@@ -1,0 +1,889 @@
+{
+  "cityEdition": "El Viejo San Juan: EUC Thrills by VibezZzCoder — https://github.com/VibezZzCoder/euc-sanjuan",
+  "source": "https://github.com/VibezZzCoder/euc-sanfrancisco",
+  "commit": "397f207d49d02e705d5a82e311cfedd193912817",
+  "publicRuntimeRelease": "1977a0a",
+  "note": "Hashes before San Juan adaptation; original EUC and Three manifests retain upstream pins.",
+  "files": [
+    {
+      "path": "FORK_GUIDE.md",
+      "bytes": 7611,
+      "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
+      "editionSha256": "a07c87031f76a4c0b58fd5cf88a90c7a46eea924e5e7d0c7fda2264cafe09fb0"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1213,
+      "sha256": "37d97cceed2f1ef6011b66eaf3b7148cfef979571a3e4b2bc7076c169415ffc4",
+      "editionSha256": "ca9da4dbf19106665641dffeab43d4728f9c5c06aaa084e4cc6fd1f4f3733ce4"
+    },
+    {
+      "path": "NOTICE-EUC-THRILLS.md",
+      "bytes": 21524,
+      "sha256": "d31f04699e76bf5e59c937b10804fae09ffb6ca7102be3b0365b608a1e38ca66",
+      "editionSha256": "4710f976816bf3132bb7b5c63a0c376787c00576f3cdb065a7cfc46546bb9d23"
+    },
+    {
+      "path": "assets/euc-badge.svg",
+      "bytes": 591,
+      "sha256": "b5ac7db367d6bad47ecb0d391be601eee4fd6014bd94e02ae456bc3424e318c0"
+    },
+    {
+      "path": "audio/euc/PROVENANCE.md",
+      "bytes": 11371,
+      "sha256": "c3b04588d8c08a276ca627720ec18710ecd2d3a2792a8b55c89e0d597ac994aa",
+      "editionSha256": "f2aee9757146794c2087678be3ccdf2695123fd1eec4c9186dc8aa9cf487fc09"
+    },
+    {
+      "path": "audio/euc/crash_adonisb2.wav",
+      "bytes": 299924,
+      "sha256": "187cee08cbafc33901c919959fc5a248e7d0107948ab83e1f34e77bec8759f6d"
+    },
+    {
+      "path": "audio/euc/crash_drunkard.wav",
+      "bytes": 299924,
+      "sha256": "56e1e118a1dd2cd882e6c78587ffb69f10dc0737b33b2e84b4a162985049cc75"
+    },
+    {
+      "path": "audio/euc/crash_flo_with_zo.wav",
+      "bytes": 299924,
+      "sha256": "7cfec9e5e0c05ba3441a56a1d4a838f874dc88c1117f0687dee04ac387ded016"
+    },
+    {
+      "path": "audio/euc/crash_gnarwheel.wav",
+      "bytes": 599804,
+      "sha256": "dda0cf3b706bd4fbb0dca2ed837a4bb52cafd10b06e77f20f077b03b283d4392"
+    },
+    {
+      "path": "audio/euc/crash_maribel.wav",
+      "bytes": 299924,
+      "sha256": "7c1e549d13853ba49b5b8837433d5aba143497faa65ddc8c61fe046f2ee139b9"
+    },
+    {
+      "path": "audio/euc/crash_red_rider.wav",
+      "bytes": 299924,
+      "sha256": "05acf9bd3e21b3df341946be48df2d98f0f92b649c79d6883e47f36530a5a99e"
+    },
+    {
+      "path": "audio/euc/crash_seal_on_a_wheel.wav",
+      "bytes": 299924,
+      "sha256": "1462d5753b58c22dab8dd3a7cdea5216f05aed4e0442bef64b5e0bb7ef76d9af"
+    },
+    {
+      "path": "audio/euc/crash_trollina.wav",
+      "bytes": 299924,
+      "sha256": "c88274f3ea5230cbbb7e19b726e45924f491c2fd10b74cc29401a7a10b51d662"
+    },
+    {
+      "path": "audio/euc/crash_wheel_in_motion.wav",
+      "bytes": 299924,
+      "sha256": "fafd15e0fb6bc19ff9ec5611f216fc91976e8333e7a4f4cfea07e399d35430d4"
+    },
+    {
+      "path": "audio/euc/crash_wipeout.wav",
+      "bytes": 299958,
+      "sha256": "44bec4433734386116c51190c54ee072569151fba2717058439f3259030dc4b0"
+    },
+    {
+      "path": "audio/euc/crash_wyldist.wav",
+      "bytes": 299924,
+      "sha256": "1a17e0c6ab6e671a67cdd6bd4aefb60abaa56c9a507d18251d6b22b9b36f03bd"
+    },
+    {
+      "path": "audio/euc/overspeed_beep.wav",
+      "bytes": 6660,
+      "sha256": "363851aa808ed5a7c66a548bbbdd113ffdbe45fa4b8f9a310ed7085f925a87b6"
+    },
+    {
+      "path": "audio/euc/siren_close_loop.wav",
+      "bytes": 688038,
+      "sha256": "0f34dc0bf177406aaaaded4fb1ac7e980bf497dd4a29423218458606fd7feed6"
+    },
+    {
+      "path": "audio/euc/siren_far_loop.wav",
+      "bytes": 516048,
+      "sha256": "09d77eacb93910f55565119a35b96b338c642f9862ba2723e2e077ac5e3100e7"
+    },
+    {
+      "path": "audio/euc/stumble_drunkard.wav",
+      "bytes": 35324,
+      "sha256": "e9403a65bddba102f29add453ae7ea47165ef35c15629e88658c6d2e8cda2004"
+    },
+    {
+      "path": "audio/euc/tyre_solid_loop.wav",
+      "bytes": 215644,
+      "sha256": "5ca9cff89e24dbffc1ad0752d829de3a997420e14cd2756b4abf941b70ba45a9"
+    },
+    {
+      "path": "audio/euc/wind_howl_loop.wav",
+      "bytes": 432258,
+      "sha256": "042440716b1331ead0247d39bdd2e522318e226be049637305ed14d19675c3ba"
+    },
+    {
+      "path": "fonts/OFL-Inter.txt",
+      "bytes": 4377,
+      "sha256": "5b9321a4298cfeb6b34354164a1c3afc3db114569984c502b9b35d988fd58c57"
+    },
+    {
+      "path": "fonts/OFL-Overpass.txt",
+      "bytes": 4392,
+      "sha256": "86e5ff25c701ec446d20b1a85b02ee6d36de8503a7288a4c948f5459809af1f0"
+    },
+    {
+      "path": "fonts/inter-latin-ext.woff2",
+      "bytes": 133336,
+      "sha256": "5e6d4fe9d9f4bff8b2a2469d25ab19576bb85331e22c6ed51398e16f95d56a9c"
+    },
+    {
+      "path": "fonts/inter-latin.woff2",
+      "bytes": 72920,
+      "sha256": "2c295d99e26dcf357d4d01bcf270fd6924b600c9a13dd8c363ef114f4c6976fa"
+    },
+    {
+      "path": "fonts/overpass-latin-ext.woff2",
+      "bytes": 46080,
+      "sha256": "0a1c9727f08b91252c19bd4ca36caf98162455f33c0adcac935606b5d8d11938"
+    },
+    {
+      "path": "fonts/overpass-latin.woff2",
+      "bytes": 39380,
+      "sha256": "29217ef8adef5f6c059feb461bdb029348205fc233dc9b6ca8604b0d068ac086"
+    },
+    {
+      "path": "js/city-api.js",
+      "bytes": 1318,
+      "sha256": "7ae9c7c16dbc6e92b9d0eb9b66e5a2d8a8b6ba41241613ad4c397c2229cbd88b",
+      "editionSha256": "c4780b07bd1cbded8c3edfdf665c3b2c831cae0fa0e4ce8218fe99f173ef8308"
+    },
+    {
+      "path": "js/euc-audio.js",
+      "bytes": 44695,
+      "sha256": "13ffe358f15068535c248d2065eb3d8058119c14db70f51b49c8f2e755d38ec8",
+      "editionSha256": "aa6eb89f87cf6ea771f246258b7bbd64a8769735b2f1c24e1c62bb85f700f303"
+    },
+    {
+      "path": "js/euc-dynamic.js",
+      "bytes": 18029,
+      "sha256": "edd7c2e8b5bc5d7c971f89991da92db62cd066bbac0a37f6e8e9921f67dfb319",
+      "editionSha256": "a3c6ee657e716384428934c78187ec45ca11e7f69cc0a124877f11526287dd1f"
+    },
+    {
+      "path": "js/euc-headlight.js",
+      "bytes": 1182,
+      "sha256": "c4860717e46de002d9d0e1b8897d5d88dcdc8cd84bb0f5406612bd5a6f047d10",
+      "editionSha256": "13790057db00f00d94aa0b7d77359e47017598782d0e3acabcfbeb41fabef6d3"
+    },
+    {
+      "path": "js/euc-hud.js",
+      "bytes": 6637,
+      "sha256": "f1b2b3878472d3e4e6dcd1b9f5dd80a24c89a0f68817fda80e048c70d854244c",
+      "editionSha256": "185cdbb51ab2d4bd8bf367d2c159e98ac1c7845608c3f9c9e2cf1866a1d3ccb2"
+    },
+    {
+      "path": "js/euc-recovery.js",
+      "bytes": 9170,
+      "sha256": "c7aa6fa5df672ae04c33765445806dee1b43a5d73acc05f125746c3c62d75fef",
+      "editionSha256": "7174137eb380b8ede8677d1466a22935662867d50c4ecf2a0826270ed69ffe6c"
+    },
+    {
+      "path": "js/euc-rider.js",
+      "bytes": 20345,
+      "sha256": "70fb0d53a9955f5b6d0bae1b9930941a316f1b041e06b8f55538abf9018f6513",
+      "editionSha256": "30b501143e23cf5bdfa4babcc436abdd1e45e42d0efa46af8159779a3f0b5613"
+    },
+    {
+      "path": "js/euc-roster.js",
+      "bytes": 855,
+      "sha256": "49537424c32091c2177a27ee00b8e56c7ddcb074134f87fb2a785cfe09caeeae",
+      "editionSha256": "d1a1150157c2403ed5679e4e68b5218a18b2931935e2f0db203c29563314446a"
+    },
+    {
+      "path": "js/euc-tricks.js",
+      "bytes": 4295,
+      "sha256": "e8e3fe1a515444cf94edd259d1ba91044cc38bff3709284369957fc637f0c306",
+      "editionSha256": "0ca460d77b0b7e498e9b40b0ddaa097f4c77fafa56aaa3c7322a7cd5b63c359c"
+    },
+    {
+      "path": "js/euc/LICENSE",
+      "bytes": 1164,
+      "sha256": "38afeea0bd30fff98b23d7b384c9f4be22bd89f84783d2faeae98d736c8f41be"
+    },
+    {
+      "path": "js/euc/MANIFEST.json",
+      "bytes": 66679,
+      "sha256": "c5001b807dfb29f435cb963d2f676f04f1081db776023043f7367986cf92de32"
+    },
+    {
+      "path": "js/euc/app/nearSolids.js",
+      "bytes": 7501,
+      "sha256": "e80a38338eb3d52e3fd9f247c17300a13693d0de1f42a5d95d2bfdc57f9dc52b"
+    },
+    {
+      "path": "js/euc/app/oneFootPose.js",
+      "bytes": 4657,
+      "sha256": "b1735f9c91f128e911687bb7eba764ad1b5ae215a15acd9bd0b112dd58dfa146"
+    },
+    {
+      "path": "js/euc/data/gnarwheelLogoAsset.js",
+      "bytes": 161541,
+      "sha256": "0ebb30c68b890251b2ecbc32a04381abb97b93d453ba4cc5bc2aeda40cad24af"
+    },
+    {
+      "path": "js/euc/data/machines.js",
+      "bytes": 4141,
+      "sha256": "a55520b13d08964f92849502a88c6a525a96b0d70bff0754be6b404abbc09b12"
+    },
+    {
+      "path": "js/euc/data/mvLogoAsset.js",
+      "bytes": 306904,
+      "sha256": "9a67ce46e6b249c7e805dca4a20d60a842d2fbdfefd4f55107d905be9d76562a"
+    },
+    {
+      "path": "js/euc/data/rideStyles.js",
+      "bytes": 1086,
+      "sha256": "a056369fc07db9484fb463f2b66ae6c4181b8dfef610884a06b9b1c2f9564475"
+    },
+    {
+      "path": "js/euc/data/riders.js",
+      "bytes": 5580,
+      "sha256": "249ad0f9abc33d3a0878f3d77f54d85c8deb62003bd67e7dc09d84f88cba755f"
+    },
+    {
+      "path": "js/euc/data/surfaces.js",
+      "bytes": 4760,
+      "sha256": "f4231d85efeda03a348276876b21a3ab4893d36709bba249a8664a027ac992f2"
+    },
+    {
+      "path": "js/euc/data/tuning.js",
+      "bytes": 60475,
+      "sha256": "a80470ad501dde43bb153f82c568d15a668c4fd7ea1cc822341ce3a390f0b53a"
+    },
+    {
+      "path": "js/euc/data/wimLogoAsset.js",
+      "bytes": 178548,
+      "sha256": "b9e6a702cd3a6c09b00df74342f159ad1dfb7f71fe892e478dbfb12785725755"
+    },
+    {
+      "path": "js/euc/input/actions.js",
+      "bytes": 4980,
+      "sha256": "186bcd652cef52cc22a13e1585765bafb7d8d9fdceda776625df8f68ad20713b"
+    },
+    {
+      "path": "js/euc/render/appearanceImports.js",
+      "bytes": 3741,
+      "sha256": "eecd93c0b4d12d11d15e8a0835e350a318b76c1f2f1cac1b22f2e101e10d93ff"
+    },
+    {
+      "path": "js/euc/render/appearanceLoader.js",
+      "bytes": 5293,
+      "sha256": "fa36f8bd246897550ac5d949a2b95796e18e0993589c3543660b1f9b1c437a8e"
+    },
+    {
+      "path": "js/euc/render/appearancePixelImports.js",
+      "bytes": 1937,
+      "sha256": "85115ab4b35ad138c68d5bc33afe2a466adb4acbe74b10d627fca500a68689ed"
+    },
+    {
+      "path": "js/euc/render/appearanceRegistry.js",
+      "bytes": 2942,
+      "sha256": "c64fc633d11a302876ab12f509f7a06e33b4a2508a5426beee3dd5265e05e1f8"
+    },
+    {
+      "path": "js/euc/render/appearanceWorker.js",
+      "bytes": 999,
+      "sha256": "fb03da5a4a00b59e6a2d7897d45a7defc77716487432865286ed0165dca4b072"
+    },
+    {
+      "path": "js/euc/render/blockoutKit.js",
+      "bytes": 16701,
+      "sha256": "9f3af864160c6a8eb0ae74cee140e4971a49d9b011391f44486e27b50ed17c8b"
+    },
+    {
+      "path": "js/euc/render/coolRiderAtlas.js",
+      "bytes": 10971,
+      "sha256": "86949c8beaf010af8e600013a6d407839be57c3ea4e053974fa610213b637b73"
+    },
+    {
+      "path": "js/euc/render/coolRiderLook.js",
+      "bytes": 25728,
+      "sha256": "89f62f92432531052a38100dbc4aaedf56ad36b9fdb7d7b4b407e33609d001d6"
+    },
+    {
+      "path": "js/euc/render/drunkardAtlas.js",
+      "bytes": 21242,
+      "sha256": "561d42499e90992e56b8689e276c0c9f889a6a04a1c1f0e1aeb45202f46437e9"
+    },
+    {
+      "path": "js/euc/render/drunkardMachineAtlas.js",
+      "bytes": 7070,
+      "sha256": "9b765c69e1700ebd428954600c95e6f3894d6730f87ee020f63425ecd553b71a"
+    },
+    {
+      "path": "js/euc/render/euc.js",
+      "bytes": 23827,
+      "sha256": "ff42ca0d27ecd3484b25b8f5caa9d3b7d213fd90958ab34ffca3a6d715e5ed64"
+    },
+    {
+      "path": "js/euc/render/floWithZoLook.js",
+      "bytes": 24645,
+      "sha256": "1103013dbb5be87942aaa2a1b8354b10f18a5000aebf8d9e9bf82be69df229de"
+    },
+    {
+      "path": "js/euc/render/gnarwheelAtlas.js",
+      "bytes": 5499,
+      "sha256": "a524c41320e470499441768a9876cd5be0f316adaea17bdc7f67d6e4c1f8f7df"
+    },
+    {
+      "path": "js/euc/render/gnarwheelLook.js",
+      "bytes": 10388,
+      "sha256": "e0f31ae726e00b3c30d32af86db986bb5455b747737e5bf48e86bdf52253af75"
+    },
+    {
+      "path": "js/euc/render/gnarwheelMachineLook.js",
+      "bytes": 2829,
+      "sha256": "ec851fcaddcbd53a6cff531f99fbe4df2d39136788f967b245bda2c6938fe907"
+    },
+    {
+      "path": "js/euc/render/inkKit.js",
+      "bytes": 10310,
+      "sha256": "06f20bdca5eb6224280738e02120ba2719ad3bea35971613dd07c40a1374b679"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-adonisb2.js",
+      "bytes": 11587,
+      "sha256": "4f67231572d0bb416440175c4fba0b193fda8bc9c1fabfd0447edfa23a001107"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-cool-rider.js",
+      "bytes": 2575,
+      "sha256": "08166ceba2d8c4842416eb8afcc6f621af602d04c86d734584c89f7e98433288"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-drunkard.js",
+      "bytes": 7524,
+      "sha256": "72131044ada9e68a5983233d427b7fcccd1064b5ab6621a8d99e90c21fc7f5b4"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-flo-with-zo.js",
+      "bytes": 8652,
+      "sha256": "db0fe88d8a2136d27ba1f86b83caa1416edcff35836ee6c2a25a7f3f3a39a2b3"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-gnarwheel.js",
+      "bytes": 996,
+      "sha256": "218c4ce5dd1660f2fe0b66b2158f4caf623e9be2707495d583be632114ee4f4d"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-maribel-vargas.js",
+      "bytes": 7067,
+      "sha256": "dd70eac98a67bf990354050f3563e9ea70adde7d42fafb6f079058b351059114"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-red-rider.js",
+      "bytes": 8130,
+      "sha256": "7afd2b511eb619efa6051d5c9b2e52bf6c09be6e41bb1adf0ac74fd5393ff71b"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-seal-on-a-wheel.js",
+      "bytes": 9152,
+      "sha256": "9c0554b901b08f030c7a41493f31a049e0b6b600c029b620d5bf1a8b4100b85d"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-trollina.js",
+      "bytes": 2839,
+      "sha256": "7da018ddfd49883f841b96555b2c8a7f9d53e914f4174a4f48a4ac2440e976ed"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-wheel-in-motion.js",
+      "bytes": 11925,
+      "sha256": "886d4ee79da4a68963e334a937cf052ce983461371618bb22e50694f0bcc3a29"
+    },
+    {
+      "path": "js/euc/render/machineAppearance-wyldist.js",
+      "bytes": 990,
+      "sha256": "fe2e7f65be9ad8ac9ec89c241917274f1e6ddfaa138cde50d24beb25041cef13"
+    },
+    {
+      "path": "js/euc/render/machineLook.js",
+      "bytes": 3157,
+      "sha256": "eb90272ff73130c2805980594b93f1224acbf1e6713bfc69a170148209af7065"
+    },
+    {
+      "path": "js/euc/render/maribelAtlas.js",
+      "bytes": 11309,
+      "sha256": "20c5afa9fa4c39241686c0dd7f8a5ec1a3b54a3829011f847cb69f363fe33386"
+    },
+    {
+      "path": "js/euc/render/maribelHair.js",
+      "bytes": 5627,
+      "sha256": "a0f686e3c1b6c0e5d43dee6332b784acf6340469af88596ed9698e78bedd8694"
+    },
+    {
+      "path": "js/euc/render/paddle.js",
+      "bytes": 4030,
+      "sha256": "2cb82c672aa762979df094b908d3759451d6bdc911dd133a7951dcc008c25e5d"
+    },
+    {
+      "path": "js/euc/render/pixels/coolRiderAtlas.js",
+      "bytes": 10135,
+      "sha256": "c18d8f70734e1412bf0682c5a7665c090a38ffd0692b77cb15781930ebebe62c"
+    },
+    {
+      "path": "js/euc/render/pixels/drunkardAtlas.js",
+      "bytes": 20232,
+      "sha256": "897dc1cf53bbcd69dc1f294b4a99e49bd235c18d85a45f4041ea52ef0562d5a1"
+    },
+    {
+      "path": "js/euc/render/pixels/drunkardMachineAtlas.js",
+      "bytes": 5350,
+      "sha256": "634403e302586b26286cc75c8cc8fd87ee508a470c8c398a3b5e094a49139487"
+    },
+    {
+      "path": "js/euc/render/pixels/gnarwheelAtlas.js",
+      "bytes": 5481,
+      "sha256": "52b649918c0548b2330631df7a3de4a75ed4f5dec51a6c906078baa64e897398"
+    },
+    {
+      "path": "js/euc/render/pixels/maribelAtlas.js",
+      "bytes": 10863,
+      "sha256": "25d3f242ac9dcda26228d051cce71f0f27b84a36da2df7dc640d0a9b8e6f8d99"
+    },
+    {
+      "path": "js/euc/render/pixels/paintColours.js",
+      "bytes": 4664,
+      "sha256": "41d545f769443a41f2b66b48b2b412f2208c1720b624d7941e1a142310efcacb"
+    },
+    {
+      "path": "js/euc/render/pixels/paintSurface.js",
+      "bytes": 2507,
+      "sha256": "07fe86a797fb467194a5925b4593fd0015e08b9c581dc151de4ece454c5c4e63"
+    },
+    {
+      "path": "js/euc/render/pixels/paintVector.js",
+      "bytes": 1788,
+      "sha256": "e47a5df1285d852bb0ad9e60a5d5e71651b12c4e878dc551f6e9b7bac6c3fc80"
+    },
+    {
+      "path": "js/euc/render/pixels/sealAtlas.js",
+      "bytes": 6295,
+      "sha256": "07c2c3c6ae197d0a739590b1848261d4b7e49d52abc228ddc48db65bbb3f2881"
+    },
+    {
+      "path": "js/euc/render/pixels/wimAtlas.js",
+      "bytes": 14582,
+      "sha256": "70b971c6d1274c1acc9a87e1e1a0877c1bd8ff95212fb3c838fa1dccc17c7cbd"
+    },
+    {
+      "path": "js/euc/render/pixels/wimMachineAtlas.js",
+      "bytes": 5589,
+      "sha256": "5f25f0e352d8bcc5e2fb8e35ffac5ba694f77284c731d77ce5ebfa4e8603c7fa"
+    },
+    {
+      "path": "js/euc/render/pixels/wyldistAtlas.js",
+      "bytes": 35884,
+      "sha256": "5a4d07b6ec07ecd1d19f026298abb188bd25d15fed0e4379977afdad8563327d"
+    },
+    {
+      "path": "js/euc/render/pngDecode.js",
+      "bytes": 13054,
+      "sha256": "7691459ec819bba6cb4a59021c698702956d466369c9937b439e6ad8d786c9db"
+    },
+    {
+      "path": "js/euc/render/rider.js",
+      "bytes": 43608,
+      "sha256": "941183437f2cc2358c0161dbe4c67a71d079af6ea0ef060b8fa0f06f8790a14a"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-adonisb2.js",
+      "bytes": 26300,
+      "sha256": "174db90c0be2be8e05e93362d89fbb4f93c4e3a9aeca2132f1f5f57127d33f15"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-cool-rider.js",
+      "bytes": 975,
+      "sha256": "c0b6b58ad54bfb4a2bdd3e856f00f7294ecc1c64d91d253bade8a186103cc0be"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-drunkard.js",
+      "bytes": 51635,
+      "sha256": "6036628be6b059a645839be7a12ea30b848d1418396eb113d1efe617861690e2"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-flo-with-zo.js",
+      "bytes": 977,
+      "sha256": "ded751cd048e6eb5a4eec7ec99ace9c8c3e2679e0764032b3ee615d36ed826f7"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-gnarwheel.js",
+      "bytes": 973,
+      "sha256": "50605875ad40d0bba6a180c151ae2a0846dd56db7c0fae199f42e6a76a68946a"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-maribel-vargas.js",
+      "bytes": 38802,
+      "sha256": "ed7431c8aaeee3df3dae4312f81b1ca3ad821da30322ef2061488731f91d8170"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-red-rider.js",
+      "bytes": 24185,
+      "sha256": "08094b172022757d596a2dae2585d444f03dd5989af673f09fc0999244f8f068"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-seal-on-a-wheel.js",
+      "bytes": 988,
+      "sha256": "c943cbaa03c00b90fa1c8a2f18343f3f77d1fa74ffbc14e9ee106fa4764c648b"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-trollina.js",
+      "bytes": 16538,
+      "sha256": "40b8578f76c85d3db9621b746b6fe8b97a0857492bc85eaa40fe411f49a2b499"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-wheel-in-motion.js",
+      "bytes": 25482,
+      "sha256": "12658c4d201ef7d20c72d437c8d20c09f4a8e6504d1e0c8085e16329f830cfd2"
+    },
+    {
+      "path": "js/euc/render/riderAppearance-wyldist.js",
+      "bytes": 967,
+      "sha256": "be37f347ee31538a80027d57ee6abacc0f7c95c3aa99521b92b51a68f41d4940"
+    },
+    {
+      "path": "js/euc/render/riderClothDrape.js",
+      "bytes": 4433,
+      "sha256": "36227c081000af7f8d5e9bf4a0fd7e2fd3584dfd8d9706e17d63a0e18e930d8d"
+    },
+    {
+      "path": "js/euc/render/riderJointSurface.js",
+      "bytes": 2302,
+      "sha256": "70001a8d6a7f22674a589e2f964df5c0d7e7ecba1a7c33dcf48c8e98d56f4dd7"
+    },
+    {
+      "path": "js/euc/render/riderLook.js",
+      "bytes": 20936,
+      "sha256": "e2751be4955514aaa7cb98c2fb9f0e247d79cd407f0dcc65c6200fefc8270b98"
+    },
+    {
+      "path": "js/euc/render/ridingRig.js",
+      "bytes": 21937,
+      "sha256": "7078cd491a150cb6c9ab4c7b452afb4218a6597f991c07d8cf2a937125c40cc9"
+    },
+    {
+      "path": "js/euc/render/rigConsolidation.js",
+      "bytes": 7642,
+      "sha256": "982be7412471116138e7a56a481a9a4261951d1bd104306086377be66aa0b756"
+    },
+    {
+      "path": "js/euc/render/sealAtlas.js",
+      "bytes": 9555,
+      "sha256": "c0a58eac4a0741f8cb8b31ec43c18d1b028045c01d39243c8471c795ca12d4dc"
+    },
+    {
+      "path": "js/euc/render/sealOnAWheelLook.js",
+      "bytes": 30248,
+      "sha256": "8a031caf2915cc2f202b95db783dca4f78e029bde6f0c61f157646fd5b11819a"
+    },
+    {
+      "path": "js/euc/render/wimAtlas.js",
+      "bytes": 15404,
+      "sha256": "45c0f5b2c0772796cd54dd3c69f1dff3b9a48af1305a40efbb3c536a96c5cf5f"
+    },
+    {
+      "path": "js/euc/render/wimMachineAtlas.js",
+      "bytes": 7196,
+      "sha256": "d6ac95814a5c22e767df41e969006daab611e21323776b037b1b888723cc8895"
+    },
+    {
+      "path": "js/euc/render/wyldistAtlas.js",
+      "bytes": 38028,
+      "sha256": "96524743a3cfc8a3a087394c460387ffcfc7e0e67c0937e85e319ddc7f837bba"
+    },
+    {
+      "path": "js/euc/render/wyldistHelmet.js",
+      "bytes": 27387,
+      "sha256": "73d28092c8aec82600638567c2429bc0760f9d98b860f8507f2fd7d42d84507a"
+    },
+    {
+      "path": "js/euc/render/wyldistLook.js",
+      "bytes": 24823,
+      "sha256": "12e4b2130568c35296f3748b8d701bc7c4f5743da30667fe4bdb96596abba805"
+    },
+    {
+      "path": "js/euc/render/wyldistMachineLook.js",
+      "bytes": 5085,
+      "sha256": "2fc20c0e54bf9ef15f2ffac9f12690a2cae51d98759938b5768eabda4d55bc3d"
+    },
+    {
+      "path": "js/euc/shared/freeze.js",
+      "bytes": 560,
+      "sha256": "4712c12bf48b918286ee0cdef60dbfac9d01203bff093d689075e6b915b83d1b"
+    },
+    {
+      "path": "js/euc/shared/letterPaths.js",
+      "bytes": 4371,
+      "sha256": "e2204b5ec5ccc1cc1468221562f9d96565463940f988aa161176d3aed575c2dc"
+    },
+    {
+      "path": "js/euc/shared/maths.js",
+      "bytes": 1398,
+      "sha256": "a7f15bc841ada14f9cf6d6660034b9cc8f1f3c3a1b365ef961b7e68af3631037"
+    },
+    {
+      "path": "js/euc/shared/ragdollBoot.js",
+      "bytes": 13792,
+      "sha256": "7ce9c02a720e5240545c3b26ebf45e09f1eb27e7750341ad27f464a2921f39cd"
+    },
+    {
+      "path": "js/euc/shared/ragdollContact.js",
+      "bytes": 18575,
+      "sha256": "07a44e02e25ff5475f4d57ae4558f46d96deb1d234e5a52ab7c14d7a313cd6ee"
+    },
+    {
+      "path": "js/euc/shared/ragdollHip.js",
+      "bytes": 4977,
+      "sha256": "d2afa73c7d01f87d1f609fbab1eaedf3fc960c88832d3a6d68f75a253856188d"
+    },
+    {
+      "path": "js/euc/shared/ragdollInterpolation.js",
+      "bytes": 561,
+      "sha256": "cdcabec95dd6edacd3667ea7b4647048e1bdcf75587e3fbbe5b75f614774ed59"
+    },
+    {
+      "path": "js/euc/shared/ragdollLimbContact.js",
+      "bytes": 25944,
+      "sha256": "25022647336b4521d9743aa961f6be52a0dd502e2cbad1f754dd3914ca94cb3e"
+    },
+    {
+      "path": "js/euc/shared/riderOccupancy.js",
+      "bytes": 25976,
+      "sha256": "8a215d3d9ed945a438af95ab314fd942f7bcacab1f5e302c6f345862a2cc1216"
+    },
+    {
+      "path": "js/euc/shared/riderSideContact.js",
+      "bytes": 7789,
+      "sha256": "10bbccb03b362c3a6567558cb318be751db19030b8cf14f48a588eeb78b2c410"
+    },
+    {
+      "path": "js/euc/simulation/EucController.js",
+      "bytes": 176904,
+      "sha256": "d8d99a78a63ebc054241110187c9c93326209e4f5f5de3bb647d67f38cc897b0"
+    },
+    {
+      "path": "js/euc/simulation/eucStepPrimitives.js",
+      "bytes": 11095,
+      "sha256": "cce3b5b6b0a27ab14d27cf0ddd8344259be16f1596a4edb12c5bd8ba71cf6467"
+    },
+    {
+      "path": "js/euc/simulation/hazards.js",
+      "bytes": 4777,
+      "sha256": "2bafdd7037290f41529251426e34349c08eaf5117c2881fa52d6298e81eff6d5"
+    },
+    {
+      "path": "js/euc/simulation/lateralCeiling.js",
+      "bytes": 746,
+      "sha256": "acf6c7b3c2cf60ac117e38719477cc3ac1e5eb98280a997bb6ce8842c24f1da5"
+    },
+    {
+      "path": "js/euc/simulation/launchPadField.js",
+      "bytes": 9318,
+      "sha256": "6949c6ce18c6db4a0564e31e81135cae740c0e30294502a8dd898e2c46dac13d"
+    },
+    {
+      "path": "js/euc/simulation/planSampler.js",
+      "bytes": 32660,
+      "sha256": "fe825796a0b3de4fca536b2892f9064c5a0c166021b248e9d9d80ce678e691c0"
+    },
+    {
+      "path": "js/euc/simulation/ragdoll.js",
+      "bytes": 87467,
+      "sha256": "4ec0f49cbfc60895b4d347c02ab5b6be588343c2c5eff1fb93e7d59acf784972"
+    },
+    {
+      "path": "js/euc/simulation/riderLean.js",
+      "bytes": 1556,
+      "sha256": "340d536951bf4734bd2175352b8d82acbc565c38a4bb85ffbc913ccb3def9883"
+    },
+    {
+      "path": "js/euc/simulation/roughness.js",
+      "bytes": 980,
+      "sha256": "0f4bcb73e8310cb09f8ad88ab23a72a5aa98624a406a3d90a931f861dd8bb946"
+    },
+    {
+      "path": "js/euc/simulation/softBodies.js",
+      "bytes": 1879,
+      "sha256": "fbef28fd85d5b386fe3f0b4fb8978abd09c7870a1c6ab40ecc4323f3b0d008d9"
+    },
+    {
+      "path": "js/euc/simulation/world.js",
+      "bytes": 870,
+      "sha256": "531d7b8e138cf39b39d28ee60bce17096e48d9273732956527a9e59b5ea8692b"
+    },
+    {
+      "path": "js/frame-rate.js",
+      "bytes": 2625,
+      "sha256": "12c96045a16cc0809113be806a770e69620350992d0d5acd58225ba8c5570e22",
+      "editionSha256": "e1f97a28fcdce14e7744a7f84f64bac885ce4be4d735b0a7ddf3a7ace4454ea7"
+    },
+    {
+      "path": "js/gamepad-controls.js",
+      "bytes": 10066,
+      "sha256": "ce1026df990aec6f8df83796953da5f04b93f8acde5d16ab1d9880634ebab3ad",
+      "editionSha256": "5e0d78474aeeb55d12ca1f66dedd2f0f5daf54928ed42d81931f7b736b2dd5f8"
+    },
+    {
+      "path": "js/render-completion.js",
+      "bytes": 1107,
+      "sha256": "88827be17468f83e7cc7f2c59cfe2f0efd897f922e0f64593f937870d97cfb7e",
+      "editionSha256": "21b03eb4f25ff509844d98e97d3dd8c794528ab75d67bff274097db41a3bc43b"
+    },
+    {
+      "path": "js/render-resolution.js",
+      "bytes": 3022,
+      "sha256": "6f44a4ef4ad6a5fe614def5bcd8d612613c729232445cd75c731a420b1db45bc",
+      "editionSha256": "80cf1a549e1e1ff94962073f0b43c59c04eac1213a25024feb144c430118548b"
+    },
+    {
+      "path": "js/rider-preparation.js",
+      "bytes": 4710,
+      "sha256": "037ef098616b1a64b6f5d7ccb883f6ec87e31fa6e4c9673a20034a5c8a40e5b1",
+      "editionSha256": "5735de5fa04de61d416bf3f76f6da7c7423c5a04eabf2d3dbc58546e6655eecb"
+    },
+    {
+      "path": "js/sf-light-data.js",
+      "bytes": 3686,
+      "sha256": "4e0212606bc4dd095acfe18263193cbeea8c10904a026e04f6af8ce4e97e6f24",
+      "editionSha256": "3b5813b2a8bd36d66e8ea8d2b06a8cb96261e795f376a41db8e86bb57a29d049"
+    },
+    {
+      "path": "js/sf-static-body-store.js",
+      "bytes": 12403,
+      "sha256": "ad614c1979f6313955b707a10ce9f388b1f330f22ba521cd81e95955f2fa1409",
+      "editionSha256": "117d8933dd0080c35c389fb072180ca8404bb35261e692c41d70c4a1a28d8daf"
+    },
+    {
+      "path": "js/sf-support-store.js",
+      "bytes": 43786,
+      "sha256": "9a2d7ea37fbe17ee56dda6bcb7fa03eb7465193509f33ca64f09f623c289bcb9",
+      "editionSha256": "e86f03b7e35393f06e613c35c20a6b258c2f4637239972fec7b24873dfc1d063"
+    },
+    {
+      "path": "js/sf-terrain-sampler.js",
+      "bytes": 65554,
+      "sha256": "f8b804d2874b05e7aa8c09b2430ca00b4554dead2fa291934efe545a519f7e92",
+      "editionSha256": "1c6e6cd98b56bd97f4b8805a17e5da462de50ea25ab30fea73fb3d44ed41019f"
+    },
+    {
+      "path": "js/touch-controls.js",
+      "bytes": 14239,
+      "sha256": "e8c42088a189ca5ad5e12b76ceebfc31b1b635faecaa5a35bcef654f9239c716",
+      "editionSha256": "ffc372983be6149dc820ee7d3038199467246df251685a60436bd756697f354d"
+    },
+    {
+      "path": "tools/vendor-euc.mjs",
+      "bytes": 93911,
+      "sha256": "ea52f89df8c269c2faff12c0747114e79ad67b4a7c846af1adcffc407b8d5e8a",
+      "editionSha256": "afbb0014498fa821dfae978420738c10c8ea1bcf5b112eb58ea9b05587d39f53"
+    },
+    {
+      "path": "tools/vendor-three.mjs",
+      "bytes": 9347,
+      "sha256": "912272e8f64a36b8da26d4f1b11b01dd5ba9c4eaa99e71e1a7bcf374c0da2b41",
+      "editionSha256": "0c0d5211bf6eda6d50231c7ad2669895f81562876d7a307d82a81f7f048fc907"
+    },
+    {
+      "path": "vendor/MANIFEST.json",
+      "bytes": 3106,
+      "sha256": "b418a11d0f26d7b361aaf18a3682484b4225361099bccf89145cbb2c85899cac"
+    },
+    {
+      "path": "vendor/three/LICENSE",
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    },
+    {
+      "path": "vendor/three/build/three.core.js",
+      "bytes": 1471104,
+      "sha256": "5fb576f559a503bdaaac4990a632984a3673f13369e947540986b0d392be3a2f"
+    },
+    {
+      "path": "vendor/three/build/three.tsl.js",
+      "bytes": 1062516,
+      "sha256": "e9d33e4c7b4917ebbd890565c58a5ae0e4db3909974d7a9156e10df6aad71634"
+    },
+    {
+      "path": "vendor/three/build/three.webgpu.js",
+      "bytes": 1338949,
+      "sha256": "a8b76de96ec32506b9b8b74ecf7a82d636e1a82f3e778d41f16547e924e34764"
+    },
+    {
+      "path": "vendor/three/examples/jsm/lighting/ClusteredLighting.js",
+      "bytes": 4240,
+      "sha256": "28d00d4a745a8927d7e0f0d8664d94d23d98ffea120ff54183b40973be45bf17"
+    },
+    {
+      "path": "vendor/three/examples/jsm/lights/SunLight.js",
+      "bytes": 2203,
+      "sha256": "580a50687031518ea66e4b0cb85884d657d2f7dc72d38e64e6c874d51f5aa2eb"
+    },
+    {
+      "path": "vendor/three/examples/jsm/lights/SunLightNode.js",
+      "bytes": 1148,
+      "sha256": "d64be448da7631e35c8382b4b80906326613739f4891301820886bddaaf9c337"
+    },
+    {
+      "path": "vendor/three/examples/jsm/lights/SunLightShadow.js",
+      "bytes": 9326,
+      "sha256": "fd3ecd1e7d426813607f2829a1f767c0473ddbf3b3507d1cc9cca888a6839e31"
+    },
+    {
+      "path": "vendor/three/examples/jsm/lights/SunShadowNode.js",
+      "bytes": 8825,
+      "sha256": "3e5e7f347c49f59b946b6958f2b88863fc7ee38fd6b992917f4a6c2f2190654c"
+    },
+    {
+      "path": "vendor/three/examples/jsm/objects/SkyMesh.js",
+      "bytes": 13456,
+      "sha256": "64804362f468a70d5d0283161241d85ef5c47fa1944ca916542a04217c3ebe64"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/display/BloomNode.js",
+      "bytes": 17230,
+      "sha256": "e7a39bf41581b5ada6463dfd2e571c6fff27648e459cc0d7fd13d64bbcf0f6ea"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/display/ImportanceSampledEnvironment.js",
+      "bytes": 16477,
+      "sha256": "a938b9efb1432628871515c030a069d91694e708c1b6ad2ebaa691aecdbd16ef"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/display/SSRNode.js",
+      "bytes": 42123,
+      "sha256": "38a173b21e9825fe3cdfaf319ba29c4bfb6693536aae9ae517c037fb5bb15967"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/display/boxBlur.js",
+      "bytes": 2748,
+      "sha256": "fa6f4ce3c9b1205fa3cc8a9da7783e57405402b6aa62a4bd984a8b0ac5ded115"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/lighting/ClusteredLightsNode.js",
+      "bytes": 30092,
+      "sha256": "19eb45bf3b6f3f9f14c02ba43dd8ee004fc69a6db6bdd2899bd06b3d5b4d7b0e"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/utils/RNoise.js",
+      "bytes": 1499,
+      "sha256": "a235650eba39528ff10f987c497552c65a3affc4633591f34aae24b4ae98a20b"
+    },
+    {
+      "path": "vendor/three/examples/jsm/tsl/utils/SpecularHelpers.js",
+      "bytes": 11900,
+      "sha256": "34b6de70b079a1418eb8fe7fc3588f32860f3f591cbac965c062fff8e73ffb19"
+    },
+    {
+      "path": "vendor/three/examples/jsm/utils/BufferGeometryUtils.js",
+      "bytes": 39077,
+      "sha256": "48916101a392fd03e0d93dd8ff4b292e14262b64df82b23b5068a6c7578bade3"
+    }
+  ]
+}

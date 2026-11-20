@@ -1,0 +1,69 @@
+<!doctype html>
+<!-- El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan — adapted from mrdoob/slop-newyork (MIT, (c) 2026 Mr.doob) and unable12/slop-sanfrancisco (MIT) -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Everything loads from this host only. The two hashes are the inline scripts (the import map below and the
+       module script at the end of the body); after changing either, run: node tools/csp.mjs -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-+0GAxYh0edQIf2ZZaUbo2EBG1syN1mosizCy9oKm6D0=' 'sha256-ZkYO1yEXgDwqMYIp7mx5NhIJH+OTbXkA1X2VO0IccAM='; worker-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#102c35">
+  <meta name="euc-build" content="sanjuan-source-1">
+  <title>El Viejo San Juan: EUC Thrills</title>
+  <link rel="icon" href="assets/euc-badge.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/game.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three/build/three.webgpu.js","three/webgpu":"./vendor/three/build/three.webgpu.js","three/tsl":"./vendor/three/build/three.tsl.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+</head>
+<body data-state="loading">
+  <main id="world" aria-label="Old San Juan riding view"></main>
+  <section id="loading" class="overlay" aria-labelledby="loading-title">
+    <div class="panel"><p class="eyebrow">EUC THRILLS · OLD SAN JUAN</p><h1 id="loading-title">El Viejo<br><span>San Juan</span></h1>
+      <p id="loading-status" role="status">Preparing the old city…</p><progress id="progress" max="1" value="0"></progress>
+      <button id="retry" hidden>Retry loading</button><a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a>
+      <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a>
+      <noscript>JavaScript is required to ride.</noscript></div>
+  </section>
+  <section id="title" class="overlay" hidden aria-labelledby="title-heading"><div class="panel">
+    <p class="eyebrow">PUERTO RICO · OLD SAN JUAN</p><h1 id="title-heading">El Viejo<br><span>San Juan</span></h1>
+    <p>Old streets. Real hills. One wheel.</p><p class="muted">Explore the plazas, ramparts and waterfront with Cool Rider. Fort interiors are closed.</p>
+    <button id="ride" class="primary">Ride with Cool Rider</button><p class="help">WASD / arrows to ride · Space to hop · Shift to charge<br>Camera button / C / controller Y: Chase, Wide, Look-around<br>Touch stick or standard controller supported<br>Controller menus: D-pad to focus · A to select / change settings · B to close</p>
+    <a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a> · <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a>
+  </div></section>
+  <header id="hud" hidden><div class="brand">EUC <span>VIEJO SAN JUAN</span></div><output id="speed">0 mph · 0 km/h</output>
+    <button id="camera-button" aria-expanded="false" aria-controls="camera-tools">Camera</button><button id="map-button">Map</button><button id="pause-button">Pause</button></header>
+  <div id="ride-status" hidden><span id="location"></span><span id="camera-status" role="status"></span><span id="rider-status" role="status"></span></div>
+  <section id="camera-tools" hidden aria-label="Camera controls">
+    <label>View <select id="camera-mode"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
+    <div class="camera-actions"><button id="camera-in" aria-label="Zoom in">+</button><button id="camera-out" aria-label="Zoom out">−</button><button id="camera-center">Center</button></div>
+    <p id="camera-hint" class="help"></p>
+  </section>
+  <div id="touch-controls" hidden><div data-touch="stick" id="stick-zone" aria-label="Touch riding stick"></div>
+    <div id="touch-stick"><span></span></div><div class="touch-buttons">
+    <button data-touch="reset">GET UP</button><button data-touch="up">HOP</button><button data-touch="boost">CHARGE</button></div></div>
+  <dialog id="pause" aria-labelledby="pause-heading"><div class="dialog-content">
+    <p class="eyebrow">OLD SAN JUAN</p><h2 id="pause-heading">Take a breather</h2>
+    <button id="resume" class="primary">Resume ride</button><button id="restart">Return to Plaza de Armas</button>
+    <label>Camera view <select id="camera-setting"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
+    <label>3D resolution <select id="resolution"><option value="100">100%</option><option value="75">75%</option><option value="50">50%</option></select></label>
+    <label>Frame limit <select id="frame-limit"><option value="auto">Auto</option><option value="60">60</option><option value="30">30</option></select></label>
+    <label><input id="sound" type="checkbox" checked> Riding sound</label>
+    <p class="help">WASD / arrows: lean and carve · Space: hop · Shift: charge / tuck · R: get up · M: map · Esc: pause.<br>Camera / C / controller Y: Chase, Wide, Look-around. Drag the view above/outside the riding controls to orbit or look; pinch / scroll / + and − to zoom. IJKL: look. V / Center / right-stick click: recenter.<br>Controller: left stick / triggers to ride, A hop, X charge, B get up, right stick camera, D-pad up/down zoom.<br>Menus: D-pad to focus · A to select / change settings · B to close.</p>
+    <p id="build" class="muted"></p><a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a>
+    <p class="credits">© OpenStreetMap contributors (ODbL) · Elevation: USGS 3DEP · Assets from EUC Thrills by VibezZzCoder — CC BY 4.0, with exceptions. <a href="credits.html" target="_blank" rel="noopener">Credits & licences</a></p>
+  </div></dialog>
+  <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><h2 id="map-heading">El Viejo San Juan</h2><div class="map-actions"><button id="close-map">Close map</button><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a></div></header>
+    <p class="muted">Yellow arrow: you · destinations use checked ground placement<br>Controller: D-pad to focus · A to select · B to close</p>
+    <canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position"></canvas>
+    <label>Find a place <input id="search" type="search" placeholder="Plaza, Morro, Princesa…"></label><div id="places"></div>
+    <p id="map-status" role="status"></p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP<br>Fort interiors are closed.</p>
+  </div></dialog>
+  <script type="module">
+    import('./js/main.js').catch(error => {
+      console.error(error); document.body.dataset.state='error';
+      document.getElementById('loading').hidden=false;
+      document.getElementById('loading-status').textContent='Could not start: '+error.message;
+      document.getElementById('retry').hidden=false;
+    });
+    document.getElementById('retry').onclick=()=>location.reload();
+  </script>
+</body></html>

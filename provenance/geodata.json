@@ -1,0 +1,69 @@
+{
+  "cityEdition": "El Viejo San Juan: EUC Thrills by VibezZzCoder \u2014 https://github.com/VibezZzCoder/euc-sanjuan",
+  "stairs.json": "\u00a9 OpenStreetMap contributors \u2014 ODbL 1.0; data/stairs.json is an array of mapped ways.",
+  "sources": [
+    {
+      "file": "osm-old-san-juan.json",
+      "url": "https://overpass-api.de/api/interpreter",
+      "bytes": 3652695,
+      "sha256": "2746bc27d723d4e241ab42c585b776fdf31e567b9d830d5c5ca5f239b619298d",
+      "credit": "\u00a9 OpenStreetMap contributors \u2014 ODbL 1.0"
+    },
+    {
+      "file": "osm-relations.json",
+      "url": "https://overpass-api.de/api/interpreter",
+      "bytes": 147505,
+      "sha256": "016cafee1eaa6cdf03bca05ba67505514d495207b9649e39b84176c5b75ba84f",
+      "credit": "\u00a9 OpenStreetMap contributors \u2014 ODbL 1.0"
+    },
+    {
+      "file": "USGS_1M_19_x80y205_PR_PuertoRicoUSVI_D24.tif",
+      "url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/1m/Projects/PR_PuertoRicoUSVI_D24/TIFF/USGS_1M_19_x80y205_PR_PuertoRicoUSVI_D24.tif",
+      "bytes": 127014387,
+      "sha256": "5641064c72648343ff61e115abe8c71d8fb2fb89373cde934b8f7567b6ac76cf",
+      "credit": "USGS 3DEP PR_PuertoRicoUSVI_D24 elevation \u2014 public domain"
+    },
+    {
+      "file": "vendor-dem-metadata-6.xml",
+      "url": "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/metadata/PR_PuertoRicoUSVI_D24/PR_PuertoRicoUSVI_6_D24/reports/vendorr_provided_xml/PR_PuertoRicoUSVI_6_D24_DEM_XML_Metadata.xml",
+      "bytes": 16217,
+      "sha256": "7e222d470ff85d09a7ce8d06dc8472e5da42551638c250a48a0024c478105f99",
+      "credit": "USGS 3DEP product and vendor metadata"
+    },
+    {
+      "file": "product-metadata.xml",
+      "url": "https://thor-f5.er.usgs.gov/ngtoc/metadata/waf/elevation/1_meter/geotiff/PR_PuertoRicoUSVI_D24/USGS_1M_19_x80y205_PR_PuertoRicoUSVI_D24.xml",
+      "bytes": 14259,
+      "sha256": "9b030637be18a5293f3b5e3c8304bc96699acd27c9395cb39ac99dd71afdbb7f",
+      "credit": "USGS 3DEP product and vendor metadata"
+    }
+  ],
+  "queries": {
+    "osj.overpassql": "[out:json][timeout:120][bbox:18.4595,-66.1300,18.4740,-66.1040];\n(node; way;);\nout body geom;\nrel;\nout tags;\n",
+    "relations.overpassql": "[out:json][timeout:120][bbox:18.4595,-66.1300,18.4740,-66.1040];(rel[\"building\"];rel[\"type\"=\"building\"];rel[\"type\"=\"restriction\"];rel[\"historic\"~\"^(castle|fort)$\"];);out body geom;>;out skel qt;\n"
+  },
+  "osmTimestamp": "2026-11-15T01:11:30Z",
+  "datumEvidence": "USGS PR_PuertoRicoUSVI_6_D24 DEM vendor metadata; contains San Juan",
+  "accuracy": "10 cm RMSEV class per source report, not a local game accuracy measurement",
+  "landAreaKm2": 1.3963,
+  "frameAreaKm2": 4.4075,
+  "buildings": 1281,
+  "roadWaysAfterClip": 678,
+  "streetLengthM": 55992,
+  "stairs": 56,
+  "mainWalkNetworkNodes": 2047,
+  "walkComponents": 44,
+  "grid": [
+    1375,
+    805
+  ],
+  "validVertices": 348028,
+  "stepM": 2,
+  "quantizationErrorMaxM": 0.004999995853938399,
+  "limits": [
+    "2 m terrain grid resampled from 1 m DEM; not a survey replica",
+    "Base geography excludes authored structures; see the area modules for rideable surfaces",
+    "Widths/heights inferred when absent; shared draw/collision geometry",
+    "Eastern cut follows the bounded city extent"
+  ]
+}

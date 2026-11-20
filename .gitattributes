@@ -1,0 +1,3 @@
+# Raster payloads can begin with long non-NUL nodata runs; never infer them as text.
+data/*.i16 binary
+data/*.u8 binary
