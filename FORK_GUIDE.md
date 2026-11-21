@@ -16,11 +16,15 @@ Check the source and notices at the revision you actually use. This guide is not
   If you keep EUC Thrills engine code, retain [its MIT licence](js/euc/LICENSE) and the
   [carried notice](NOTICE-EUC-THRILLS.md). If you keep three.js, retain its [MIT notice](vendor/three/LICENSE)
   and pin; Inter and Overpass, if retained, carry their respective SIL OFL licences in `fonts/`.
+  If you keep city life, carry the [file-by-file donor credit](provenance/actors-import.json): New York for
+  vehicle lofts and synthesized sound, San Francisco for traffic, pedestrian figures and reactions, and
+  moving-body helpers. Credit VibezZzCoder and the Mr.doob and Kamil work inherited by those editions.
 - **Original licensed EUC Thrills assets are CC BY 4.0.** Attribute what you reuse, link to the
   [licence](https://creativecommons.org/licenses/by/4.0/) and indicate changes. This is not a licence for
   everything in the package. Check the [EUC Thrills notice](NOTICE-EUC-THRILLS.md) and
   [individual audio rights](audio/euc/PROVENANCE.md).
-- **Geography has its own terms.** OSM-derived data is under ODbL 1.0, not MIT or CC BY. USGS 3DEP elevation
+- **Geography has its own terms.** OSM-derived data, including the basis for San Juan's lane and walk routes,
+  is under ODbL 1.0, not MIT or CC BY; the routing code is MIT. USGS 3DEP elevation
   is public domain. See [LICENSING.md](LICENSING.md) and the [geodata provenance](provenance/README.md).
   The streets follow real geography, but heights and shapes of some buildings, access details and other
   authored features are approximations, not survey data.
@@ -73,7 +77,8 @@ to throw out the physics because a participant used it. Acknowledge EUC Thrills 
 or endorser of your game.
 
 **3. Take the city and bring your own game.** For example, build a walking tour with your own camera,
-controls, characters and audio. You don't need an EUC rider to draw the streets:
+controls, characters and audio. You don't need an EUC rider to draw the streets. This example omits city life:
+open it with `?parked=0` so the world does not register parked-car solids without the vehicle kit drawing them.
 
 1. Start a clean project. Copy the `js/sj-*.js` world/layout/builders and shared geometry helpers, `data/`,
    and [provenance](provenance/README.md), with the licences/notices. Include the geography builders
@@ -158,6 +163,26 @@ controls, characters and audio. You don't need an EUC rider to draw the streets:
    Set your own title, in-game credits and public data link. Recheck the streets cache/key if you change its
    inputs and the CSP if you carry over the HTML policy. Package your actual project and audit the shipped files;
    a city-only build doesn't need to contain any of the participants or their assets.
+
+### Keep city life in your own host
+
+Use `createCityLife` from `js/sj-life.js` after `buildWorld` and before releasing the construction records.
+Copy or pack anything you need later before calling `releaseConstruction`. Follow the shipped host for
+`focus`, `clearAround`, `setHour`, `warm`, `update` and `dispose`; feed it your actor pose instead of assuming
+a camera is a rider. Each async traffic/people part returns `update`, `publish`, `refocus`, `clearAround`,
+`setHour`, `warm`, `stats` and `dispose`. `js/sj-actor-bodies.js` supplies the shared index: parts read the last
+snapshot and publish live moving bodies regardless of rendering. Parked bodies belong to the static sampler.
+Precompile all draw variants at startup, use seeded randomness and avoid per-actor lights. For synthesized sound,
+attach `life.createAudio` to your own audio context and update it only while playing.
+
+Set population caps with `?cars=N` or `?people=N`, or change `LIFE_CAPS` for new defaults. Add a parked street
+in the `PARKING_OVERRIDES` cross-section table in `js/sj-street-sides.js` by road index; parking and traffic
+share its widths and sides, so keep a lane and crossings clear and rebuild the streets cache. Append new
+vehicle types in `js/sj-vehicle-types.js` without reordering the existing entries. To add a place people gather,
+give a plaza a ring and hour tiers in `js/sj-walk.js` (or mark it as a square ground area); supply routes,
+public stair flights and benches before the handoff. San Juan's liveries, parked rows, wardrobe and placement are
+local designs; keep any new liveries free of real maker, company or agency marks unless independently cleared.
+Keep the donor record current with `node tools/actors-provenance.mjs` and verify it with `--check`.
 
 ## Credits to paste into your game and README
 

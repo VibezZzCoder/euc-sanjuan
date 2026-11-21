@@ -9,9 +9,11 @@ before reusing files.
 
 | Paths | Owner or source; terms |
 | --- | --- |
-| `js/sj-*.js`, `tools/build-*.py`, terrain and detail bake tools | San Juan world and data pipeline, by VibezZzCoder; code is MIT. Generated geographic inputs and outputs retain their data terms. |
+| `js/sj-*.js`, `tools/build-*.py`, terrain and detail bake tools | San Juan world and data pipeline, by VibezZzCoder; code is MIT, with city-life adaptations credited below. Generated geographic inputs and outputs retain their data terms. |
 | `js/sj-atmosphere.js`, `js/sj-sea.js`, `js/sj-glow.js`, `js/sj-glow-kinds.js` | Time of day, water, baked lamp lighting and lit-window types. The atmosphere's solar attenuation uses the Preetham coefficients from three.js SkyMesh (MIT). |
 | `js/sj-camera.js`, `js/sj-camera-crowns*.js`, `tools/bake-camera-crowns.mjs` | San Juan riding camera and its camera-only tree crown bake. The camera does not drive riding physics. |
+| `js/sj-life.js`, `js/sj-actor-bodies.js`, `js/sj-street-sides.js`, `js/sj-parking-layout.js`, `js/sj-vehicle-types.js`, `js/sj-vehicles.js`, `js/sj-vehicle-models.js` | City-life host, shared moving-body index, street cross-sections and parking, fleet data and rendering. Models and moving-body helpers adapt MIT New York and San Francisco edition code. |
+| `js/sj-traffic*.js`, `js/sj-people*.js`, `js/sj-walk.js`, `js/sj-life-audio*.js` | Traffic and its lane graph, pedestrians and their walk network, local figures/accessories and synthesized audio; exact MIT donor credit in `provenance/actors-import.json`. Lane and walk routes use OSM-derived data (ODbL). |
 | `data/`, `js/sj-ground-osm.js`, `js/sj-streets-data.js`, `js/sj-worldedge-data.js`, `provenance/` | OSM-derived geography is ODbL 1.0; USGS 3DEP elevation is public domain. Some layers mix geography with authored details; consult `provenance/geodata.json`. |
 | `js/euc/`, `audio/euc/` | Generated riding engine from EUC Thrills by VibezZzCoder (MIT code); original licensed assets are CC BY 4.0, with exceptions. Keep `js/euc/LICENSE`, `NOTICE-EUC-THRILLS.md` and the applicable `audio/euc/PROVENANCE.md`. Edit `tools/vendor-euc.mjs` or the pinned source, not generated modules by hand. |
 | `js/main.js`, `js/euc-*.js`, `js/sf-*.js`, input and render helpers | City host and integration, including NYC/SF adaptations with MIT work by Mr.doob and Kamil (@unable0_). Keep all three copyright lines and the complete MIT text in `LICENSE`. |
@@ -29,6 +31,7 @@ node tools/csp.mjs --check
 node tools/vendor-three.mjs --check
 node tools/build-streets-cache.mjs --check
 node tools/bake-camera-crowns.mjs --check
+node tools/actors-provenance.mjs --check
 python3 tools/package.py                 # rebuilds dist/
 python3 tools/smoke.py
 ```
@@ -66,6 +69,30 @@ python3 tools/serve.py --dist             # preview the package on the same port
 - For an EUC Thrills city change, keep mapped grades, draw/collision agreement and stock riding physics. Test altered
   surfaces and entrances in both directions and preview important changes on WebGPU and WebGL2 (`?webgpu=0`).
 
+## Change city life
+
+- `createCityLife` in `js/sj-life.js` runs after world construction and before `releaseConstruction`.
+  Each async part returns `update`, `publish`, `refocus`, `clearAround`, `setHour`, `warm`, `stats` and
+  `dispose`. The host updates traffic then people from the previous body snapshot, publishes to
+  `js/sj-actor-bodies.js`, and commits vehicle buffers before the rider steps. Publish live collision bodies
+  even if not drawn; parked cars are static solids in `world.sampler`, not moving bodies.
+- Pack route and placement records needed after boot before the construction handoff. Use the host's named
+  seeded random streams, the simulation `dt` or `atmosphere.elapsed`, and reusable per-frame buffers. Create
+  all materials and warm every pool/LOD for boot compilation, then change the hour by uniforms and population
+  recycling only. No lights attached to individual actors. Street audio uses a same-origin worker and the
+  game's existing audio context; it does not import donor sound files.
+- Change `LIFE_CAPS` for device defaults; `?cars=N` and `?people=N` override caps, `?life=0` turns off moving
+  populations and street sound, and `?parked=0` removes parked cars and their solids. The hour and site also
+  affect occupancy. `VEHICLE_TYPES` and `FLEET` in `js/sj-vehicle-types.js` cover the fleet; append types without
+  changing existing indices.
+- Add a parked street in `PARKING_OVERRIDES` in `js/sj-street-sides.js` by city road index (not OSM way ID):
+  +1 is right of point order, −1 is left and 0 is none. Both parking and traffic read that cross-section.
+  Keep clearance for the moving lane, entries and crossings; rebuild the streets cache. For a gathering place,
+  add a square and hour tiers in `js/sj-walk.js`, or a `kind: 'square'` ground area; publish sidewalks/paths
+  through area `routeLines`, register public flights and expose benches before the handoff.
+- When you adapt donor code, record its pinned path, source bytes and SHA-256, the adaptation and its lineage.
+  Refresh changed edition hashes with `node tools/actors-provenance.mjs` and verify with `--check`.
+
 ## If you are forking this
 
 1. **Choose what to reuse.**
@@ -76,7 +103,8 @@ python3 tools/serve.py --dist             # preview the package on the same port
      title, badge, links and other branding; carry the origin name in credits, not as your game's identity.
    - **City only, for a non-EUC game:** start with `js/sj-*.js` (omit `sj-camera.js` and the crown files if using your own camera),
      `data/`, `provenance/`, the relevant geography/bake tools and the Three import map and vendor closure.
-     Supply your own shell, inputs, actor, camera and audio. Use your own title and artwork. Keep the small set
+   Supply your own shell, inputs, actor, camera and audio. The example runs without city-life simulation,
+   and disables parked cars to keep their drawing and collision consistent. Use your own title and artwork. Keep the small set
      of MIT sampling helpers that the city loader imports, or replace the sampler before dropping those modules.
 2. **Wire the city contract.** `js/sj-world.js` exports `loadCity()`, `buildWorld(scene, world, progress)`,
    `AREA_LAYOUTS` and `areasOf(world)`. Keep area order and aligned `tops`, `colliders`, `cuts`, `surfaces` and

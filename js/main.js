@@ -15,10 +15,11 @@ import { waitForRenderCompletion } from './render-completion.js';
 import { RidingCamera } from './sj-camera.js';
 import { createWaterWatchdog } from './euc-water-watchdog.js';
 import { createAtmosphere,createTimePreference,timeOverride } from './sj-atmosphere.js';
+import { createCityLife } from './sj-life.js';
 
 import {animasTurnHint} from './sj-norzagaray-layout.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
-let state='loading',renderer,entity,touch,pad,audio,context,master,world,scene,camera,scenery;
+let state='loading',renderer,entity,touch,pad,audio,context,master,world,scene,camera,scenery,life,lifeAudio;
 let busy=false,resizePending=true,parked=false,sizeKey='',last=0,lastView=0,muted=false,transition=0,audioPreparation,cameraControls;
 const keys={},touchKeys={},padKeys={},lookKeys={},pulses={},suppressed=new Set();
 const preferences=initialRenderPreferences(),resolution=createRenderResolutionPreference(undefined,preferences.resolution);
@@ -33,7 +34,7 @@ function gate(next){transition++;state=next;document.body.dataset.state=next;man
   clear(lookKeys);cameraControls?.resetInput();showCameraTools(false);
   entity?.clearInput();touch?.setEnabled(next==='riding');pad?.reset();if(context)context[next==='riding'&&!muted?'resume':'suspend']().catch(()=>{});}
 function failure(error){if(state==='error')return;console.error(error);gate('error');renderer?.setAnimationLoop(null);
-  audio?.dispose();
+  audio?.dispose();lifeAudio?.dispose();
   for(const id of ['map','pause'])if($(id).open)$(id).close();$('loading').hidden=false;$('title').hidden=true;
   $('loading-status').textContent='Could not continue: '+error.message;$('retry').hidden=false;$('retry').focus();}
 function fallback(reason){if(renderer?.backend?.isWebGPUBackend&&params.get('webgpu')!=='0'){
@@ -92,6 +93,12 @@ function findArrival(point){
   }
   return null;
 }
+// The game starts on the plaza's paved edge beside Calle San Francisco, looking along the street: a few metres off the
+// traffic lane, so nobody waits behind a rider who is still reading the controls. Falls back to the street arrival.
+const START={x:-.62,z:12.64};
+function plazaStart(base){const start=arrival(START,base.headingY);if(!start)return base;
+  for(let d=.5;d<=16;d+=.5)if(!arrival({x:start.x+Math.sin(base.headingY)*d,z:start.z+Math.cos(base.headingY)*d},base.headingY))return base;
+  return {...base,...start};}
 function updateHud(){const speed=Math.abs(entity.speed);$('speed').textContent=`${(speed*2.23694).toFixed(0)} mph · ${(speed*3.6).toFixed(0)} km/h`;
   $('location').textContent=`${entity.position.x.toFixed(1)}, ${entity.position.z.toFixed(1)} · ${entity.position.y.toFixed(1)} m`;
   const c=entity.controller,warning=hudModel.update({crashed:c.crashed,powerStage:c.powerWarning,tiltBack:c.tiltBack,overspeed:c.overspeed},performance.now()/1000);
@@ -102,11 +109,12 @@ function tick(now){if(busy)return;const dt=last?Math.min(.05,(now-last)/1000):0;
   try{pad.update(dt);if(state!=='riding'||document.hidden)return;
     cameraControls.applyGamepadInput((lookKeys.KeyL||0)-(lookKeys.KeyJ||0),(lookKeys.KeyK||0)-(lookKeys.KeyI||0),(lookKeys.Minus||0)-(lookKeys.Equal||0),dt);
     const blended={...pulses};clear(pulses);for(const source of [keys,touchKeys,padKeys])for(const k in source)blended[k]=Math.max(blended[k]??0,source[k]);
-    atmos.advance(dt);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));scenery.update(dt,entity.position);audio?.update(entity,entity.drainEvents());updateHud();
+    atmos.advance(dt);life.update(dt,entity,camera);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));audio?.update(entity,entity.drainEvents());lifeAudio?.update(camera,dt);updateHud();
     if(pacer.shouldRender(now))draw(now,dt);
   }catch(error){failure(error);}}
 async function sound(){if(muted)return;if(!context){const Context=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Context)return;
-  context=new Context();master=context.createGain();master.gain.value=.65;master.connect(context.destination);audio=new EucAudio(context,master);}
+  context=new Context();master=context.createGain();master.gain.value=.65;master.connect(context.destination);audio=new EucAudio(context,master);
+  lifeAudio=life?.createAudio(context,master);} // the city's sound, under the rider's
   context.resume().catch(()=>{}); // Unlock synchronously from Ride/Resume, before fetching or decoding.
   if(!audioPreparation)audioPreparation=(async()=>{const bank=await audio.riderBanks.prepareRider('cool-rider',context);
     try{bank.commit();}finally{bank.dispose();}})();
@@ -139,6 +147,7 @@ function mapDrawing(){const canvas=$('map-canvas'),rect=canvas.getBoundingClient
 const searchKey=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
 function listPlaces(){const search=searchKey($('search').value);$('places').replaceChildren();for(const p of arrivals){if(!searchKey(p.name).includes(search))continue;
   const button=document.createElement('button');button.textContent=p.name;button.onclick=async()=>{if(busy)return;
+    life.clearAround(p.x,p.z);
     if(!entity.placeAt(p.x,p.z,p.headingY,p.y,{requireClear:true,departure:1})){ $('map-status').textContent='That arrival is blocked. Choose another place.';return;}
     $('map-status').textContent='';await resume();};$('places').append(button);}}
 async function openMap(){if(busy||state!=='riding')return;busy=true;gate('map');try{await waitForRenderCompletion(renderer);
@@ -179,7 +188,7 @@ function syncCamera(mode){for(const id of ['camera-mode','camera-setting'])$(id)
   $('camera-hint').textContent=mode==='look'?'Look around: drag to look up/down and turn. Pinch or +/− to magnify.':'Drag to orbit. Pinch or +/− to zoom. Look-around gives a rider-height view.';}
 
 // Time of day: uniforms and one environment bake, no shader rebuild; redraw the still frame behind a menu.
-function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;timePreference.set(next);atmos.apply(next);
+function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;timePreference.set(next);atmos.apply(next);life?.setHour(next);
   for(const id of ['time-title','time-of-day'])$(id).value=next;if(state==='title'||state==='paused')draw(performance.now(),0,true);}
 async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms:{uInteriorGlow:{value:0}}};
   renderer=new THREE.WebGPURenderer({antialias:true,forceWebGL:params.get('webgpu')==='0'||(preferences.phone&&params.get('webgpu')!=='1'),powerPreference:'high-performance'});
@@ -194,16 +203,19 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   atmos=createAtmosphere({renderer,scene,phone:preferences.phone});sun=atmos.sun;sun.userData.aim=(x,y,z)=>atmos.aim({x,y,z},camera);
   stage('Reading Old San Juan terrain and streets…',.12);world=await loadCity();
   stage('Building the compact city…',.25);scenery=await buildWorld(scene,world,p=>stage('Building streets and hills…',.25+p*.3));
+  // Traffic and people (js/sj-life.js): built while the area records still exist, drawn and compiled with the city.
+  stage('Bringing the streets to life…',.56);life=await createCityLife({scene,world,atmosphere:atmos,renderer,phone:preferences.phone,params,hour:timeOfDay});
   // Post-build handoff: drop construction-only area records (js/sj-handoff.js; ?handoff=0 keeps them).
   if(HANDOFF&&params.get('handoff')!=='0')releaseConstruction(world,Object.keys(AREA_LAYOUTS));
   atmos.apply(timeOfDay);
   stage('Preparing Cool Rider…',.65);const appearance=await prepareEucRider('cool-rider');
   const candidate=world.city.places.find(p=>p.name==='Plaza de Armas')??{name:'Plaza de Armas',x:0,z:0};spawn=findArrival(candidate);
   if(!spawn)throw new Error('No safe Plaza de Armas spawn');
-  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,appearance,softBodies:world.softBodies});
+  spawn=plazaStart(spawn);
+  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,appearance,softBodies:world.softBodies,dynamicWorld:life.dynamicWorld});
   // Immersion watchdog: a rider left in the sea without a native recovery is placed back at a checked dry public spot.
   waterWatch=createWaterWatchdog({sampler:world.sampler,spawn,arrivals:()=>arrivals,recovery:world.coast?.recoveryPoints,maxStepUp:entity.controller.tuning.maxStepUp,
-    place:(x,z,h,y)=>entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2})});
+    place:(x,z,h,y)=>{life.clearAround(x,z);return entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2});}});
   arrivals=[...world.city.places,...world.corridor.places,...(world.gate?.places??[]),...(world.fort?.places??[]),...areasOf(world).flatMap(a=>a.places??[])].map(findArrival).filter(Boolean);
   touch=new TouchControls(manager);touch.setEnabled(false);
   cameraControls=new RidingCamera(syncCamera);syncCamera('chase');
@@ -226,7 +238,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   for(const [id,action] of [['camera-in',()=>cameraControls.zoom(-2)],['camera-out',()=>cameraControls.zoom(2)],['camera-center',()=>cameraControls.resetOrbit()]])$(id).onclick=event=>{
     if(state!=='riding')return;action();if(event.detail)renderer.domElement.focus({preventScroll:true});};
   $('pause-button').onclick=pause;$('map-button').onclick=openMap;$('close-map').onclick=resume;$('search').oninput=listPlaces;
-  $('restart').onclick=()=>{if(entity.placeAt(spawn.x,spawn.z,spawn.headingY,spawn.y,{requireClear:true,departure:1}))resume();};
+  $('restart').onclick=()=>{life.clearAround(spawn.x,spawn.z);if(entity.placeAt(spawn.x,spawn.z,spawn.headingY,spawn.y,{requireClear:true,departure:1}))resume();};
   for(const id of ['pause','map'])$(id).addEventListener('cancel',event=>{event.preventDefault();resume();});
   const mapping={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',Space:'up',ShiftLeft:'boost',ShiftRight:'boost',KeyR:'reset'};
   document.addEventListener('keydown',event=>{
@@ -251,7 +263,9 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   window.addEventListener('blur',()=>{if(state==='riding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='riding')pause();last=0;});
   window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();});
   $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · Cool Rider`;
-  stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);await compileWholeCity();
+  stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);
+  // Life gathers round the spawn; every actor pool draws at least one instance while the city compiles.
+  life.focus(entity,camera);life.warm(true);try{await compileWholeCity();}finally{life.warm(false);}
   stage('Finishing the first frame…',.95);draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
   stage('Warming the riding view…',.97);await warmRidingView();
   $('loading').hidden=true;$('title').hidden=false;gate('title');$('ride').focus();renderer.setAnimationLoop(tick);

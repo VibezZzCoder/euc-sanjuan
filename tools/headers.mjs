@@ -8,7 +8,8 @@ const origin='El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT �
 const nyc=' — adapted from mrdoob/slop-newyork (MIT, (c) 2026 Mr.doob)';
 const sf=' and unable12/slop-sanfrancisco (MIT)';
 const lineage={'index.html':nyc+sf,'js/euc-headlight.js':nyc,'js/touch-controls.js':nyc,'js/gamepad-controls.js':nyc,
-  'js/sf-support-store.js':nyc+sf,'js/sf-terrain-sampler.js':nyc+sf};
+  'js/sf-support-store.js':nyc+sf,'js/sf-terrain-sampler.js':nyc+sf,'js/sj-vehicle-models.js':nyc,'js/sj-traffic.js':nyc+sf,'js/sj-people.js':nyc+sf,'js/sj-people-figure.js':nyc+sf,
+  'js/sj-life-audio-synth.js':nyc,'js/sj-life-audio-plan.js':nyc};
 const data={'js/sj-ground-osm.js':'© OpenStreetMap contributors, ODbL 1.0','js/sj-streets-data.js':'© OpenStreetMap contributors, ODbL 1.0',
   'js/sj-worldedge-data.js':'USGS 3DEP, public domain','js/sj-forttops-bake.js':'fitted heights: USGS 3DEP; mapped coordinates: © OpenStreetMap contributors, ODbL 1.0'};
 export function header(file){

@@ -1,0 +1,99 @@
+{
+  "cityEdition": "El Viejo San Juan: EUC Thrills by VibezZzCoder — https://github.com/VibezZzCoder/euc-sanjuan",
+  "note": "Vehicle-model, traffic, pedestrian and city-sound code adapted from the New York and San Francisco editions of EUC Thrills (MIT: Mr.doob, Kamil, VibezZzCoder). Each entry records a San Juan file, a donor source file and its pre-adaptation bytes and hash, and the San Juan file's hash. The listed public release has identical bytes for the recorded donor files.",
+  "donors": {
+    "sanfrancisco": {
+      "source": "https://github.com/VibezZzCoder/euc-sanfrancisco",
+      "commit": "2526eb83dfc0ddfc90440ce6b73c2b522a67f363",
+      "publicRelease": "dd2bbab53c88671a182cbb6854010dea1d2b386f"
+    },
+    "newyork": {
+      "source": "https://github.com/VibezZzCoder/euc-nyc",
+      "commit": "5f6f505737a946788523e57f3cca30453af0f42a",
+      "publicRelease": "ebaae082a530b1643b670c160848f6053bb38097"
+    }
+  },
+  "files": [
+    {
+      "path": "js/sj-actor-bodies.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/sf-dynamic-bodies.js",
+      "sourceBytes": 18141,
+      "sourceSha256": "e30a2efa437a068512eed900752f559df8428db4099eb054454d1b06e4083389",
+      "editionSha256": "28af4c493fec0c7b0e44ef816ae55a71ef07329c68864a45e345415c65545a9b",
+      "derived": "Body index, vehicle crash slices and posed vehicle body as ES exports; the pedestrian reaction helpers of the donor file are not included here."
+    },
+    {
+      "path": "js/sj-vehicle-models.js",
+      "donor": "newyork",
+      "sourcePath": "js/actor-models.js",
+      "sourceBytes": 127702,
+      "sourceSha256": "b7afbb8de0a056a46017b0dde04baaf3cef0e722c3d322e6e96a645b17a93052",
+      "editionSha256": "9fa0bb4c90698b8c9ebed43eeac2286186ebf3acb8e291dad3d066840b323e11",
+      "derived": "Car loft geometry, wheels, mirrors, rails, bed cover, stand-in and the lofted car and wheel TSL materials; bus, taxi sign, light bar, plate atlas and New York liveries removed; San Juan body types, liveries, rear-only illegible plate, accessories and hour-driven lamps added."
+    },
+    {
+      "path": "js/sj-vehicle-models.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/sf-dynamic-bodies.js",
+      "sourceBytes": 18141,
+      "sourceSha256": "e30a2efa437a068512eed900752f559df8428db4099eb054454d1b06e4083389",
+      "editionSha256": "9fa0bb4c90698b8c9ebed43eeac2286186ebf3acb8e291dad3d066840b323e11",
+      "derived": "The body sections used for parked-car solids bin the drawn triangles along the car as the San Francisco edition cuts its crash slices; output, step and merge rules are San Juan's."
+    },
+    {
+      "path": "js/sj-traffic.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/traffic.js",
+      "sourceBytes": 112039,
+      "sourceSha256": "20365f1d36f5c8001e7fc07980b53c391927ec0a445a036639c919b8b90f867d",
+      "editionSha256": "6c6cc6844786026ad8babd34df0d6d70798f501e513a0e4882416616dd8b343d",
+      "derived": "Car following (Intelligent Driver Model braking and free acceleration), the stop-sign sequence (full stop, order of arrival, timeout only with a clear junction), grade slowing with the uphill crawl, and the steering, signal and body-pitch pose; the lane graph, junction claims, manners towards people and the rider, and the population are new."
+    },
+    {
+      "path": "js/sj-people-figure.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/pedestrians.js",
+      "sourceBytes": 65234,
+      "sourceSha256": "5b5b38056a9d6d2e2f45ad06d43eaf6e59f6fe3e52760b1749ead8523383746d",
+      "editionSha256": "0967a98e6e48292584a1e1fdf095d04664fe4991f77bb8a544d79592c7796028",
+      "derived": "The skinned crowd figure (lofted body and its level-of-detail geometry, 15-bone skeleton, vertex-stage skinning from pose storage, instanced near/far batches, planted-foot gait with two-bone IK) as an ES module; San Juan wardrobe material (per-person colours and garment styles instead of seed-hashed winter palettes), worn items (cap, hat, day-pack, shoulder bag, skirt), seated, photograph and talking poses, explicit boot warm-up; the bicycle pose is not included."
+    },
+    {
+      "path": "js/sj-people.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/sf-dynamic-bodies.js",
+      "sourceBytes": 18141,
+      "sourceSha256": "e30a2efa437a068512eed900752f559df8428db4099eb054454d1b06e4083389",
+      "editionSha256": "052d4f70f3cfdad8a095fe5e6614fb7e196c42245fb3d86ac54e3bc23447c8b4",
+      "derived": "The pedestrian reactions to the rider (anticipating sidestep, admitted-impact shove with pause and return, cooldown) and the meeting scheduler, rewritten around San Juan's walk network; population, routes, places, seats, crossings and groups are new."
+    },
+    {
+      "path": "js/sj-life-audio-synth.js",
+      "donor": "newyork",
+      "sourcePath": "js/audio-events.js",
+      "sourceBytes": 23752,
+      "sourceSha256": "06b773e5d1816fb5c1c2658dfe637f20d49c5a0c839386197575793a6038f8bb",
+      "editionSha256": "2f89828fb04d66570425a07807c91a0b145c36d47bb766483ecb75c60b933f84",
+      "derived": "Footstep (heel, roll, scuff, grit fragments), formant pseudo-speech (glottal pulse, jitter and shimmer, three moving resonators, consonant onsets) and the two-reed horn as plain sample generators; re-voiced softer and warmer (grit band lowered, horn harmonics reduced and low-passed), plus new surprised outbursts; crash, debris, signal and wind voices not included."
+    },
+    {
+      "path": "js/sj-life-audio-synth.js",
+      "donor": "newyork",
+      "sourcePath": "js/audio-synthesis.js",
+      "sourceBytes": 19146,
+      "sourceSha256": "3d48a8281feb8ded5599b8e69b5f1e16204b2a8bfc1ceeb0cce2fed15067ad8c",
+      "editionSha256": "2f89828fb04d66570425a07807c91a0b145c36d47bb766483ecb75c60b933f84",
+      "derived": "The four-stroke exhaust loop (twenty whole cycles, per-cylinder strength and timing, release pulse with body resonance) and the warmed noise loop, without valve clatter or the high-rev bank; the sett rumble, the plaza murmur and the job list are new; motor voice graph, gears and siren not included."
+    },
+    {
+      "path": "js/sj-life-audio-plan.js",
+      "donor": "newyork",
+      "sourcePath": "js/audio-system.js",
+      "sourceBytes": 34948,
+      "sourceSha256": "757999f3e1bb42a1f6252f06f18a13a2d051637ad998f32b08f3493332d8776f",
+      "editionSha256": "79ae627568c459f543f764043cd5a78430b45b72feb3e47acb2865fa4419140e",
+      "derived": "Voice caps (8/6 motors, 8/5 events) with retiring voices counted against the cap, the 22 m step, 30 m talk and air low-pass distance rules, alternating conversation turns and the outburst on a rising bumped counter, rewritten as allocation-free decisions without audio objects; matching cars by position, the keep bonus, scheduled footsteps, the gear model for crawling cars and the murmur and distant-traffic bed levels are new."
+    }
+  ]
+}

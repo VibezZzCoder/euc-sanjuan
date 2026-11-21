@@ -42,7 +42,7 @@ def main():
     # still boots through the runtime path, about a second slower, so staleness must fail here, not ship unnoticed.
     node=shutil.which(os.environ.get('NODE','node'))
     check(node is not None,'Node.js is required (set NODE or PATH).')
-    for tool,marker in [('build-streets-cache','is current'),('csp',None),('vendor-three',None),('headers','source notices checked')]:
+    for tool,marker in [('build-streets-cache','is current'),('csp',None),('vendor-three',None),('headers','source notices checked'),('actors-provenance','actor imports checked')]:
         result=subprocess.run([node,f'tools/{tool}.mjs','--check'],cwd=ROOT,capture_output=True,text=True,timeout=600)
         check(result.returncode==0 and (not marker or marker in result.stdout),f'{tool} failed: '+(result.stdout+result.stderr)[-500:])
         print('PASS node:',tool)

@@ -8,6 +8,15 @@
   `js/euc-audio.js` is also a San Juan adaptation: removing the optional 4.1 kHz PWM/coil
   oscillator/modulation/filter/gain/glide branch leaves the useful motor/tyre/wind and event/warning paths intact.
   The original SF import hash remains provenance, not a claim of current byte equality.
+  If `FORK_GUIDE.md` changes, refresh its `editionSha256`; the source hash still identifies the original SF file.
+- [actors-import.json](actors-import.json): vehicle lofts and street-sound synthesis and scheduling from EUC
+  Thrills New York; traffic behaviour, skinned pedestrian figures and reactions, and the shared actor body index
+  and vehicle crash shapes from EUC Thrills San Francisco. Adaptations are MIT; credit VibezZzCoder and the
+  underlying work of Mr.doob (slop-newyork) and Kamil (slop-sanfrancisco) where inherited. The body index and
+  crash-shape helpers come from the San Francisco edition itself. `publicRelease` identifies a published tree
+  with the same donor file bytes. Check current San Juan hashes with `node tools/actors-provenance.mjs --check`.
+  Wardrobe, unbranded liveries, parked rows and the lane and walk networks are San Juan work. The networks combine
+  OSM-derived city data (ODbL) with authored details and are built by MIT code; neither donor's geography was used.
 - `geodata.json`: cached OSM/USGS URLs, full hashes, query text, datum evidence and bounded build counts/limitations.
 - `../data/plaza-detail.json`: ODbL plaza/fountain/gazebo rings and bench points, extracted from the same cached OSM
   input by `tools/build-plaza-detail.py` with a recorded input hash. It does not rebuild or modify terrain/roads.

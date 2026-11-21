@@ -18,6 +18,10 @@ The rebuilt riding camera pulls in around walls and tunnels,
 keeps clear of the sea, frames for portrait screens and eases back after a manual orbit. The Polvorín de Santa Elena
 roof and wall are repaired, and the wheel pushes through shrubs and hedges with drag instead of hitting a solid obstacle.
 
+Look for parked rows, slow cars following the one-way grid and stopping or yielding at corners, and people
+on sidewalks, in plazas and on public stairs. There are piragua carts and a kite on the El Morro lawn.
+Engines, horns, footsteps and the murmur of conversation are synthesized as you ride.
+
 ## Run it locally
 
 The game is plain HTML, CSS and JavaScript modules with no build step. It serves the bundled Three.js and data
@@ -30,6 +34,9 @@ python3 tools/serve.py
 Then open **http://127.0.0.1:8004** in a current browser on the same machine. The game tries WebGPU with a
 WebGL2 fallback, and defaults to WebGL2 on phones. Add `?webgpu=0` to force WebGL2 or `?webgpu=1` to request WebGPU;
 `?time=midday`, `?time=golden` or `?time=blue` overrides the saved hour for that visit.
+Use `?life=0` to turn off moving cars, pedestrians and street sound, or `?parked=0` to remove parked cars and
+their solid bodies. `?cars=N` and `?people=N` override the moving-car and pedestrian caps for that visit
+(0 turns off that population). Parked cars and scenery such as the carts and kite are independent of those caps.
 City materials are compiled during loading rather than on the ride. To play from another device, use a web server
 that device can reach.
 
@@ -45,6 +52,7 @@ node --test tests/*.test.mjs        # headless tests
 node tools/csp.mjs --check          # Content-Security-Policy matches the inline scripts
 node tools/vendor-three.mjs --check # vendored three.js and fonts match vendor/MANIFEST.json
 node tools/build-streets-cache.mjs --check
+node tools/actors-provenance.mjs --check
 python3 tools/package.py            # portable copy of the runtime files in dist/
 ```
 
@@ -59,7 +67,14 @@ Neither upstream checkout nor GIS tooling is needed to play the game.
 ## Current limits
 
 - Cool Rider is the only playable rider. Source assets for the other ten riders are included, but rider
-  selection and pursuit gameplay aren't available. The city has placeholder walkers and no traffic yet.
+  selection and pursuit gameplay aren't available.
+- Motor traffic uses a connected subset of streets. No cars drive in La Perla, the tunnels or Puerta de San Juan.
+  City life gathers around the rider rather than simulating every block at once; some streets are much quieter
+  than the plazas and waterfront, and a few sidewalks too narrow to walk stay empty.
+- Cars brake for the rider and for people, but a rider who cuts into a lane right in front of a car can still be hit.
+  Hitting a person at speed crashes the rider, as hitting any obstacle does.
+- Small visual slips remain: two people heading for neighbouring bench seats can overlap for a moment, a walker
+  can stand slightly off the ground on a few uneven spots, and a distant car can leave view on the longest avenue.
 - Blue hour is the darkest hour by design, and it is deliberately dim away from lamps, which use baked lighting without
   per-lamp shadows. The sea stays physically flat; the reef shelf is an approximation and does not reflect lamps.
 - Orbiting into a wall at a tunnel mouth can still bump the camera or briefly pull it close.
@@ -67,7 +82,7 @@ Neither upstream checkout nor GIS tooling is needed to play the game.
   promise that every route between places is rideable.
 - Building shapes, heights and colours are simplified or inferred from mapped footprints and photographs; this is not
   a surveyed replica.
-- Tested in Chromium and on phones during development; other browsers and devices may behave differently.
+- The game with city life has been played in desktop Chrome and on an iPhone. Other browsers and devices may vary.
 
 ## Build on the city
 
@@ -80,6 +95,12 @@ to your own game, and carry over the right credits.
 - **Code:** MIT. See [LICENSE](LICENSE) (© 2026 Mr.doob; © 2026 Kamil (@unable0_), San Francisco contributions;
   © 2026 VibezZzCoder, EUC adaptation and San Juan work) and [js/euc/LICENSE](js/euc/LICENSE) for the EUC Thrills
   riding engine.
+- **City life:** vehicle lofts and street sound adapt the [New York edition](https://github.com/VibezZzCoder/euc-nyc)
+  of EUC Thrills and its Mr.doob lineage. Traffic, pedestrian figures and reactions, and actor collisions adapt
+  the [San Francisco edition](https://github.com/VibezZzCoder/euc-sanfrancisco), including Kamil's and Mr.doob's
+  work where inherited. See [the exact source record](provenance/actors-import.json) for the MIT code.
+  San Juan's own liveries, parked rows, wardrobe, lanes and walks were made for this city; the liveries carry no
+  real maker, company or agency marks. Lane and walk routes derive from OSM data (ODbL); their algorithms are MIT.
 - **EUC Thrills assets:** original licensed assets are [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/),
   with exceptions for real riders' identities, logos, contributed recordings and generated vocal layers.
   Attribute as:

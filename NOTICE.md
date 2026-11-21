@@ -8,6 +8,13 @@ Old San Juan riding world by VibezZzCoder, 2026. https://github.com/VibezZzCoder
 - Engine integration adapted from the pinned EUC San Francisco implementation; historical city engine:
   unable12/slop-sanfrancisco (Kamil) and mrdoob/slop-newyork (Mr.doob), MIT. See `LICENSE` and
   `provenance/sf-import.json` for exact imported files and pre-adaptation hashes.
+- City life: vehicle models and synthesized street sound adapt the EUC Thrills New York edition
+  (including Mr.doob's slop-newyork work); traffic, pedestrian figures and reactions, and actor collisions adapt
+  the EUC Thrills San Francisco edition (including Kamil's slop-sanfrancisco work and its New York inheritance).
+  These code adaptations are MIT; see [the file-by-file record](provenance/actors-import.json).
+  San Juan authored its own vehicle liveries, parked rows, wardrobe, lanes and walks. The liveries use no real
+  maker, company or agency marks. The lane and walk networks are built from San Juan's OSM-derived geography
+  (ODbL); the algorithms are MIT. No donor city maps or street recordings were imported for city life.
 - **© OpenStreetMap contributors — Open Database Licence (ODbL).** https://www.openstreetmap.org/copyright
   `data/city.json`, boundary/road/building derivatives and the generation rules remain available under ODbL.
   Licence: <https://opendatacommons.org/licenses/odbl/1-0/>. [Download the derived layers](credits.html).

@@ -30,8 +30,8 @@ import { createWorldEdgeLayout } from './sj-worldedge-layout.js';
 import { clipChunkTriangles, cutTouches } from './sj-terrain-cut.js';
 import { shareSupportExtras } from './sj-handoff.js';
 import { drawnGroundProbe, seatKitLamps, seatRecords } from './sj-street-kit.js';
-import { crossesStairApproach } from './sj-stairs.js';
 import { SoftFoliageField, softBoxOf } from './sj-soft-foliage.js';
+import { createParkingLayout, parkingEnabled } from './sj-parking-layout.js';
 
 // area modules, in priority order (earlier tints win). Each key is a world field; nulling one must reproduce the
 // output without it exactly. Builders are registered in sj-plaza.js under the same key.
@@ -105,11 +105,19 @@ export async function loadCity() {
       // bottom is r.y + offset, default 0): seated the same way; drawing extends only the foot to r.foot.
       for(const s of a.seatLists??[])seatRecords(s.records,a.colliders,ground,{radius:typeof s.radius==='function'?s.radius:()=>s.radius??.2,nominal:r=>r.y+(s.offset??0)});}
     for(const s of plaza.seatLists??[])seatRecords(s.records,plaza.colliders,ground,{radius:typeof s.radius==='function'?s.radius:()=>s.radius??.2,nominal:r=>r.y+(s.offset??0)});}
+  // Parked cars (js/sj-parking-layout.js): static solids beside the kerbs, placed clear of every solid registered so far,
+  // drawn by the vehicle kit (js/sj-vehicles.js). ?parked=0 leaves them out.
+  const parking=parkingEnabled()?createParkingLayout({city,height,isDry,paved:areaLayouts.streets?.paved,
+    solids:[...colliders,...plaza.colliders,...corridor.colliders,...gate.colliders,...fort.colliders,...areas.flatMap(a=>a.colliders??[])],
+    tops:[...gate.tops,...fort.tops,...(corridor.tops??[]),...areas.flatMap(a=>a.tops??[])],offLimits:areas.map(a=>a.offLimitsAt).filter(Boolean),
+    places:[...city.places,...corridor.places,...(gate.places??[]),...(fort.places??[]),...areas.flatMap(a=>a.places??[])],
+    trees:[...city.trees,...(plaza.trees??[]),...areas.flatMap(a=>[...(a.trees??[]),...(a.claimedTrees??[]),...(a.palms??[]),...(a.broadleaf??[])])]}):null;
   // Soft foliage (`soft: true` prisms, js/sj-soft-foliage.js): occupied ground for every construction consumer, but never a
   // solid; the rider's controller drags through them (world.softBodies).
   const softBoxes=[];
   const solidOnly=list=>list.filter(c=>{if(!c.soft)return true;softBoxes.push(softBoxOf(c));return false;});
   plaza.paving.push(...corridor.paving);colliders.push(...solidOnly([...plaza.colliders,...corridor.colliders,...gate.colliders,...fort.colliders,...areas.flatMap(a=>a.colliders)]));
+  if(parking)colliders.push(...parking.colliders);
   const softBodies=new SoftFoliageField(softBoxes);
   // Puerta de San Juan: bounded replacement floor + ceiling through the DEM rampart (SF tunnel-bore contract).
   // El Morro bridge deck: bounded replacement floor over the smeared DEM ridge (render cut inside the bridge body).
@@ -123,7 +131,7 @@ export async function loadCity() {
     data:{groundMask:{header:{originX:t.x0,originZ:t.z0,w:t.nx,h:t.nz,cell:t.step,
       classes:['sidewalk','asphalt','lawn','waterEdge']},mask:groundMask}}});
   shareSupportExtras(sampler.topStore); // one shared entry per distinct `source` label (js/sj-handoff.js)
-  return {city,detail,plaza,corridor,gate,fort,...areaLayouts,terrain,land,surface,sampler,softBodies,height,isDry,barriers};
+  return {city,detail,plaza,corridor,gate,fort,...areaLayouts,terrain,land,surface,sampler,softBodies,parking,height,isDry,barriers};
 }
 
 // Shore skirt neighbours: [di,dj, edge start, edge end] in grid offsets (constant, hoisted out of the per-cell loop).
@@ -310,32 +318,6 @@ export async function buildWorld(scene, world, progress=()=>{}) {
   const plazaDetail=buildPlaza(scene,world);
   // Artificial light at blue hour from the fixtures the builders reported (js/sj-glow.js).
   const glow=buildGlow(scene,world,{buildings:finals});   // light is stopped by the final drawn outlines (open porticos stay open)
-  // Bounded ambient walkers. They stop for the rider; full crowd contact/traffic is a later integration milestone.
-  const stairCuts=allCuts.filter(c=>/stair|flight|apron|gate-landing/.test(c.kind??''));
-  const crossesCut=(a,b)=>stairCuts.some(c=>{
-    if(Math.max(a[0],b[0])<c.minX-1||Math.min(a[0],b[0])>c.maxX+1||
-       Math.max(a[1],b[1])<c.minZ-1||Math.min(a[1],b[1])>c.maxZ+1)return false;
-    let near=0,far=1;for(const [nx,ny,nz,d] of c.planes){if(ny!==0)continue;
-      const h=nx*a[0]+nz*a[1]+d+Math.hypot(nx,nz),s=nx*(b[0]-a[0])+nz*(b[1]-a[1]);
-      if(Math.abs(s)<1e-9){if(h<0)return false;continue;}if(s>0)near=Math.max(near,-h/s);else far=Math.min(far,-h/s);
-      if(near>far)return false;}return true;});
-  const paths=city.roads.filter(r=>['footway','pedestrian'].includes(r.kind)&&r.length>30&&r.length<300&&
-    !r.points.some((p,i)=>i&&(crossesStairApproach(r.points[i-1],p)||crossesCut(r.points[i-1],p))));
-  const count=Math.min(32,paths.length),bodyG=new THREE.CapsuleGeometry(.22,.85,2,4);owned.add(bodyG);
-  const people=new THREE.InstancedMesh(bodyG,material({color:'#866d65',roughness:1}),count);
-  const footSample={normal:{}},footOffset=.85/2+.22;
-  const walkers=paths.slice(0,count).map((r,i)=>({points:r.points,at:(i*.618)%1,speed:.8+(i%4)*.1}));
-  people.castShadow=true;scene.add(people);
-  function update(dt,rider) {
-    walkers.forEach((w,i)=>{
-      const line=paths[i],distance=w.at*line.length;let walked=0,x=w.points[0][0],z=w.points[0][1];
-      for(let j=1;j<w.points.length;j++){const a=w.points[j-1],b=w.points[j],len=Math.hypot(b[0]-a[0],b[1]-a[1]);
-        if(walked+len>=distance){const f=(distance-walked)/(len||1);x=a[0]+(b[0]-a[0])*f;z=a[1]+(b[1]-a[1])*f;break;}walked+=len;}
-      if(!rider||Math.hypot(rider.x-x,rider.z-z)>3)w.at=(w.at+dt*w.speed/line.length)%1;
-      const ground=world.sampler.cityGround(x,z,footSample,height(x,z)+.35);
-      dummy.position.set(x,ground.height+footOffset,z);dummy.scale.setScalar(world.isDry(x,z)?1:0);dummy.updateMatrix();people.setMatrixAt(i,dummy.matrix);
-    });people.instanceMatrix.needsUpdate=true;
-  }
-  update(0,null);
-  return {update,details:plazaDetail.stats,glow,dispose(){glow.dispose();plazaDetail.dispose();for(const g of owned)g.dispose();for(const m of materials)m.dispose();trunks.dispose();leaves.dispose();people.dispose();}};
+  // Traffic and people are built by js/sj-life.js, not here.
+  return {update(){},details:plazaDetail.stats,glow,dispose(){glow.dispose();plazaDetail.dispose();for(const g of owned)g.dispose();for(const m of materials)m.dispose();trunks.dispose();leaves.dispose();}};
 }
