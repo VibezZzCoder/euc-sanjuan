@@ -6,7 +6,8 @@
 // mouth the low shore reads as a thin strip; mid-rise Miramar blocks are visible behind Muelle 2.
 // The backdrop is inferred beyond the mapped land.
 import * as THREE from 'three/webgpu';
-import {positionLocal,positionWorld,cameraPosition,smoothstep,mix,vec4,float,max,uniform} from '../vendor/three/build/three.tsl.js';
+import {positionLocal,cameraPosition} from '../vendor/three/build/three.tsl.js';
+import {skyMaterial} from './sj-atmosphere.js';
 
 // City ground palette at the cut (sidewalk, unpaved class 1, lawn, water edge). class 1 follows the
 // ground package's unassigned hard ground (worn concrete `#978f81`–`#878073`, sj-ground.js HARD) instead of the old
@@ -256,41 +257,18 @@ export function buildWorldEdge(e,ctx) {
     scene.add(cull);meshes.push(cull);}
   emitBuckets();
 
-  // ---- Sky: camera-centred dome (r 4400 m, inside the 5000 m far plane) drawn first without depth. Horizon = the fog
-  // colour so fogged land and sea melt into it; a pale haze band just above; bluer overhead. (the distant
-  // ridge / far-shore band painted on the dome was removed — a camera-centred band cannot be grounded and floated above
-  // the haze from high cameras; the real DEM shores carry the far view.) ----
-  const fogColour=scene.fog?.color?.clone?.()??new THREE.Color('#a7cbd0');
+  // ---- Sky: camera-centred dome (r 4400 m, inside the 5000 m far plane) drawn first without depth. Its colour is the
+  // time-of-day sky (js/sj-atmosphere.js): the haze at and below the horizon, so fogged land and sea melt into it.
+  // (the distant ridge / far-shore band once painted on the dome was removed — a camera-centred band cannot be
+  // grounded and floated above the haze from high cameras; the real DEM shores carry the far view.) ----
   {const R=4400,el=[-90,-6,0,.6,1.7,4,9,17,30,50,70,90].map(d=>d*Math.PI/180);  // rows packed at the horizon, 24 segments
-    const g=new THREE.LatheGeometry(el.map(a=>new THREE.Vector2(Math.max(1e-3,Math.cos(a)*R),Math.sin(a)*R)),24),p=g.attributes.position,col=new Float32Array(p.count*3);
-    const hz=fogColour.clone(),haze=new THREE.Color('#bfd8da'),mid=new THREE.Color('#9dc6dc'),top=new THREE.Color('#84b5d6');
-    for(let i=0;i<p.count;i++){const y=p.getY(i)/R;
-      if(y<=0)c.copy(hz);else if(y<.03)c.copy(hz).lerp(haze,y/.03);else if(y<.3)c.copy(haze).lerp(mid,(y-.03)/.27);else c.copy(mid).lerp(top,Math.min(1,(y-.3)/.5));
-      col.set([c.r,c.g,c.b],3*i);}
-    g.setAttribute('color',new THREE.BufferAttribute(col,3));g.deleteAttribute('normal');g.deleteAttribute('uv');
-    const dome=own(mergeColoured([g]));g.dispose();
-    const m=new THREE.MeshBasicNodeMaterial({vertexColors:true,fog:false,depthWrite:false,side:THREE.DoubleSide});
-    m.positionNode=positionLocal.add(cameraPosition);extraMaterials.push(m);
-    const mesh=new THREE.Mesh(dome,m);mesh.frustumCulled=false;mesh.renderOrder=-1000;add(mesh,'sky');mesh.receiveShadow=false;}
+    const g=own(new THREE.LatheGeometry(el.map(a=>new THREE.Vector2(Math.max(1e-3,Math.cos(a)*R),Math.sin(a)*R)),24));
+    g.deleteAttribute('normal');g.deleteAttribute('uv');g.computeBoundingSphere();
+    const m=skyMaterial();m.positionNode=positionLocal.add(cameraPosition);extraMaterials.push(m);
+    const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.renderOrder=-1000;add(mesh,'sky');mesh.receiveShadow=false;}
 
-  // ---- Fog range (GLOBAL change, see FOG) and the sea's horizon blend (the only change to the sea: an output hook;
-  // coast owns its look). ----
+  // ---- Fog range (GLOBAL change, see FOG). The sea's horizon blend lives with the sea material (js/sj-sea.js). ----
   if(scene.fog?.isFog){scene.fog.near=FOG.near;scene.fog.far=FOG.far;}
-  // The sea may be built by a later area (coast registers after worldedge): patch it once, on the sky's first frame.
-  const hazeColour=uniform(fogColour);
-  const patchSea=()=>{const sea=scene.children?.find(m=>m.userData?.sea)??scene.children?.find(m=>m.isMesh&&m.geometry?.parameters?.width>=5000);
-    if(!sea||sea.userData.worldedgeHorizon)return !!sea;
-    let m=sea.material;
-    if(!m.isNodeMaterial){const n=new THREE.MeshStandardNodeMaterial();for(const key in m)if(key!=='uuid')n[key]=m[key];m=n;}
-    const base=m.setupOutput;
-    // Within ~2.6° of the horizon the sea turns toward the haze (up to 85%), and fully before the fog end.
-    m.setupOutput=function(builder,out){const d=positionWorld.sub(cameraPosition),dist=d.length().max(1);
-      const dip=cameraPosition.y.sub(positionWorld.y).div(dist);
-      const f=max(float(1).sub(smoothstep(0,.045,dip)).mul(.85),smoothstep(2400,4300,dist));
-      return base.call(this,builder,vec4(mix(out.rgb,hazeColour,f),out.a));};
-    m.needsUpdate=true;if(m!==sea.material){extraMaterials.push(m);sea.material=m;}sea.userData.worldedgeHorizon=true;return true;};
-  stats.seaHorizon=patchSea()&&!!scene.children?.find(m=>m.userData?.sea);
-  {const sky=meshes.find(m=>m.name==='sj-worldedge-sky');if(sky){let done=false;sky.onBeforeRender=()=>{if(!done)done=patchSea()&&!!scene.children?.find(m=>m.userData?.sea);};}}
   const sky=meshes.find(m=>m.name==='sj-worldedge-sky');if(sky)sky.dispose=()=>{for(const m of extraMaterials)m.dispose();};
   return stats;
 }

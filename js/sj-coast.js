@@ -1,15 +1,17 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // Coast visuals — © 2026 VibezZzCoder, MIT. Every shore number comes from sj-coast-layout.js (shared physical owner).
-// ctx: {scene,own,mat,meshes} — the shared pools. Four draws: shore faces, quay copings, loose rocks and the sea.
-// Vertex colours only, no textures. Everything outside the polygon (far shore, horizon, east land) belongs to `worldedge`.
+// ctx: {scene,own,mat,materials,textures,meshes,world} — the shared pools. Shore faces, quay copings and loose rocks are
+// vertex-coloured; the sea grid uses js/sj-sea.js (its material and shore-distance texture join the owner pools).
+// Everything outside the polygon (far shore, horizon, east land) belongs to `worldedge`.
 // References: Wikimedia Commons curid=86543901 tan/brown pitted eolianite shelf, dark wet rock and white surf; Wikimedia Commons
 // curid=72372087, curid=80251220, curid=109811939 La Perla's rock-and-rubble shore with a surf line; Wikimedia Commons curid=123485577 dark rocks and surf under El Morro; Wikimedia Commons curid=123441024 the
 // Puntilla east quay (pale concrete coping, dark wet face); Wikimedia Commons curid=106059407, curid=182263185 low pale quay walls at the Aduana and Arsenal.
 import * as THREE from 'three/webgpu';
+import {shoreField,seaMaterial} from './sj-sea.js';
 
 const ROCK=['#75664d','#665b49','#80714f','#5e5950'].map(c=>new THREE.Color(c));
-const WET=new THREE.Color('#3a3731'),SURF=new THREE.Color('#b9c5c1'),DEEP=new THREE.Color('#2b6170');
-const RIPRAP=['#6a6c64','#5c6058','#72766c','#63675e'].map(c=>new THREE.Color(c)),APRON=new THREE.Color('#6d706c'),FOAM_OUT=new THREE.Color('#3f9497'),FACE_SURF=new THREE.Color('#8d9894');   // softer face surf row (no bright wedges at face ends)
+const WET=new THREE.Color('#3a3731'),DEEP=new THREE.Color('#2b6170');
+const RIPRAP=['#6a6c64','#5c6058','#72766c','#63675e'].map(c=>new THREE.Color(c)),APRON=new THREE.Color('#6d706c'),FACE_SURF=new THREE.Color('#8d9894');   // softer face surf row (no bright wedges at face ends)
 const STONE=['#5c6058','#6c7066','#63675e','#73766b','#686a60'].map(c=>new THREE.Color(c)),STONE_WET=new THREE.Color('#34372f');
 const QUAY=new THREE.Color('#a8a397'),QUAY_STAIN=new THREE.Color('#7d796d'),QUAY_WET=new THREE.Color('#33403b'),COPING=new THREE.Color('#d2ccbf');
 const hash=(x,z)=>{let h=Math.imul(Math.round(x*16)|0,374761393)^Math.imul(Math.round(z*16)|0,668265263);h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;};
@@ -18,6 +20,20 @@ const smooth=(x,z,s)=>{const fx=x/s,fz=z/s,i=Math.floor(fx),j=Math.floor(fz),u=f
   const a=hash(i,j),b=hash(i+1,j),c=hash(i,j+1),d=hash(i+1,j+1);return a+(b-a)*e(u)+(c-a)*e(v)+(a-b-c+d)*e(u)*e(v);};
 function geometry(p,c,idx){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
   g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));if(idx)g.setIndex(idx);g.computeVertexNormals();g.computeBoundingSphere();return g;}
+
+// The drawn ground the sea meets: terrain heights with the coast's flipped cells, the coast's fill ground and its shore
+// faces (row by row, as drawn above). Read once at construction for the shore-distance field.
+export function shoreSurface(n,world){
+  // Every area's authored ground/floor triangles and render cuts (coast strips, wall-foot strips, waterfront decks).
+  const areas=Object.values(world??{}).filter(a=>a&&typeof a==='object'&&(Array.isArray(a.cuts)||Array.isArray(a.groundTriangles)));
+  if(!areas.includes(n))areas.push(n);
+  const tris=areas.flatMap(a=>[...(a.groundTriangles??[]),...(a.floorTriangles??[])]),cuts=areas.flatMap(a=>(a.cuts??[]).map(c=>c.ring).filter(Boolean));
+  const p=(v,r)=>[v.x+v.m[0]*r[0],r[1],v.z+v.m[1]*r[0]];
+  for(const f of n.faces??[])for(let i=0;i+1<f.rowsA.length;i++){const a=p(f.a,f.rowsA[i]),b=p(f.b,f.rowsB[i]),u=p(f.a,f.rowsA[i+1]),v=p(f.b,f.rowsB[i+1]);
+    tris.push([a,v,b],[a,u,v]);}
+  const flip=areas.map(a=>a.flipCells).filter(f=>f?.size);
+  return {heights:world?.terrain?.heights??null,flip,triangles:tris,cuts};
+}
 
 export function buildCoast(n,ctx) {
   const {scene,own,mat,meshes}=ctx;
@@ -51,15 +67,8 @@ export function buildCoast(n,ctx) {
         B.idx.push(...(flip?[top,vid(B,v,f.quay,rows.length-1,rows),foot]:[top,foot,vid(B,v,f.quay,rows.length-1,rows)]));tris++;};
       if(!ends.has(f.a.id)||byB.get(f.a.id)?.quay!==f.quay)capAt(f.a,f.rowsA,true);
       if(!starts.has(f.b.id)||byA.get(f.b.id)?.quay!==f.quay)capAt(f.b,f.rowsB,false);}
-    // Surf lines across the waterline strips (Wikimedia Commons curid=72372087, curid=86543901): a flat soft foam band 4 cm over the water along the smoothed
-    // contact, white at the contact fading out to the shallow-water tone. Entries: [inland, seaward].
-    for(const run of n.foam)for(let k=0;k+1<run.length;k++){const [i0,o0]=run[k],[i1,o1]=run[k+1];
-      if(Math.hypot(i1[0]-i0[0],i1[2]-i0[2])>3.5)continue;const B=binOf(i0[0],i0[2]);
-      // the crest brightness varies along the shore too (smooth noise over ~9 m), not only the width.
-      const ids4=[i0,i1,o1,o0].map(q=>{B.p.push(...q);const f=q===i0||q===i1?tmp.copy(SURF).lerp(FOAM_OUT,.65*smooth(q[0]+5,q[2]-3,9)):FOAM_OUT;B.c.push(f.r,f.g,f.b);return B.next++;});
-      // Upward-facing: (i0,i1,o1) / (i0,o1,o0) or the reverse, by the plan winding.
-      const cr=(i1[0]-i0[0])*(o1[2]-i0[2])-(i1[2]-i0[2])*(o1[0]-i0[0]);
-      B.idx.push(...(cr<0?[ids4[0],ids4[1],ids4[2],ids4[0],ids4[2],ids4[3]]:[ids4[0],ids4[2],ids4[1],ids4[0],ids4[3],ids4[2]]));tris+=2;}
+    // Surf along the waterline (Wikimedia Commons curid=72372087, curid=86543901) is drawn by the sea material itself
+    // (js/sj-sea.js), so it moves with the swell and has no polygon edge against the water.
     // Quay aprons over the fill ears: weathered concrete, the same bins and material.
     for(const ap of n.aprons??[]){const B=binOf(ap.x,ap.z),AC=ap.colour?new THREE.Color(ap.colour):APRON;for(const q of ap.polys)for(let i=1;i+1<q.length;i++){const t=[q[0],q[i],q[i+1]];
       const cr=(t[1][0]-t[0][0])*(t[2][2]-t[0][2])-(t[1][2]-t[0][2])*(t[2][0]-t[0][0]);for(const v of (cr<0?t:[t[0],t[2],t[1]])){B.p.push(...v);B.c.push(AC.r,AC.g,AC.b);B.idx.push(B.next++);}tris++;}}
@@ -102,33 +111,27 @@ export function buildCoast(n,ctx) {
 
   // ---- The sea: one coarse grid with vertex colours (Wikimedia Commons curid=123485577, curid=72372087, curid=86543901: turquoise over the north-shore reef shelf, deep
   // blue offshore, greener bay water to the south) instead of the flat 12 km plane. Same water line (y = 0). ----
-  {const {land,...t}=n.seaGrid;
-    // Coarse land occupancy (10 m) and a chamfer distance to it, for the shallow-water tint.
-    const cs=10,cw=Math.ceil((t.nx-1)*t.step/cs),ch=Math.ceil((t.nz-1)*t.step/cs),dist=new Float32Array(cw*ch).fill(1e9);
-    for(let j=0;j<t.nz;j+=5)for(let i=0;i<t.nx;i+=5)if(land[j*t.nx+i])dist[Math.min(ch-1,Math.floor(j*t.step/cs))*cw+Math.min(cw-1,Math.floor(i*t.step/cs))]=0;
-    for(let pass=0;pass<2;pass++)for(let jj=0;jj<ch;jj++)for(let ii0=0;ii0<cw;ii0++){const j=pass?ch-1-jj:jj,i=pass?cw-1-ii0:ii0,k=j*cw+i,s=pass?1:-1;
-      for(const [di,dj,w] of [[s,0,1],[0,s,1],[s,s,1.414],[-s,s,1.414]]){const a=i+di,b=j+dj;if(a<0||b<0||a>=cw||b>=ch)continue;const v=dist[b*cw+a]+w*cs;if(v<dist[k])dist[k]=v;}}
-    // Grid lines: 75 m (was 50 m) over the islet and its near water, then widening to ±12 km (the old ±6 km edge could sit inside the 5 km far plane at the east end).
+  // The surface itself (waves, sky reflection, shallows, surf, horizon) is js/sj-sea.js; this grid carries the body tint
+  // and how open each part is to the Atlantic swell.
+  {// Grid lines: 75 m over the islet and its near water, then widening to ±12 km (beyond the 5 km far plane everywhere).
     const axis=(lo,hi,R)=>{const a=[];for(let v=lo;v<=hi;v+=75)a.push(v);let s=75,v=lo;while(v>-R){s*=1.8;v=Math.max(-R,v-s);a.unshift(v);}s=75;v=a.at(-1);while(v<R){s*=1.6;v=Math.min(R,v+s);a.push(v);}return a;};
     const XS=axis(-1850,1750,12000),ZS=axis(-1350,1050,12000),NX=XS.length,NZ=ZS.length;
-    const shoreDist=(x,z)=>{const i=Math.floor((x-t.x0)/cs),j=Math.floor((z-t.z0)/cs);if(i<0||j<0||i>=cw||j>=ch)return 1e9;return dist[j*cw+i];};
-    const HAZE=new THREE.Color('#86b4bb'),OPEN=new THREE.Color('#1c5f7d'),BAY=new THREE.Color('#236b7a'),SHALLOW=new THREE.Color('#2f878c'),col=new THREE.Color();
+    const OPEN=new THREE.Color('#1b5878'),BAY=new THREE.Color('#2a5e66'),col=new THREE.Color();
     const noise=(x,z,s)=>{const fx=x/s,fz=z/s,i=Math.floor(fx),j=Math.floor(fz),u=fx-i,v=fz-j,e=q=>q*q*(3-2*q);
       const a=hash(i,j),b=hash(i+1,j),c=hash(i,j+1),d=hash(i+1,j+1);return a+(b-a)*e(u)+(c-a)*e(v)+(a-b-c+d)*e(u)*e(v);};
-    const p=new Float32Array(NX*NZ*3),c=new Float32Array(p.length),idx=[];
+    const st=t=>Math.max(0,Math.min(1,t)),ss=t=>{t=st(t);return t*t*(3-2*t);};
+    const p=new Float32Array(NX*NZ*3),c=new Float32Array(p.length),e=new Float32Array(NX*NZ),idx=[];
     for(let j=0;j<NZ;j++)for(let i=0;i<NX;i++){const x=XS[i],z=ZS[j],k=(j*NX+i)*3;p[k]=x;p[k+1]=0;p[k+2]=z;
-      // North (open Atlantic, z < -300) to south (the bay, z > 200): blend; then shallow turquoise within ~90 m of land.
-      const bay=Math.max(0,Math.min(1,(z+300)/700));col.copy(OPEN).lerp(BAY,bay);
-      const d=shoreDist(x,z),sh=d<120?.75*Math.pow(1-d/120,1.5)*(bay>.6?.5:1):0;col.lerp(SHALLOW,sh);
-      const nz=noise(x,z,260)-.5;col.offsetHSL(0,0,nz*.03);
-      // Far water shades toward the haze ((−225,248)): beyond ~0.3 km from the islet the tone eases to a pale bay
-      // teal by ~3 km, so it meets worldedge's horizon blend instead of a dark band under the sky.
-      {const dx=Math.max(-1400-x,0,x-1340),dz=Math.max(-940-z,0,z-660),far=Math.max(0,Math.min(1,(Math.hypot(dx,dz)-300)/2700));col.lerp(HAZE,.6*far);}c[k]=col.r;c[k+1]=col.g;c[k+2]=col.b;}
+      // North (open Atlantic, z < -300) to south (the bay, z > 200): deep blue to a greener bay tone.
+      const bay=st((z+300)/700);col.copy(OPEN).lerp(BAY,bay);col.offsetHSL(0,0,(noise(x,z,260)-.5)*.03);c[k]=col.r;c[k+1]=col.g;c[k+2]=col.b;
+      // Open to the swell: the Atlantic north of the islet, partly the harbour mouth west of El Morro; the bay is sheltered.
+      e[j*NX+i]=Math.max(ss((-100-z)/500),.5*ss((-750-x)/300));}
     for(let j=0;j+1<NZ;j++)for(let i=0;i+1<NX;i++){const a=j*NX+i;idx.push(a,a+NX,a+1,a+1,a+NX,a+NX+1);}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));g.setAttribute('color',new THREE.BufferAttribute(c,3));
-    g.setIndex(idx);const nrm=new Float32Array(p.length);for(let k=1;k<nrm.length;k+=3)nrm[k]=1;g.setAttribute('normal',new THREE.BufferAttribute(nrm,3));g.computeBoundingSphere();
-    const sea=add(g,mat({vertexColors:true,roughness:.32,metalness:0}),'sj-coast-sea');sea.userData.sea=true;   // worldedge finds it by this flag
-    stats.seaVertices=p.length/3;stats.seaTriangles=idx.length/3;}
+    g.setAttribute('exposure',new THREE.BufferAttribute(e,1));g.setIndex(idx);g.computeBoundingSphere();
+    const field=shoreField(n.seaGrid,shoreSurface(n,ctx.world));ctx.textures?.add(field.texture);
+    const material=seaMaterial(field),sea=add(g,material,'sj-coast-sea');sea.userData.sea=true;ctx.materials?.add(material);
+    stats.seaVertices=p.length/3;stats.seaTriangles=idx.length/3;stats.seaField=field.texels;stats.seaContour=field.segments;}
 
   return stats;
 }

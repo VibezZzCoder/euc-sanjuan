@@ -2,6 +2,7 @@
 // Reference-led Plaza de Armas kit — © 2026 VibezZzCoder, MIT.
 // Wikimedia Commons curid=119654687, curid=151531420, curid=131971241, curid=151530323, curid=151596781, curid=182287159, curid=158245806, curid=122798497, curid=80303584, curid=131971302 guide forms; source IDs and inferred dimensions live in the private area notes.
 import * as THREE from 'three/webgpu';
+import { glowLamp,glowPane } from './sj-glow.js';
 import {inDetail,inRing} from './sj-plaza-layout.js';
 import {createPavingRegions} from './sj-paving.js';
 import {CATHEDRAL_ID,inCorridor,corridorFacade} from './sj-corridor-layout.js';
@@ -25,6 +26,7 @@ import {buildUptown} from './sj-uptown.js';
 import {buildEastcivic} from './sj-eastcivic.js';
 import {buildWaterfront} from './sj-waterfront.js';
 import {buildWorldEdge} from './sj-worldedge.js';
+import {smallWaterMaterial,compileAtBoot} from './sj-sea.js';
 import {buildCoast} from './sj-coast.js';
 import {AREA_LAYOUTS,areasOf} from './sj-world.js';
 import {groupPools,pavingClusters} from './sj-pool-groups.js';
@@ -55,8 +57,11 @@ export function buildPlaza(scene,world) {
   const box=own(new THREE.BoxGeometry(1,1,1));
   const cylinder=own(new THREE.CylinderGeometry(1,1,1,12));
   const sphere=own(new THREE.IcosahedronGeometry(1,1));
-  let facadePass=true;
+  let facadePass=true;const THIN=.065;
   function bake(g,x,y,z,sx,sy,sz,paint,ry=0,kind=facadePass?'facade':'solid',rz=0) {
+    // Fine parts (rails, bars, thin poles: two cross extents ≤ THIN) receive but don't cast. Thinner than a sun-map texel
+    // (≈5.7 cm desktop, 8.6 cm phone), they print aliased, crawling stripes instead of a shadow.
+    if(kind==='solid'&&(g===box||g===cylinder||g===sphere)){const k=g===box?1:2,e=[Math.abs(sx)*k,Math.abs(sy)*(g===sphere?2:1),Math.abs(sz)*k].sort((p,q)=>p-q);if(e[1]<=THIN)kind='facade';}
     const key=`${Math.floor(x/64)},${Math.floor(z/64)},${kind}`;
     dummy.position.set(x,y,z);dummy.rotation.set(0,ry,rz);dummy.scale.set(sx,sy,sz);dummy.updateMatrix();matrix.copy(dummy.matrix);
     normalMatrix.getNormalMatrix(matrix);colour.set(paint);
@@ -124,6 +129,17 @@ export function buildPlaza(scene,world) {
     for(let j=0;j<=Math.ceil(w/.22);j++)localBox(f,u-w/2+j*w/Math.ceil(w/.22),y+.55,.88,civic?.085:.035,.8,civic?.085:.035,civic?C.trim:C.iron);
     for(const side of [-1,1])localBox(f,u+side*(w/2+.12),y+.92,.47,.04,.04,.83,C.iron);
   }
+  // Bracket wall lantern at facade station u, plate centre height y (local +d = out): plate 2 cm into the wall, arm,
+  // framed glass, pyramid cap; the glass reports itself to the blue-hour light (sj-glow.js).
+  let lanternCap=null,wallLanterns=0;
+  function wallLantern(f,u,y,power=1) {
+    lanternCap??=own(new THREE.ConeGeometry(.17,.16,4));
+    localBox(f,u,y-.05,.0125,.14,.34,.065,C.iron);localBox(f,u,y,.28,.044,.044,.5,C.iron);
+    localBox(f,u,y+.02,.52,.15,.04,.15,C.iron);localBox(f,u,y+.2,.52,.2,.32,.2,'#e8d9a4');
+    for(const [a,d] of [[-1,-1],[-1,1],[1,-1],[1,1]])localBox(f,u+a*.1,y+.2,.52+d*.1,.032,.34,.032,C.iron);
+    bake(lanternCap,...f.point(u,y+.43,.52),1,1,1,C.iron,f.angle+Math.PI/4);
+    glowLamp(...f.point(u,y+.2,.52),'lantern',{power});wallLanterns++;
+  }
   let facades=0,openings=0,corridorFacades=0;
   for(const b of city.buildings) {
     if(!b.outer.some(p=>inDetail(...p)||inCorridor(...p))||[410592051,410620625,CATHEDRAL_ID].includes(b.id))continue;
@@ -145,12 +161,12 @@ export function buildPlaza(scene,world) {
         const u=Math.max(0,Math.min(1,((mid[0]-p[0])*dx+(mid[2]-p[1])*dz)/(dx*dx+dz*dz)));
         return Math.hypot(mid[0]-p[0]-dx*u,mid[2]-p[1]-dz*u);
       }));
-      return distanceToPlaza>26&&!corridor?null:{f,corridor,ground};
+      return distanceToPlaza>26&&!corridor?null:{f,corridor,ground,onPlaza:distanceToPlaza<8};
     });
     for(let i=0;i<plan.length;i++) {
       if(!plan[i])continue;
       // The facade continuing from this edge's end: ring order reverses when the frames were swapped outward.
-      const {f,corridor,ground}=plan[i],next=plan[(i+(signed>0?plan.length-1:1))%plan.length];
+      const {f,corridor,ground,onPlaza}=plan[i],next=plan[(i+(signed>0?plan.length-1:1))%plan.length];
       // Bound detailing to the plaza-facing block and its immediate adjoining streets.
       facades++;
       if(corridor)corridorFacades++;
@@ -190,10 +206,24 @@ export function buildPlaza(scene,world) {
           // Uphill ground-floor bays keep their doorstep at the local street, but stop below the first string
           // course/balcony brackets (identical to nominal where the street is level with the facade midpoint).
           const h=floor?nominal:Math.min(nominal,ground+floorH-.39-bottom);
-          opening(f,u,bottom,width,h,cityHall?(floor===0||j>0&&j<6):floor===0&&j%3===0);openings++;
+          const arched=cityHall?(floor===0||j>0&&j<6):floor===0&&j%3===0;opening(f,u,bottom,width,h,arched);openings++;
+          // Light round a closed leaf (the recess shows at its edges and over its head; L12); more often on the plaza fronts.
+          {const hh=arched?h-width/2:h;glowPane(...f.point(u,bottom+hh/2,.09),f.angle,width,hh,floor?'upperSeam':onPlaza||cityHall?'doorPlaza':'doorSeam');}
           if(floor&&(cityHall||j%2===(b.id%2)))balcony(f,u,bottom-.17,width+.1,cityHall);
         }
       }
+      // Wall lanterns (the street lanterns' bracket form, Wikimedia Commons curid=182287159, curid=158245806; D1/G3 iron
+      // wall brackets on Cristo): on every third pier between ground-floor bays (every other one on the cathedral corridor
+      // streets), below the first string course and clear
+      // of the balconies (piers sit half a bay from either opening). Above heads, non-solid.
+      // City Hall: a lantern on every arcade pier (its arcade rhythm at dusk, L3; inferred fixtures); the corridor streets
+      // every other pier, other fronts every third.
+      if(bays>1)for(let j=1;j<bays;j++){if(!cityHall&&(j+b.id)%(corridor?2:3))continue;
+        const u=j*f.length/bays,p=f.point(u,0,.5),y=height(p[0],p[2])+2.7;if(y+.62>ground+floorH-.12)continue;
+        // their light on pale plaster at close range was brighter than the street's (first frame out of the plaza):
+        // the plaza-kit fronts alternate 50 / 70 % of a street lantern's light, City Hall's arcade 45 / 65 % (every pier keeps
+        // its lantern and core: the rhythm stays, the plaster under them is no longer the brightest thing out of the plaza)
+        wallLantern(f,u,y,cityHall?(j%2?.45:.65):j%2?.5:.7);}
       // Twin belfries are the defining City Hall silhouette (Wikimedia Commons curid=119654687, curid=131971241); dimensions inferred within OSM facade.
       if(cityHall)for(const u of [f.length*.12,f.length*.88]) {
         facadePass=false; // Keep the large tower/cap silhouette in the shadow map.
@@ -226,7 +256,7 @@ export function buildPlaza(scene,world) {
   const gateStats=world.gate?buildGate(world.gate,{scene,bake,own,box,cylinder,sphere,mat,meshes,textures,height}):null;
   const fortStats=world.fort?buildFort(world.fort,{scene,bake,own,box,cylinder,sphere,mat,meshes,textures,height}):null;
   // area modules (Princesa east, San Cristóbal / Plaza Colón): same shared pools and owners.
-  const areaStats={};for(const key of Object.keys(AREA_LAYOUTS))areaStats[key]=world[key]?AREA_BUILDERS[key](world[key],{scene,bake,own,box,cylinder,sphere,mat,meshes,textures,height,world}):null;
+  const areaStats={};for(const key of Object.keys(AREA_LAYOUTS))areaStats[key]=world[key]?AREA_BUILDERS[key](world[key],{scene,bake,own,box,cylinder,sphere,mat,materials,meshes,textures,height,world}):null;
 
   // Fountain: mapped circumference, low layered warm-stone ring, central bowl and four simplified draped figures.
   const f=plaza.fountain,ringG=own(new THREE.TorusGeometry(f.radius-.25,.23,6,48));ringG.rotateX(Math.PI/2);
@@ -236,8 +266,8 @@ export function buildPlaza(scene,world) {
   bake(wallG,f.x,f.y+.43,f.z,1,1,1,C.stone);
   bake(ringG,f.x,f.y+.62,f.z,1,1,1,'#c4ac8d');
   const water=own(new THREE.CircleGeometry(f.radius-.42,48));water.rotateX(-Math.PI/2);
-  const wm=mat({color:'#426d68',roughness:.26,metalness:0});
-  const waterMesh=new THREE.Mesh(water,wm);waterMesh.position.set(f.x,f.y+.47,f.z);scene.add(waterMesh);meshes.push(waterMesh);
+  const wm=smallWaterMaterial({},scene);   // js/sj-sea.js: ripple, sky Fresnel, sun
+  const waterMesh=new THREE.Mesh(water,wm);waterMesh.name='sj-plaza-fountain-water';compileAtBoot(waterMesh);waterMesh.position.set(f.x,f.y+.47,f.z);materials.add(wm);scene.add(waterMesh);meshes.push(waterMesh);
   cyl(f.x,f.y+.65,f.z,1.25,1.1,'#aa8b60');cyl(f.x,f.y+1.23,f.z,1.45,.16,'#c4aa7d');
   cyl(f.x,f.y+1.8,f.z,.065,1.05,'#c8d9ce');
   for(let i=0;i<4;i++) {
@@ -302,7 +332,7 @@ export function buildPlaza(scene,world) {
   // A small number of traditional dark posts, Wikimedia Commons curid=119654687, curid=151531420 silhouettes; placement inferred beside mapped trees.
   for(const {x,y,z,foot} of plaza.lamps) {
     cyl(x,y+1.8,z,.065,3.6,C.iron);
-    const lb=Number.isFinite(foot)?Math.min(y,foot):y;cyl(x,(lb+y+.44)/2,z,.18,y+.44-lb,C.iron);/* seated foot */cube(x,y+3.7,z,.28,.5,.28,'#dbc997');
+    const lb=Number.isFinite(foot)?Math.min(y,foot):y;cyl(x,(lb+y+.44)/2,z,.18,y+.44-lb,C.iron);/* seated foot */cube(x,y+3.7,z,.28,.5,.28,'#dbc997');glowLamp(x,y+3.7,z,'post',{ground:y});
     const cap=own(new THREE.ConeGeometry(.29,.22,4));bake(cap,x,y+4.06,z,1,1,1,C.iron,Math.PI/4);
   }
   // Supplementary Wikimedia Commons curid=131971302: octagonal green canopy, slender posts, stone base and copper-coloured roof cap.
@@ -319,6 +349,15 @@ export function buildPlaza(scene,world) {
   bake(roof,gazebo.x,gy+4.6,gazebo.z,1,1,1,'#71826a',Math.PI/8);
   cyl(gazebo.x,gy+5.05,gazebo.z,.45,.5,'#486347');
   const cupola=own(new THREE.ConeGeometry(.65,.45,8));bake(cupola,gazebo.x,gy+5.5,gazebo.z,1,1,1,'#b47e53');
+  // Gazebo lanterns (inferred; a lit kiosk is the plaza's east anchor at dusk, L3): a pendant under the canopy and a
+  // bracket lantern on the outer face of every other post, all under the canopy edge and above heads. Non-solid.
+  {const lamp=(x,y,z,ry)=>{bake(box,x,y-.18,z,.2,.04,.2,C.iron,ry,'facade');bake(box,x,y,z,.18,.3,.18,'#e8d9a4',ry,'facade');
+      bake(box,x,y+.19,z,.24,.06,.24,C.iron,ry,'facade');};
+    bake(cylinder,gazebo.x,gy+3.27,gazebo.z,.015,.5,.015,C.iron,0,'facade');lamp(gazebo.x,gy+2.86,gazebo.z,Math.PI/8);
+    glowLamp(gazebo.x,gy+2.86,gazebo.z,'post',{ground:gy+.45});
+    for(let i=1;i<8;i+=2){const a=i*Math.PI/4,c=Math.cos(a),sn=Math.sin(a),at=r=>[gazebo.x+c*r,gazebo.z+sn*r];
+      const [ax,az]=at(2.88),[lx,lz]=at(3.2);bake(box,(ax+lx)/2,gy+2.98,(az+lz)/2,.34,.04,.04,C.iron,-a,'facade');
+      lamp(lx,gy+2.8,lz,-a);glowLamp(lx,gy+2.8,lz,'post',{ground:gy+.45});}}
   // Small mapped structures retain their footprints; finish is provisional, not a branded shop replica.
   for(const b of city.buildings.filter(b=>[410592051,410620625].includes(b.id))) {
     const signed=b.outer.reduce((sum,p,j)=>{const q=b.outer[(j+1)%b.outer.length];return sum+p[0]*q[1]-q[0]*p[1];},0);
@@ -459,7 +498,7 @@ export function buildPlaza(scene,world) {
   for(const g of geometries)if(!drawn.has(g)){g.dispose();geometries.delete(g);}
   const bytes=[...geometries].reduce((n,g)=>n+Object.values(g.attributes).reduce((s,a)=>s+a.array.byteLength,0)+(g.index?.array.byteLength??0),0)
     +meshes.reduce((n,m)=>n+(m.instanceMatrix?.array.byteLength??0)+(m.instanceColor?.array.byteLength??0),0);
-  return {stats:{facades,openings,corridorFacades,cathedralSteps:world.corridor?.cathedral.steps.length??0,
+  return {stats:{facades,openings,corridorFacades,wallLanterns,cathedralSteps:world.corridor?.cathedral.steps.length??0,
     palms:plaza.palms.length,trees:plaza.trees.length,benches:plaza.benches.length,
     meshes:meshes.length,vertices,geometryBytes:bytes,textureBytes:textures.size*4*(256*256*4-1)/3,colliders:plaza.colliders.length+(world.corridor?.colliders.length??0)+(world.gate?.colliders.length??0)+(world.fort?.colliders.length??0)+areasOf(world).reduce((n,a)=>n+a.colliders.length,0),pavingRegions:pavingRegions.length,
     gate:gateStats&&{...gateStats,colliders:world.gate.colliders.length,floorTops:world.gate.tops.length,surfaces:world.gate.surfaces.length},

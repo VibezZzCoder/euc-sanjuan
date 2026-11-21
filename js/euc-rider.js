@@ -132,7 +132,7 @@ function buildRig(riderId, appearance) {
   }
 }
 
-export function createEucEntity(scene, sampler, { x, y, z, referenceY = y, heading = 0, rider = 'cool-rider', dynamicWorld, appearance } = {}) {
+export function createEucEntity(scene, sampler, { x, y, z, referenceY = y, heading = 0, rider = 'cool-rider', dynamicWorld, appearance, softBodies } = {}) {
   if (!isPlayableRider(rider)) throw new Error('Unknown playable rider: ' + String(rider));
   if (![x, z, heading].every(Number.isFinite) || !Number.isFinite(referenceY)
     || (y !== undefined && !Number.isFinite(y))) throw new Error('SF spawn requires finite XZ, heading and Y/referenceY');
@@ -143,6 +143,7 @@ export function createEucEntity(scene, sampler, { x, y, z, referenceY = y, headi
     spawn: { position: { x, y: ground.height, z }, headingY: heading },
     tuning: EUC_TUNING,
     dynamicWorld,
+    softBodies, // soft foliage (js/sj-soft-foliage.js): stock drag, wobble and ragdoll damping
   });
   controller.setRideStyle(rideStyleFor(riderId));
   const previous = createPose();

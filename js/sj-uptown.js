@@ -9,6 +9,7 @@
 // (Museo de San Juan), Wikimedia Commons curid=72603185 (lawn edge).
 import * as THREE from 'three/webgpu';
 import {streetKit,IRON} from './sj-street-kit.js';
+import { glowPane } from './sj-glow.js';
 
 const DOOR='#4a3426',DOOR_LINE='#2a1d14',BRONZE='#3d3a30',ARCH_DARK='#5e574b';
 
@@ -61,7 +62,8 @@ export function buildUptown(n,ctx) {
       let nb=wall?-.012:back0;for(let k=0;k<24&&clash(nb);k++)nb=(wall?-.012:back0)-.006*(k+1);
       placed.push([u0,u1,y0,y1,nb]);d=(fr+nb)/2;dep=fr-nb;
       const [x,z]=P(u,d);put(box,x,y,z,w,h,dep,c,ry,kind);},
-      panel:(g,u,y,d,w,h,c,kind='facade')=>{const [x,z]=P(u,d);put(g,x,y,z,w,h,1,c,rp,kind);}};};
+      panel:(g,u,y,d,w,h,c,kind='facade')=>{const [x,z]=P(u,d);put(g,x,y,z,w,h,1,c,rp,kind);},
+      glow:(u,y,d,w,h,kind)=>{const [x,z]=P(u,d);glowPane(x,y,z,rp,w,h,kind);}};};   // glazing that may be lit at blue hour (sj-glow.js)
   const shade=(hex,k)=>{const c=new THREE.Color(hex);c.multiplyScalar(k);return '#'+c.getHexString();};
 
   // ---- Facades: plinth/base, quoins, string courses, cornice and parapet, openings (layout grid). ----
@@ -133,10 +135,10 @@ export function buildUptown(n,ctx) {
       if(o.kind==='win'){trimBox(o.u,yc,o.w+.3,h+.3);
         // Closed shutters (perf): one leaf-pair panel over the opening with the dark meeting line (it hid the glass box anyway).
         // shutters s+.115 (meeting line 1 cm on them), glazing s+.09 (mullion s+.121), sill s+.165 — all ≥ 2 cm off the trim s+.07
-        if(st.shutter&&!priv){X.box(o.u,yc,s+.1,o.w,h,.03,st.shutter);X.box(o.u,yc,s+.12,.035,h-.04,.01,DOOR_LINE);}
-        else{X.box(o.u,yc,s+.065,o.w,h,.05,glaze(st,o.u,yc,F.id));if(o.storey===0&&!priv&&F.id!==n.special.gable?.id)X.box(o.u,yc,s+.115,.035,h,.012,IRON);}
+        if(st.shutter&&!priv){X.box(o.u,yc,s+.1,o.w,h,.03,st.shutter);X.box(o.u,yc,s+.12,.035,h-.04,.01,DOOR_LINE);X.glow(o.u,yc,s+.115,o.w,h,'leak');}
+        else{X.box(o.u,yc,s+.065,o.w,h,.05,glaze(st,o.u,yc,F.id));if(F.id!==n.special.gable?.id)X.glow(o.u,yc,s+.09,o.w,h,'civic');if(o.storey===0&&!priv&&F.id!==n.special.gable?.id)X.box(o.u,yc,s+.115,.035,h,.012,IRON);}
         if(!priv)X.box(o.u,sillY(o.y0-.2),s+.08,o.w+.45,.1,.17,st.trim);windows++;}
-      else if(o.kind==='arch'){X.panel(arch,o.u,o.y0-.12,s+.045,o.w+.3,(h+.2)/1.1,st.trim);X.panel(arch,o.u,o.y0,s+.075,o.w,h/1.1,glaze(st,o.u,o.y0,F.id));X.box(o.u,sillY(o.y0-.17),s+.08,o.w+.45,.1,.17,st.trim);arches++;}
+      else if(o.kind==='arch'){X.panel(arch,o.u,o.y0-.12,s+.045,o.w+.3,(h+.2)/1.1,st.trim);X.panel(arch,o.u,o.y0,s+.075,o.w,h/1.1,glaze(st,o.u,o.y0,F.id));X.glow(o.u,o.y0+h*.545/2,s+.075,o.w,h*.545,'civic');X.box(o.u,sillY(o.y0-.17),s+.08,o.w+.45,.1,.17,st.trim);arches++;}
       else if(o.kind==='arcade'){X.panel(arch,o.u,o.y0,s+.045,o.w+.36,(h+.16)/1.1,st.trim);X.panel(arch,o.u,o.y0,s+.075,o.w,h/1.1,ARCH_DARK);
         if(o.storey>0)X.box(o.u,o.y0-.5,s+.11,o.w+.1,.9,.18,st.trim);arches++;}
       // doors: trim front s+.07, leaf front s+.095 (2.5 cm proud of the trim, nothing in front of it: the band/plinth stop at the
@@ -317,12 +319,18 @@ export function buildUptown(n,ctx) {
   if(n.special.polvorin){const P=n.special.polvorin,{W,mag,top,eave,ridge}=P,wall='#d3cdbd',cap='#e2ddd0',roof='#7d5a45';
     for(const f of P.faces){const X=frame(f);X.box(f.L/2,top+.09,.0,f.L+.4,.18,.5,cap,'solid');}
     const V=(u,v,y)=>{const [x,z]=W(u,v);return [x,y,z];},vm=(mag.v0+mag.v1)/2,{u0,u1,v0,v1}=mag,b=top-.3;
-    tris([upTri(V(u0,v0,b),V(u1,v0,b),V(u1,v0,eave)),upTri(V(u0,v0,b),V(u1,v0,eave),V(u0,v0,eave)),upTri(V(u0,v1,b),V(u1,v1,eave),V(u1,v1,b)),upTri(V(u0,v1,b),V(u0,v1,eave),V(u1,v1,eave)),
-      [V(u0,v0,b),V(u0,v1,b),V(u0,vm,ridge)],[V(u0,v0,b),V(u0,vm,ridge),V(u0,v1,b)],[V(u1,v0,b),V(u1,vm,ridge),V(u1,v1,b)],[V(u1,v0,b),V(u1,v1,b),V(u1,vm,ridge)]],wall,'cast',true);
+    // closed masonry shell: the long walls rise to the roof plane (wall line under the slope, not 7 cm short of it) and
+    // each gable end is the full wall (foot to wall head) plus its triangle to the ridge, edges on the roof plane — the
+    // ends were a single triangle from the foot to the ridge, leaving open wedges at both upper corners.
+    const wh=ridge+.05-(ridge+.2-eave)*(vm-v0)/(vm-v0+.5),rp=ridge+.05;
+    const gable=u=>[[V(u,v0,b),V(u,v1,b),V(u,v1,wh)],[V(u,v0,b),V(u,v1,wh),V(u,v0,wh)],[V(u,v0,wh),V(u,v1,wh),V(u,vm,rp)]];
+    tris([upTri(V(u0,v0,b),V(u1,v0,b),V(u1,v0,wh)),upTri(V(u0,v0,b),V(u1,v0,wh),V(u0,v0,wh)),upTri(V(u0,v1,b),V(u1,v1,wh),V(u1,v1,b)),upTri(V(u0,v1,b),V(u0,v1,wh),V(u1,v1,wh)),
+      ...gable(u0),...gable(u1)],wall,'cast',true);
     tris([upTri(V(u0-.5,v0-.5,eave-.15),V(u1+.5,v0-.5,eave-.15),V(u1+.5,vm,ridge+.05)),upTri(V(u0-.5,v0-.5,eave-.15),V(u1+.5,vm,ridge+.05),V(u0-.5,vm,ridge+.05)),
       upTri(V(u0-.5,v1+.5,eave-.15),V(u1+.5,vm,ridge+.05),V(u1+.5,v1+.5,eave-.15)),upTri(V(u0-.5,v1+.5,eave-.15),V(u0-.5,vm,ridge+.05),V(u1+.5,vm,ridge+.05))],roof,'cast',true);
     for(const [u,sd] of [[u0,-1],[u1,1]]){const [x,z]=W(u+sd*.06,vm);put(cylinder,x,(eave+ridge)/2-.3,z,.75,.05,.75,'#4b4740',Math.atan2(-P.az,P.ax),'solid',Math.PI/2);}
-    for(const [x,z] of P.pillars){const g=top;put(box,x,(g+ridge+3.2)/2,z,.95,ridge+3.2-g,.95,'#cfc8b6',Math.atan2(-P.az,P.ax),'solid');put(box,x,ridge+3.3,z,1.1,.2,1.1,cap,Math.atan2(-P.az,P.ax),'solid');}
+    // pillars stand on the enclosure fill (foot 5 cm into it), the cap seated 2 cm down over the shaft head
+    for(const [x,z] of P.pillars){const g=top-.05;put(box,x,(g+ridge+2)/2,z,.95,ridge+2-g,.95,'#cfc8b6',Math.atan2(-P.az,P.ax),'solid');put(box,x,ridge+2.08,z,1.1,.2,1.1,cap,Math.atan2(-P.az,P.ax),'solid');}
     const g=P.garita;put(cylinder,g.x,(g.y-.2+top+.4)/2,g.z,.95,top+.6-g.y,.95,'#ddd7c8',0,'solid');put(sphere,g.x,top+.4,g.z,1.0,.85,1.0,'#ddd7c8',0,'solid');
     put(sphere,g.x,top+1.35,g.z,.16,.22,.16,cap,0,'solid');}
   // ---- Casa Blanca closure walls: whitewashed rendered garden walls on a grey base, pale coping; level-topped

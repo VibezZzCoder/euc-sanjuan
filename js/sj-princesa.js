@@ -8,6 +8,7 @@ import * as THREE from 'three/webgpu';
 import {tallPalm} from './sj-palm.js';
 import {surfaceBuffer,drawGarita,masonryTexture} from './sj-gate.js';
 import {streetKit} from './sj-street-kit.js';
+import {smallWaterMaterial,compileAtBoot} from './sj-sea.js';
 
 const IRON='#1f2523',GREEN='#2f5b45',TERRA='#b4573b',BRONZE='#6f6a5c';
 
@@ -51,10 +52,12 @@ export function buildPrincesa(layout,ctx) {
       const p0=[a.T[0]+(a.Q[0]-a.T[0])*.25,a.T[1]+(a.Q[1]-a.T[1])*.25],p1=[b.T[0]+(b.Q[0]-b.T[0])*.25,b.T[1]+(b.Q[1]-b.T[1])*.25];
       const len=Math.hypot(p1[0]-p0[0],p1[1]-p0[1]);if(len<.05)continue;
       const ry=Math.atan2(-(p1[1]-p0[1]),p1[0]-p0[0]),y0=(pa+pb)/2,h=RAIL.rise,cx=(p0[0]+p1[0])/2,cz=(p0[1]+p1[1])/2;
-      bake(box,p0[0],pa+h/2,p0[1],.06,h,.06,GREEN,ry,'solid');
-      for(const y of [.08,h-.04])bake(box,cx,y0+y,cz,len,.045,.045,GREEN,ry,'solid');
+      // Fine rail parts (2.5–6 cm, under one shadow texel) receive but don't cast: as sun-map casters they printed
+      // aliased stripes on the bank below the wall.
+      bake(box,p0[0],pa+h/2,p0[1],.06,h,.06,GREEN,ry,'facade');
+      for(const y of [.08,h-.04])bake(box,cx,y0+y,cz,len,.045,.045,GREEN,ry,'facade');
       const diag=Math.hypot(len,h-.12),tilt=Math.atan2(h-.12,len);
-      for(const s of [-1,1])bake(box,cx,y0+h/2,cz,diag,.025,.025,GREEN,ry,'solid',s*tilt);
+      for(const s of [-1,1])bake(box,cx,y0+h/2,cz,diag,.025,.025,GREEN,ry,'facade',s*tilt);
       railBars+=5;
     }
   }
@@ -93,10 +96,10 @@ export function buildPrincesa(layout,ctx) {
   for(let i=0;i<16;i++){const a=(i+.5)*Math.PI/8,x=f.x+Math.cos(a)*(f.radius+.02),z=f.z+Math.sin(a)*(f.radius+.02);
     bake(box,x,(f.stepTop+f.rimTop+.08)/2,z,.18,f.rimTop+.08-f.stepTop,.5,'#c99273',-a,'solid');}
   bake(inward(own(new THREE.CylinderGeometry(f.radius-.29,f.radius-.29,f.rimTop-f.water+.1,48,1,true))),f.x,(f.rimTop+f.water-.1)/2,f.z,1,1,1,'#a98168',0,'solid');
-  const waterMat=mat({color:'#3f6d6a',roughness:.22,metalness:0});
+  const waterMat=smallWaterMaterial({},ctx.scene);ctx.materials?.add(waterMat);   // js/sj-sea.js: ripple, sky Fresnel, sun
   for(const [r,y,name] of [[f.radius-.28,f.water,'sj-plaza-princesa-water'],[ib.radius-.18,ib.top-.05,'sj-plaza-princesa-water-upper']]){
     const g=own(new THREE.CircleGeometry(r,40));g.rotateX(-Math.PI/2);const m=new THREE.Mesh(g,waterMat);m.position.set(f.x,y,f.z);m.name=name;
-    m.receiveShadow=true;scene.add(m);meshes.push(m);}
+    m.receiveShadow=true;compileAtBoot(m);scene.add(m);meshes.push(m);}
   bake(own(new THREE.CylinderGeometry(ib.radius,ib.radius+.06,ib.top-.15-(f.water-.3),40)),f.x,(ib.top-.15+f.water-.3)/2,f.z,1,1,1,'#c27f63',0,'solid');
   {const g=own(new THREE.TorusGeometry(ib.radius-.08,.15,6,40));g.rotateX(Math.PI/2);bake(g,f.x,ib.top,f.z,1,1,1,'#d29a7b',0,'solid');}
   // Rock (Wikimedia Commons curid=195143828): overlapping faceted boulders rising to a summit. Supports come from the very triangles baked.

@@ -400,7 +400,7 @@ export function createBahiaLayout({city,height,terrain,surface,land,isDry,areas=
   for(let a=Math.PI*.2;a<Math.PI*.8-1e-6;a+=Math.PI*.6/7){const b=a+Math.PI*.6/7;
     for(const [list,R,w,h] of [[obeliskSet.seat,4.4,.5,.46],[obeliskSet.hedge,5.15,.7,.9]]){const p=[OBELISK[0]+Math.cos(a)*R,OBELISK[1]+Math.sin(a)*R],q=[OBELISK[0]+Math.cos(b)*R,OBELISK[1]+Math.sin(b)*R];
       const [ux,uz]=unit(p,q),r=[[p[0]-uz*w/2,p[1]+ux*w/2],[q[0]-uz*w/2,q[1]+ux*w/2],[q[0]+uz*w/2,q[1]-ux*w/2],[p[0]+uz*w/2,p[1]-ux*w/2]];
-      if(r.some(t=>nearStrip(t[0],t[1],.3)||!dry(...t)))continue;const g=Math.min(...r.map(t=>height(...t)));list.push({p,q,w,g,h,y:Math.max(...r.map(t=>height(...t)))});prism(r,g-.1,Math.max(...r.map(t=>height(...t)))+h);}}
+      if(r.some(t=>nearStrip(t[0],t[1],.3)||!dry(...t)))continue;const g=Math.min(...r.map(t=>height(...t)));list.push({p,q,w,g,h,y:Math.max(...r.map(t=>height(...t)))});const c=prism(r,g-.1,Math.max(...r.map(t=>height(...t)))+h);if(c&&list===obeliskSet.hedge)c.soft=true;}}
   // Pond benches (B10): two benches on the apron facing the basin.
   {const c=centroid(POND);for(const a of [.6,2.4]){const x=c[0]+Math.cos(a)*7.6,z=c[1]+Math.sin(a)*7.6,b=benchAt(x,z,Math.atan2(c[0]-x,c[1]-z));if(b){benches.push(b);claim(x,z,1.2);}}}
   for(const [x,z] of [[1010,217],[1018,221],[1026,224.5],[1232,176],[1247,172.5],[1213,170],[1252,134]])
@@ -417,7 +417,7 @@ export function createBahiaLayout({city,height,terrain,surface,land,isDry,areas=
       if(!dry(x,z)||nearStrip(x,z,.4))continue;bollards.push({x,z,y:height(x,z),foot:footMin(x,z,.35)});prism(circle(x,z,.22,8),Math.min(height(x,z)-.1,footMin(x,z,.35)),height(x,z)+.62);last=[x,z];}}
   // Low shrubs along the north (road-side) edge of the south strip (B1 hedges), clear of the crossings.
   for(let x=742;x<1018;x+=4.2){const e=[PARK[15],PARK[16],PARK[17]];let zN=null;for(let i=0;i+1<e.length;i++)if(x>=e[i][0]&&x<=e[i+1][0])zN=e[i][1]+(e[i+1][1]-e[i][1])*(x-e[i][0])/(e[i+1][0]-e[i][0]);
-    if(zN===null)continue;const z=zN+2.2;if(!free(x,z,.8,.7))continue;shrubs.push({x,z,y:height(x,z),s:.75+hash(Math.round(x),3)*.3});prism(circle(x,z,.75,8),height(x,z)-.1,height(x,z)+.9);claim(x,z,.8);}
+    if(zN===null)continue;const z=zN+2.2;if(!free(x,z,.8,.7))continue;shrubs.push({x,z,y:height(x,z),s:.75+hash(Math.round(x),3)*.3});prism(circle(x,z,.75,8),height(x,z)-.1,height(x,z)+.9).soft=true;claim(x,z,.8);}
   // bases reach 4 cm below the lowest DEM point (= the drawn drapes) under
   // their footprint (centre, corners, edge mid-points); colliders share that bound. The builder reads `foot`.
   for(const p of palms){p.foot=footMin(p.x,p.z,p.ring?.95:.3);prism(circle(p.x,p.z,.24,8),Math.min(p.y-.15,p.foot),p.y+3.5);if(p.ring)prism(circle(p.x,p.z,.95,10),p.foot,p.y+.45);}

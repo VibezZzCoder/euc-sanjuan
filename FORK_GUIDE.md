@@ -88,17 +88,54 @@ controls, characters and audio. You don't need an EUC rider to draw the streets:
    `floorTriangles`. A heightfield alone misses bridges, roofs, stairs and layered passages.
 
    ```js
-   // In your host module, with the local import map configured.
+   // In a root-level host module, with the local import map configured.
    import * as THREE from 'three/webgpu';
    import { loadCity, buildWorld } from './js/sj-world.js';
+   import { createAtmosphere, timeOverride } from './js/sj-atmosphere.js';
 
+   const params = new URLSearchParams(location.search);
+   const renderer = new THREE.WebGPURenderer({
+     antialias: true, forceWebGL: params.get('webgpu') === '0',
+   });
+   renderer.outputColorSpace = THREE.SRGBColorSpace;
+   renderer.toneMapping = THREE.NeutralToneMapping;
+   renderer.shadowMap.enabled = true;
+   await renderer.init();
+   renderer.setSize(innerWidth, innerHeight);
+   document.body.append(renderer.domElement);
    const scene = new THREE.Scene();
-   scene.add(new THREE.HemisphereLight(0xdbeaf1, 0x9b8665, 2));
+   scene.background = new THREE.Color('#a7cbd0');
+   const light = createAtmosphere({ renderer, scene });
    const world = await loadCity();
    const scenery = await buildWorld(scene, world);
-   // Supply your own renderer, camera and movement loop.
-   // In that loop: scenery.update(dtSeconds, null); then render your scene.
+   light.apply(timeOverride(params) ?? 'golden');
+
+   // A fixed view of Fuente Raíces and the bay. Replace with your own camera.
+   const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.15, 5000);
+   camera.position.set(-186, world.height(-186, 246) + 2.2, 246);
+   camera.lookAt(-206.4, world.height(-206.4, 234.3) + 3.5, 234.3);
+
+   let previous;
+   renderer.setAnimationLoop(now => {
+     const dt = previous === undefined ? 0 : Math.min(0.05, (now - previous) / 1000);
+     previous = now;
+     light.advance(dt);
+     scenery.update(dt, null);
+     light.aim(camera.position, camera);
+     renderer.render(scene, camera);
+   });
    ```
+
+   Load the host through an external `<script type="module" src="./host.js"></script>` after configuring the
+   import map. `createAtmosphere` sets up the sun and fog; `buildWorld` adds the sky, sea and the baked lamp
+   light. Don't add a second fill light or set `scene.fogNode`. Set `phone: true` in `createAtmosphere` for the
+   smaller sun shadow map, and pass your actor's position to `light.aim` when following one.
+
+   Choose `'midday'`, `'golden'` or `'blue'` with `light.apply(id)`; this changes uniforms and re-bakes the
+   sky's environment texture, not the lamp map or shader programs. The short example lets the renderer compile
+   on first use. To avoid first-view or first-visit hitches, follow `compileWholeCity` in `js/main.js` after
+   building scenery and setting the hour: temporarily show and un-cull all drawables with automatic LOD
+   suspended, compile, then submit and finish a frame with the sun shadow pass before restoring the flags.
 
 3. Connect your actor's ground/obstacle queries to `world.sampler` or convert the authored supports and solids
    into your own collision representation. `js/sf-terrain-sampler.js` exports `SfTerrainSampler`
@@ -115,7 +152,8 @@ controls, characters and audio. You don't need an EUC rider to draw the streets:
    construction in `loadCity()` before removing `js/euc/` completely. Do not keep
    the entire generated folder just to satisfy a few imports. If using `releaseConstruction` in
    `js/sj-handoff.js`, call it after rendering is built and your collider copy is complete. Dispose of scenery
-   and remove its scene content when unloading.
+    and remove its scene content when unloading. Stop the render loop and call `light.dispose()` to release
+    the atmosphere's resources.
 4. Test a sloped street, stairs and a layered passage where the top surface isn't always the walkable floor.
    Set your own title, in-game credits and public data link. Recheck the streets cache/key if you change its
    inputs and the CSP if you carry over the HTML policy. Package your actual project and audit the shipped files;

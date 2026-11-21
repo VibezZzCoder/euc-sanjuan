@@ -4,6 +4,7 @@ import * as THREE from 'three/webgpu';
 import { SfTerrainSampler } from './sf-terrain-sampler.js';
 import { createPlazaLayout,plazaBuilding,plazaGroundBase } from './sj-plaza-layout.js';
 import { buildPlaza,plazaWallColour } from './sj-plaza.js';
+import { beginGlow,buildGlow } from './sj-glow.js';
 import { createCorridorLayout } from './sj-corridor-layout.js';
 import { createGateLayout, GATE_BOUNDS } from './sj-gate-layout.js';
 import { createFortLayout } from './sj-fort-layout.js';
@@ -30,6 +31,7 @@ import { clipChunkTriangles, cutTouches } from './sj-terrain-cut.js';
 import { shareSupportExtras } from './sj-handoff.js';
 import { drawnGroundProbe, seatKitLamps, seatRecords } from './sj-street-kit.js';
 import { crossesStairApproach } from './sj-stairs.js';
+import { SoftFoliageField, softBoxOf } from './sj-soft-foliage.js';
 
 // area modules, in priority order (earlier tints win). Each key is a world field; nulling one must reproduce the
 // output without it exactly. Builders are registered in sj-plaza.js under the same key.
@@ -103,7 +105,12 @@ export async function loadCity() {
       // bottom is r.y + offset, default 0): seated the same way; drawing extends only the foot to r.foot.
       for(const s of a.seatLists??[])seatRecords(s.records,a.colliders,ground,{radius:typeof s.radius==='function'?s.radius:()=>s.radius??.2,nominal:r=>r.y+(s.offset??0)});}
     for(const s of plaza.seatLists??[])seatRecords(s.records,plaza.colliders,ground,{radius:typeof s.radius==='function'?s.radius:()=>s.radius??.2,nominal:r=>r.y+(s.offset??0)});}
-  plaza.paving.push(...corridor.paving);colliders.push(...plaza.colliders,...corridor.colliders,...gate.colliders,...fort.colliders,...areas.flatMap(a=>a.colliders));
+  // Soft foliage (`soft: true` prisms, js/sj-soft-foliage.js): occupied ground for every construction consumer, but never a
+  // solid; the rider's controller drags through them (world.softBodies).
+  const softBoxes=[];
+  const solidOnly=list=>list.filter(c=>{if(!c.soft)return true;softBoxes.push(softBoxOf(c));return false;});
+  plaza.paving.push(...corridor.paving);colliders.push(...solidOnly([...plaza.colliders,...corridor.colliders,...gate.colliders,...fort.colliders,...areas.flatMap(a=>a.colliders)]));
+  const softBodies=new SoftFoliageField(softBoxes);
   // Puerta de San Juan: bounded replacement floor + ceiling through the DEM rampart (SF tunnel-bore contract).
   // El Morro bridge deck: bounded replacement floor over the smeared DEM ridge (render cut inside the bridge body).
   // Areas may mark private ground (offLimitsAt(x,z,y): closed sites) for checked placement, recovery and arrivals.
@@ -116,7 +123,7 @@ export async function loadCity() {
     data:{groundMask:{header:{originX:t.x0,originZ:t.z0,w:t.nx,h:t.nz,cell:t.step,
       classes:['sidewalk','asphalt','lawn','waterEdge']},mask:groundMask}}});
   shareSupportExtras(sampler.topStore); // one shared entry per distinct `source` label (js/sj-handoff.js)
-  return {city,detail,plaza,corridor,gate,fort,...areaLayouts,terrain,land,surface,sampler,height,isDry,barriers};
+  return {city,detail,plaza,corridor,gate,fort,...areaLayouts,terrain,land,surface,sampler,softBodies,height,isDry,barriers};
 }
 
 // Shore skirt neighbours: [di,dj, edge start, edge end] in grid offsets (constant, hoisted out of the per-cell loop).
@@ -134,7 +141,7 @@ export function interiorPartyWalls(buildings){
   return out;}
 export async function buildWorld(scene, world, progress=()=>{}) {
   const {city,terrain:t,land,surface,height}=world;
-  const owned=new Set(), materials=new Set();
+  const owned=new Set(), materials=new Set();beginGlow();
   const material=options=>{const m=new THREE.MeshStandardMaterial(options); materials.add(m); return m;};
   // Area `ground` (sj-ground.js): natural-ground class colours and the detail terrain material; null keeps the base.
   const ground=await groundPalette(world);
@@ -301,6 +308,8 @@ export async function buildWorld(scene, world, progress=()=>{}) {
     dummy.position.y=y+4.4;dummy.scale.set(2.2,2.6,2.2);dummy.updateMatrix();leaves.setMatrixAt(i,dummy.matrix);});
   trunks.castShadow=leaves.castShadow=true;scene.add(trunks,leaves);
   const plazaDetail=buildPlaza(scene,world);
+  // Artificial light at blue hour from the fixtures the builders reported (js/sj-glow.js).
+  const glow=buildGlow(scene,world,{buildings:finals});   // light is stopped by the final drawn outlines (open porticos stay open)
   // Bounded ambient walkers. They stop for the rider; full crowd contact/traffic is a later integration milestone.
   const stairCuts=allCuts.filter(c=>/stair|flight|apron|gate-landing/.test(c.kind??''));
   const crossesCut=(a,b)=>stairCuts.some(c=>{
@@ -328,5 +337,5 @@ export async function buildWorld(scene, world, progress=()=>{}) {
     });people.instanceMatrix.needsUpdate=true;
   }
   update(0,null);
-  return {update,details:plazaDetail.stats,dispose(){plazaDetail.dispose();for(const g of owned)g.dispose();for(const m of materials)m.dispose();trunks.dispose();leaves.dispose();people.dispose();}};
+  return {update,details:plazaDetail.stats,glow,dispose(){glow.dispose();plazaDetail.dispose();for(const g of owned)g.dispose();for(const m of materials)m.dispose();trunks.dispose();leaves.dispose();people.dispose();}};
 }

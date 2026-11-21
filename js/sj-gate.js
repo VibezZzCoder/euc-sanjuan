@@ -3,6 +3,7 @@
 // Wikimedia Commons curid=81591499, curid=123113261 (portal, battered wall, paseo), curid=81591500 (passage/doors), curid=114692556, curid=80420013, curid=80420699 (wall, seawall garita), curid=122996449 (garita/lamps).
 // All dimensions come from sj-gate-layout.js, which also owns the matching solids, floor tops and terrain cut.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 
 const RED='#b5382c',WHITE='#eeebe2',PLASTER='#e0d6c1',WOOD='#5a2e22',IRON='#1f2523',STONE='#a89f8f';
 
@@ -280,7 +281,7 @@ export function buildGate(gate,{scene,bake,own,box,cylinder,sphere,mat,meshes,te
   // Lamps (Wikimedia Commons curid=80420009, curid=81591499, curid=122996449): tall black posts with lanterns along the wall side.
   for(const {x,y,z} of gate.lamps){
     bake(cylinder,x,y+2.05,z,.07,4.1,.07,IRON,0,'solid');bake(cylinder,x,y+.25,z,.19,.5,.19,IRON,0,'solid');
-    bake(box,x,y+4.25,z,.3,.52,.3,'#e1d3a4',0,'solid');bake(box,x,y+4.53,z,.36,.06,.36,IRON,0,'solid');
+    bake(box,x,y+4.25,z,.3,.52,.3,'#e1d3a4',0,'solid');glowLamp(x,y+4.25,z,'post',{ground:y});bake(box,x,y+4.53,z,.36,.06,.36,IRON,0,'solid');
   }
   for(const b of gate.benches){
     const f={angle:b.heading,point:(u,y,d=0)=>[b.x+Math.cos(b.heading)*u+Math.sin(b.heading)*d,y,b.z-Math.sin(b.heading)*u+Math.cos(b.heading)*d]};

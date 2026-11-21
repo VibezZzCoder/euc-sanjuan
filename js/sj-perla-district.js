@@ -6,6 +6,7 @@
 // tan shelf, curid=80155724, curid=109811940, curid=80251220, curid=109811939, curid=86543932, curid=137763018 palms.
 import * as THREE from 'three/webgpu';
 import {palmInstances} from './sj-palm.js';
+import { glowPane,glowLamp } from './sj-glow.js';
 import {inRing,segmentDistance} from './sj-plaza-layout.js';
 import {BEACH,ROCK_EAST,ROCK_WEST} from './sj-perla-district-layout.js';
 
@@ -67,6 +68,7 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
   const frame=(a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz),ux=dx/length,uz=dz/length;
     return {length,ux,uz,angle:-Math.atan2(uz,ux),point:(u,y,d=0)=>[a[0]+ux*u-uz*d,y,a[1]+uz*u+ux*d]};};
   const lbox=(f,u,y,d,w,h,depth,c,kind='facade')=>bake(box,...f.point(u,y,d),w,h,depth,c,f.angle,kind);
+  const glow=(f,u,y,d,w,h,kind)=>glowPane(...f.point(u,y,d),f.angle,w,h,kind);   // a lower front that may be lit at blue hour (sj-glow.js)
   const streetLines=n.streets.flatMap(s=>s.points.slice(1).map((b,i)=>({a:s.points[i],b,half:s.half})));
   const houseRings=n.houses.map(h=>h.outer);
   const inOther=(x,z,self)=>houseRings.some(r=>r!==self&&inRing(x,z,r));
@@ -74,6 +76,12 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
 
   // ---- Houses: low roof parapets on every mass (Wikimedia Commons curid=99177715, curid=86543964, curid=86543932), a few roof rooms and tanks; street-facing fronts get
   // the opening kit (65/66/81/84): louvred windows, narrow doors at the local street, solid balconies on two brackets. ----
+  // One occupied pocket on each side (reference #68: mostly dark roofs with a few unmistakable terraces/businesses; the
+  // house choice is inferred): A, the first street front facing Norzagaray (south) near the Cancha, its ground and first
+  // floors open and lit with a bare bulb over the door; B, the first seaward front near it, seen from the shore, with one
+  // cool-white shop window and the one coloured accent #68 shows. Openings there are drawn open (no leaves).
+  const cancha=n.places?.find(p=>/Cancha/.test(p.name)),pockets={A:null,B:null,C:null},westRim={x:60,z:-370};   // C: below the western Norzagaray rim (inferred)
+  const bulb=(f,u,y,g,kind)=>{lbox(f,u,y+.12,.09,.05,.05,.18,'#2a2a2a');lbox(f,u,y,.2,.1,.13,.1,kind==='bulbCool'?'#eef2f2':'#fff1d6');glowLamp(...f.point(u,y,.2),kind,{ground:g});};
   for(const h of n.houses){const r=h.outer,signed=r.reduce((s,a,i)=>{const c=r[(i+1)%r.length];return s+a[0]*c[1]-c[0]*a[1];},0);
     const seed=h.id%1000,floor=Math.max(...r.map(p=>height(p[0],p[1])));
     for(let i=0;i<r.length;i++){let a=r[i],b=r[(i+1)%r.length];if(signed>0)[a,b]=[b,a];const f=frame(a,b);if(f.length<.6)continue;
@@ -98,6 +106,9 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
       const rear=!street&&!seaward&&f.length>=2.6&&!inOther(...(p=>[p[0],p[2]])(f.point(f.length/2,0,1.4)),r);   // alley faces from 1.4 m
       if(!street&&!seaward&&!rear)continue;
       edges++;
+      let pocket=null;if(cancha&&f.length>=3.6){const dc=Math.hypot(mid[0]-cancha.x,mid[2]-cancha.z),dw=Math.hypot(mid[0]-westRim.x,mid[2]-westRim.z);
+        if(!pockets.A&&street&&f.ux>.5&&dc<45){pocket='A';pockets.A=h.id;}else if(!pockets.B&&seaward&&f.ux<-.5&&dc<80){pocket='B';pockets.B=h.id;}
+        else if(!pockets.C&&street&&f.ux>.5&&dw<40){pocket='A';pockets.C=h.id;}}
       const bays=Math.max(1,Math.floor(f.length/2.7)),gs=[];for(let j=0;j<bays;j++){const p=f.point((j+.5)*f.length/bays,0,.5);gs.push(height(p[0],p[2]));}
       const gMax=Math.max(...gs),floors=Math.max(1,Math.min(4,Math.floor((h.roof-gMax+.4)/2.9))),door=Math.floor((seed/7)%bays);
       const shutter=SHUTTER[seed%SHUTTER.length],doorC=DOOR[(seed>>2)%DOOR.length];
@@ -132,17 +143,21 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
         if(fl===0&&j===backDoor&&floor-g<.45&&g+2.3<h.roof-.5){lbox(f,u,g+1.06,.03,.98,2.2,.08,RECESS);lbox(f,u,g+1.04,.06,.86,2.12,.05,doorC);
           lbox(f,u,g+2.26,.07,1.22,.14,.14,TRIM);openings++;doors++;continue;}
         if(street&&fl===0&&j===door){const top=g+2.15;if(top>h.roof-.5)continue;              // narrow door at the local street
-          lbox(f,u,g+1.06,.03,.98,2.2,.08,RECESS);lbox(f,u,g+1.04,.06,.86,2.12,.05,doorC);lbox(f,u,top+.1,.07,1.22,.16,.14,TRIM);openings++;continue;}
+          if(pocket==='A'){lbox(f,u,g+1.06,.03,.98,2.2,.08,RECESS);lbox(f,u,top+.1,.07,1.22,.16,.14,TRIM);glow(f,u,g+1.06,.071,.98,2.2,'pocket');
+            bulb(f,u,top+.45,g,'bulb');glowLamp(...f.point(u,g+.6,1.3),'threshold',{ground:g});openings++;continue;}
+          lbox(f,u,g+1.06,.03,.98,2.2,.08,RECESS);lbox(f,u,g+1.04,.06,.86,2.12,.05,doorC);lbox(f,u,top+.1,.07,1.22,.16,.14,TRIM);glow(f,u,g+1.04,.086,.86,2.12,'houseDoor');openings++;continue;}
         let bottom=fl?gMax+fl*2.9+.95:g+1.0;if(rear){if(hash01(seed,i*13+j*5+fl)<.15)continue;bottom=Math.max(bottom,floor+.95+fl*2.9);}   // 15 % blank
         const top=bottom+1.15;if(top>h.roof-.45||bottom<g+.7)continue;
         // Recess, a pair of horizontal-louvre leaves with three slat shadows across them, a sill.
         // Rear openings (seams): a cheaper three-part window — recess, one louvred leaf, sill.
         // mixed apertures — some dark louvres, some open dark recesses with a grille bar, a few smaller.
         if(rear){const v=hash01(seed+j*31,i*7+fl),sz=v<.2?.75:1;lbox(f,u,bottom+.575,.02,1.04*sz,1.19*sz,.06,RECESS);
-          if(v>=.35)lbox(f,u,bottom+.575,.055,.9*sz,1.08*sz,.04,v<.6?['#2f4a3a','#5a3b2b','#33464f'][(seed+j)%3]:shutter);else lbox(f,u,bottom+.575,.05,.06,1.1*sz,.03,'#3a3a38');
+          if(v>=.35)lbox(f,u,bottom+.575,.055,.9*sz,1.08*sz,.04,v<.6?['#2f4a3a','#5a3b2b','#33464f'][(seed+j)%3]:shutter);else{lbox(f,u,bottom+.575,.05,.06,1.1*sz,.03,'#3a3a38');if(fl<2)glow(f,u,bottom+.575,.051,1.04*sz,1.19*sz,'houseRoom');}
           lbox(f,u,bottom-.04,.08,1.16*sz,.08,.18,TRIM);openings++;continue;}
         lbox(f,u,bottom+.575,.02,1.04,1.19,.06,RECESS);
-        for(const s of [-1,1])lbox(f,u+s*.255,bottom+.575,.055,.47,1.11,.04,shutter);
+        if(pocket&&fl<(pocket==='A'?2:1)){glow(f,u,bottom+.575,.051,1.04,1.19,pocket==='A'?(fl?'pocketDim':'pocket'):j===0?'pocketCool':j===1?'pocketAccent':'pocket');
+          if(pocket==='B'&&j===0){bulb(f,u,bottom+1.45,g,'bulbCool');glowLamp(...f.point(u,g+.6,1.5),'threshold',{ground:g});}lbox(f,u,bottom-.04,.08,1.16,.08,.18,TRIM);openings++;continue;}
+        for(const s of [-1,1])lbox(f,u+s*.255,bottom+.575,.055,.47,1.11,.04,shutter);if(fl<2)glow(f,u,bottom+.575,.076,.98,1.11,'houseShutter');
         for(const k of [-1,0,1])lbox(f,u,bottom+.575+k*.27,.08,.98,.025,.02,'#8f8f89');
         lbox(f,u,bottom-.04,.08,1.16,.08,.18,TRIM);openings++;}
       // (Wikimedia Commons curid=86543903: a cantilevered slab with a light rail on the back of the blue house): some rear faces, first floor.
@@ -258,5 +273,5 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
     g.computeVertexNormals();g.computeBoundingSphere();
     const m=new THREE.Mesh(g,mat({vertexColors:true,roughness:.8,metalness:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
     m.name='sj-plaza-perladistrict-bowl';m.receiveShadow=true;scene.add(m);meshes.push(m);}
-  return {foundations:found,courseHits,houses:n.houses.length,broadleaf:(n.broadleaf??[]).length,frontages:edges,openings,balconies,rooftop,lips,bands,backDoors:doors,retaining:walls,poles:n.poles.length,palms:n.palms.length,rocks:n.rocks.length,rail:n.rail.length};
+  return {pockets,foundations:found,courseHits,houses:n.houses.length,broadleaf:(n.broadleaf??[]).length,frontages:edges,openings,balconies,rooftop,lips,bands,backDoors:doors,retaining:walls,poles:n.poles.length,palms:n.palms.length,rocks:n.rocks.length,rail:n.rail.length};
 }

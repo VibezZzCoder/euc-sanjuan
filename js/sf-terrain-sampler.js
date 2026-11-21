@@ -1065,7 +1065,8 @@ export class SfTerrainSampler {
     return true;
   }
 
-  raycast(origin, direction, maxDistance) {
+  // solidsOnly: visible boxes and prisms only (no terrain, tops or ceilings); the camera samples those separately.
+  raycast(origin, direction, maxDistance, solidsOnly = false) {
     const length = Math.hypot(direction.x, direction.y, direction.z);
     if (!(length > 0) || !Number.isFinite(length) || !(maxDistance > 0) || !Number.isFinite(maxDistance)) return null;
     const d = { x: direction.x / length, y: direction.y / length, z: direction.z / length };
@@ -1076,6 +1077,7 @@ export class SfTerrainSampler {
       const a = prismIntervals(p, origin, d, maxDistance);
       if (a.length && (hit === null || a[0].start < hit)) hit = a[0].start;
     }
+    if (solidsOnly) return hit;
     const limit = hit ?? maxDistance, events = [0, limit];
     const b = { minX: Math.min(origin.x, origin.x + d.x * limit), maxX: Math.max(origin.x, origin.x + d.x * limit),
       minZ: Math.min(origin.z, origin.z + d.z * limit), maxZ: Math.max(origin.z, origin.z + d.z * limit) };

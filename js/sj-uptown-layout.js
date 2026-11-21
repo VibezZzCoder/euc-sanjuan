@@ -283,7 +283,9 @@ export function createUptownLayout({city,height,terrain,surface,isDry,gate,fort,
     const doorU=west?west.L*.62:0,[glo]=west?gRange(west,doorU-.7,doorU+.7):[0];
     special.polvorin={faces,top,ax,az,W,mag,eave:top+2.4,ridge:top+2.4+3.4,west,door:west&&{u:doorU,w:1.3,y0:glo-.03,y1:glo+2.3},
       garita:(()=>{const c=pts.reduce((m,p)=>Math.hypot(p[0]+669.59,p[1]+314.824)<Math.hypot(m[0]+669.59,m[1]+314.824)?p:m,pts[0]);return {x:c[0],z:c[1],y:height(...c)};})(), // south-west corner (photo)
-      pillars:[W(mag.u0+1.5,(mag.v0+mag.v1)/2+3.5),W(mag.u1-3,(mag.v0+mag.v1)/2-3.5)]};
+      // free-standing pillars beside the magazine at diagonally opposite ends (photo: north side at the east end, south
+      // side by the west gable), 1.4 m outside its long walls: clear of the 0.5 m roof overhang, inside the enclosure
+      pillars:[W(mag.u0+1.5,mag.v1+1.4),W(mag.u1-3,mag.v0-1.4)]};
     if(special.polvorin.door)facades.push({id:POLVORIN,face:west,role:'enclosure',style:STYLE[POLVORIN],roof:top,top,base0:west.hi,fh:top-west.hi,storeys:1,
       openings:[{kind:'door',...special.polvorin.door}],plinths:[],stoneTop:null,bays:0,bw:0});}}
 
@@ -563,7 +565,7 @@ export function createUptownLayout({city,height,terrain,surface,isDry,gate,fort,
     prism([[A[0]-uz*h,A[1]+ux*h],[B[0]-uz*h,B[1]+ux*h],[B[0]+uz*h,B[1]-ux*h],[A[0]+uz*h,A[1]-ux*h]],t.y-.6,t.y+.65);}
   shrubs.splice(0,shrubs.length,...shrubs.filter(s=>terraces.every(t=>segmentDistance(s.x,s.z,t.p,t.q)>s.r+.5)));
   for(const t of trees)prism(circle(t.x,t.z,.34*t.scale,10),t.y-.15,t.y+3.5);
-  for(const s of shrubs)prism(circle(s.x,s.z,s.r*.85,8),s.y-.15,s.y+1.05);
+  for(const s of shrubs){const c=prism(circle(s.x,s.z,s.r*.85,8),s.y-.15,s.y+1.05);if(c)c.soft=true;}   // foliage: soft (js/sj-soft-foliage.js)
   // Lanterns at the plaza perimeter (survey: two or three dark lanterns) and in the Beneficencia park.
   const lamps=[];
   for(const [x,z] of [[-183.6,-205.5],[-147.2,-208.6],[-160.2,-185.2],[-334.5,-188.8],[-352.6,-172.4]]){

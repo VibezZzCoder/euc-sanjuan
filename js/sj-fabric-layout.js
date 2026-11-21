@@ -25,6 +25,7 @@
 // Openings additionally carry a role code in `roles` (Uint8Array per frame record): 1 ground door, 2 ground window, 3 upper.
 import {inDetail,inRing,segmentDistance} from './sj-plaza-layout.js';
 import {CATHEDRAL_ID,inCorridor,corridorFacade} from './sj-corridor-layout.js';
+import {paneKind} from './sj-glow-kinds.js';
 
 export const PART_STRIDE=12;
 export const FABRIC={corner:.6,bay:3.3,civicBay:4.3,storey:3.35,probe:[.8,2.4],reach:[1.5,4,7,10],roadSlack:1.2,
@@ -185,6 +186,8 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
   // share a plane with what carries it. Door threshold steps and balcony slabs therefore stop SILL_DROP below the datum
   // and their exposed fronts sit 2 cm behind the sill fascia (steps) — the sill reads as a stone sill on its support.
   const SILL_DROP=.015;
+  // Glazing that may be lit from inside at blue hour (sj-glow.js): front-face centre, yaw, size, kind, 7 numbers each.
+  const glowList=[],glow=(f,u,y,d,w,h,kind)=>{const q=f.point(u,y,d);glowList.push(q[0],q[1],q[2],f.angle,w,h,paneKind(kind));};
   // A box seen from all round: two back-to-back half boxes (the box geometry has no back face).
   // roof = 1: a roof volume (room, cap, tank) that stays drawn to the far roof tier (sj-fabric.js) for fort/aerial views.
   const pushBoth=(pt,angle,sx,sy,sz,c,shear=0,roof=0)=>{const nx=Math.sin(angle)*sz/4,nz=Math.cos(angle)*sz/4;
@@ -364,7 +367,7 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
       if(garage&&!rear)for(const r of e.runs){const rb=bays.filter(q=>q.r===r);rb.forEach((q,j)=>{if(j%4===3&&j<rb.length-1)q.pier=true;});
         if(rb.length>=3){const v=rb[Math.max(0,Math.min(rb.length-1,Math.round((rnd(80)<.5?.25:.75)*(rb.length-1))))];if(!v.core)v.vehicle=true;}}
       // Transom/fanlight glazing over the top of a door leaf (the leaf fills the whole opening): front 3 cm before the leaf.
-      const glazed=(u,y,w,h)=>push('box',p,chunk,f.point(u,y+h/2,.058),f.angle,w,h,.03,modern?pane(paneN++):glass);
+      const glazed=(u,y,w,h)=>{push('box',p,chunk,f.point(u,y+h/2,.058),f.angle,w,h,.03,modern?pane(paneN++):glass);glow(f,u,y+h/2,.073,w,h,modern?'shop':'transom');};
       if(modern&&!rear){const group=garage?99:mstyle==='pilaster'?1:mstyle==='ribbon'?99:2+Math.floor(rnd(72)*3);
         for(const r of e.runs){const rb=bays.filter(q=>q.r===r);if(rb.length<2)continue;
           // Piers between bay groups (pilaster style: at every bay, paler and slimmer), full height above the base course.
@@ -387,7 +390,7 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
               const vw=Math.min(q.pitch*.6,2.4),vy=gmax+1.0;if(vy+1.1<datum+floorH-.4&&vw>.8){opening(f.point(u,vy,0),f.angle,vw,1.1,surround,shade(wall,.78));roles.push(2);stats.openings++;}
               continue;}
             if(q.pier)continue;
-            if(q.core){if(y>gmax+2.6){opening(f.point(u,y,.13),f.angle,.6,Math.min(1.05,h),surround,pane(paneN++),0);roles.push(3);stats.openings++;}continue;}
+            if(q.core){if(y>gmax+2.6){opening(f.point(u,y,.13),f.angle,.6,Math.min(1.05,h),surround,pane(paneN++),0);glow(f,u,y+Math.min(1.05,h)/2,.175,.6,Math.min(1.05,h),'stair');roles.push(3);stats.openings++;}continue;}
             if(h>.6&&y>gmax+2.6)push('box',p,chunk,f.point(u,y+h/2,.02),f.angle,Math.min(q.pitch*.72,3.4),h,.04,deck);}
           // Columns at each bay edge read the structural cadence instead of continuous slots.
           const lo=gmax+bandRise-.05;if(b.roof-.1-lo>2)push('box',p,chunk,f.point(u+q.pitch/2,(lo+b.roof-.1)/2,.06),f.angle,.5,b.roof-.1-lo,.16,shade(wall,1.08));
@@ -406,7 +409,7 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
               else if((fan||shopFront)&&hh>=2.6){const hd=hh*(shopFront?.68:.74);
                 // Transom: a light sky-tinted pane (Wikimedia Commons curid=151596781: light glazed heads over the doors). the dense
                 // black railing grille is gone; per building none / one / three thin dark grey-green glazing bars (inferred).
-                const th=hh-hd-.08;push('box',p,chunk,f.point(uu,yb+hd+.04,.06),f.angle,ww,.08,.08,trim);push('box',p,chunk,f.point(uu,yb+hd+.08+th/2,.058),f.angle,ww,th,.03,transom);
+                const th=hh-hd-.08;push('box',p,chunk,f.point(uu,yb+hd+.04,.06),f.angle,ww,.08,.08,trim);push('box',p,chunk,f.point(uu,yb+hd+.08+th/2,.058),f.angle,ww,th,.03,transom);glow(f,uu,yb+hd+.08+th/2,.073,ww,th,shopFront?'transomShop':'transom');
                 for(const t of tBars)push('box',p,chunk,f.point(uu+t*ww,yb+hd+.08+th/2,.081),f.angle,.045,th,.02,tBar);}
               roles.push(1);stats.openings++;stats.doors++;
               push('box',p,chunk,f.point(uu,(doorAt.lo-.12+yb-SILL_DROP)/2,.03),f.angle,ww+.3,yb-SILL_DROP-doorAt.lo+.12,.14,band);}}
@@ -414,14 +417,16 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
             // Modern ground storey: low-sill shop/service glazing (sill 0.45 m) instead of upper-floor slots.
             const yb=gmax+(modern?.45:kind==='civic'?(floors>1?1.25:.75):.85),hh=Math.min(modern?2.4:kind==='civic'?2.0:2.1,limit-yb);
             if(hh>=.8){if(modern)opening(f.point(u,yb,0),f.angle,w,hh,surround,pane(paneN++),0);else opening(f.point(u,yb,0),f.angle,w,hh,surround,shutter);
+              glow(f,u,yb+hh/2,.045,w,hh,modern?'shop':'leak');
               roles.push(2);stats.openings++;}}}
         for(let k=1;k<floors;k++){const fl=datum+k*floorH,civicSill=kind==='civic'?.85:0;
           const sash=upStyle==='window'||rear||modern,wb=fl+.04+(rear||modern?.85:civicSill+(sash?.8:0));
           const wh=Math.min(rear?1.45:modern?1.35+rnd(74)*.5:kind==='civic'?2.3:sash?1.75:2.5,floorH-(rear||modern?1.3:kind==='civic'?1.35:sash?1.5:.72),top-.4-wb);
           if(wh<1.1||wb<gmax+2.6)continue;
           const darkLeaf=rnd(40+k*7+Math.round(u*3))<.14;
-          if(q.core){opening(f.point(u,fl+floorH*.38,.13),f.angle,.6,Math.min(1.05,floorH*.4),surround,pane(paneN++),0);roles.push(3);stats.openings++;continue;}
+          if(q.core){opening(f.point(u,fl+floorH*.38,.13),f.angle,.6,Math.min(1.05,floorH*.4),surround,pane(paneN++),0);glow(f,u,fl+floorH*.38+Math.min(1.05,floorH*.4)/2,.175,.6,Math.min(1.05,floorH*.4),'stair');roles.push(3);stats.openings++;continue;}
           if(modern)opening(f.point(u,wb,0),f.angle,w,wh,surround,pane(paneN++),0);else opening(f.point(u,wb,0),f.angle,w,wh,surround,darkLeaf?dark:shutter,darkLeaf?0:1);
+          glow(f,u,wb+wh/2,.045,w,wh,modern?'office':darkLeaf?'open':'leak');
 
           if(mstyle==='pilaster')push('box',p,chunk,f.point(u,fl+.04+.42,.035),f.angle,w,.72,.03,warm);
           // Civic piano nobile hood (cornisa) just above the frame's own hood moulding (top at 1.12 × the height).
@@ -480,6 +485,6 @@ export function createFabricLayout({city,detail,height,terrain,corridor,gate,for
   const out={};for(const [k,v] of Object.entries(parts))out[k]=Float32Array.from(v);
   const ms=Date.now()-t0;
   return {colliders:[],tops:[],cuts:[],tint:new Map(),surfaces:[],floorTriangles:[],places:[],
-    buildingColours,fabric:{parts:out,leafTones:Float32Array.from(leafTones),boxRoof:Uint8Array.from(boxRoof),roles:Uint8Array.from(roles),chunks:ids.size,stats:{...stats,ms,skipped}},
+    buildingColours,fabric:{parts:out,leafTones:Float32Array.from(leafTones),glowPanes:Float32Array.from(glowList),boxRoof:Uint8Array.from(boxRoof),roles:Uint8Array.from(roles),chunks:ids.size,stats:{...stats,ms,skipped}},
     plansById:new Map(plans.map(p=>[p.id,{kind:p.kind,modern:p.modern,mixed:p.mixed,plazaEdges:p.plazaEdges,dressed:!!p.dressed}]))};
 }

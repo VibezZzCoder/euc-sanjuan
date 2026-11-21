@@ -10,6 +10,8 @@ before reusing files.
 | Paths | Owner or source; terms |
 | --- | --- |
 | `js/sj-*.js`, `tools/build-*.py`, terrain and detail bake tools | San Juan world and data pipeline, by VibezZzCoder; code is MIT. Generated geographic inputs and outputs retain their data terms. |
+| `js/sj-atmosphere.js`, `js/sj-sea.js`, `js/sj-glow.js`, `js/sj-glow-kinds.js` | Time of day, water, baked lamp lighting and lit-window types. The atmosphere's solar attenuation uses the Preetham coefficients from three.js SkyMesh (MIT). |
+| `js/sj-camera.js`, `js/sj-camera-crowns*.js`, `tools/bake-camera-crowns.mjs` | San Juan riding camera and its camera-only tree crown bake. The camera does not drive riding physics. |
 | `data/`, `js/sj-ground-osm.js`, `js/sj-streets-data.js`, `js/sj-worldedge-data.js`, `provenance/` | OSM-derived geography is ODbL 1.0; USGS 3DEP elevation is public domain. Some layers mix geography with authored details; consult `provenance/geodata.json`. |
 | `js/euc/`, `audio/euc/` | Generated riding engine from EUC Thrills by VibezZzCoder (MIT code); original licensed assets are CC BY 4.0, with exceptions. Keep `js/euc/LICENSE`, `NOTICE-EUC-THRILLS.md` and the applicable `audio/euc/PROVENANCE.md`. Edit `tools/vendor-euc.mjs` or the pinned source, not generated modules by hand. |
 | `js/main.js`, `js/euc-*.js`, `js/sf-*.js`, input and render helpers | City host and integration, including NYC/SF adaptations with MIT work by Mr.doob and Kamil (@unable0_). Keep all three copyright lines and the complete MIT text in `LICENSE`. |
@@ -26,6 +28,7 @@ node --test tests/*.test.mjs
 node tools/csp.mjs --check
 node tools/vendor-three.mjs --check
 node tools/build-streets-cache.mjs --check
+node tools/bake-camera-crowns.mjs --check
 python3 tools/package.py                 # rebuilds dist/
 python3 tools/smoke.py
 ```
@@ -47,9 +50,19 @@ python3 tools/serve.py --dist             # preview the package on the same port
 
 - Keep scripts, workers and runtime assets same-origin. If either inline script in `index.html` changes, run
   `node tools/csp.mjs`; check the resulting policy. Do not loosen it to make a change pass.
-- When world-build source or input data change, run `node tools/build-streets-cache.mjs` and commit the regenerated
+- When streets-cache inputs change, run `node tools/build-streets-cache.mjs` and commit the regenerated
   `js/sj-streets-cache-key.js` and `data/streets-cache.bin` together. Use the vendor tool rather than editing
-  pinned libraries by hand.
+  pinned libraries by hand. The key covers the `js/sj-world.js` import graph (including `sj-atmosphere.js`,
+  `sj-sea.js`, `sj-glow.js`, `sj-glow-kinds.js` and `sf-terrain-sampler.js`) and the data listed in
+  `CACHE_DATA` in `js/sj-streets-cache.js`.
+- After changing tree or palm records, run `node tools/bake-camera-crowns.mjs` to regenerate
+  `js/sj-camera-crowns-bake.js`; do not edit the baked list by hand.
+- Keep the hour a uniform-only change for shaders. `apply()` also updates light values and re-bakes the same
+  sky environment target. Don't set `scene.fogNode`; let `createAtmosphere` wire its node through the pinned
+  renderer's plain `THREE.Fog` path. Add new scenery before the whole-city startup compile in `js/main.js`.
+- World builders report luminous parts to `sj-glow.js`; publish changed building outlines through
+  `buildingOverrides` so the light bake follows drawn openings. Keep one scene light for the baked map,
+  not a separate shadow-casting light for each lamp. Keep the sea surface flat at `y = 0`.
 - For an EUC Thrills city change, keep mapped grades, draw/collision agreement and stock riding physics. Test altered
   surfaces and entrances in both directions and preview important changes on WebGPU and WebGL2 (`?webgpu=0`).
 
@@ -61,7 +74,7 @@ python3 tools/serve.py --dist             # preview the package on the same port
      assuming any participant permission extends to it.
    - **Independent riding game:** keep the MIT engine and assets you can independently license. Change the game
      title, badge, links and other branding; carry the origin name in credits, not as your game's identity.
-   - **City only, for a non-EUC game:** start with `js/sj-*.js` (replace `sj-camera.js` if using your own camera),
+   - **City only, for a non-EUC game:** start with `js/sj-*.js` (omit `sj-camera.js` and the crown files if using your own camera),
      `data/`, `provenance/`, the relevant geography/bake tools and the Three import map and vendor closure.
      Supply your own shell, inputs, actor, camera and audio. Use your own title and artwork. Keep the small set
      of MIT sampling helpers that the city loader imports, or replace the sampler before dropping those modules.
@@ -74,7 +87,8 @@ python3 tools/serve.py --dist             # preview the package on the same port
    `PlanTerrainSampler` in `js/euc/simulation/planSampler.js` and `js/euc/data/tuning.js`. Follow recovery's imports
    through `js/euc-dynamic.js` and `js/euc/simulation/world.js`; trace the rest before deleting.
    Call `releaseConstruction` from `js/sj-handoff.js` only after building and after
-   your host has consumed or copied the construction records it needs.
+   your host has consumed or copied the construction records it needs. Set up the atmosphere and renderer
+   as shown in [the fork guide](FORK_GUIDE.md); `buildWorld` adds the baked lamp light.
 3. **For independent games, ship only assets you have the rights to use.** Use your own cast, marks and recordings
    unless separately cleared. Read [NOTICE-EUC-THRILLS.md](NOTICE-EUC-THRILLS.md) and
    [audio/euc/PROVENANCE.md](audio/euc/PROVENANCE.md) for the terms. If retaining the engine, configure the

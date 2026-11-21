@@ -3,6 +3,7 @@
 // entrance), curid=123485577 (Atlantic walls), curid=148962402, curid=148962401 (2024 aerials: massing, lighthouse, path), curid=34389396, curid=34389747 (HABS: moat, bridge arches,
 // lighthouse, garita), curid=136301888 (garita). All dimensions come from sj-fort-layout.js, which owns the matching solids/tops.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 import {surfaceBuffer,drawGarita,masonryTexture} from './sj-gate.js';
 
 const OCHRE='#b8935f',PALE='#cdb994',GREY='#958c7b',WOOD='#7a5536',IRON='#1f2523',WHITE='#ece6d6',LANTERN='#2a2f30';
@@ -188,7 +189,7 @@ export function buildFort(fort,{scene,bake,own,box,cylinder,sphere,mat,meshes,te
       bake(box,...L(a,d,y+yy),f?.06:.6,1.1,f?.6:.06,'#3b3e3c',ryL,'facade');
     const top=y+l.body+.34;
     bake(cylinder,...L(0,0,top+.3),1.25,.6,1.25,WHITE,0,'solid');bake(cylinder,...L(0,0,top+.64),1.32,.08,1.32,LANTERN,0,'solid');
-    bake(cylinder,...L(0,0,top+.68+1.0),1.0,2.0,1.0,LANTERN,0,'solid');
+    bake(cylinder,...L(0,0,top+.68+1.0),1.0,2.0,1.0,LANTERN,0,'solid');glowLamp(...L(0,0,top+.68+1.0),'lighthouse');
     bake(sphere,...L(0,0,top+2.68),1.05,.62,1.05,LANTERN,0,'solid');
     bake(cylinder,...L(0,0,top+3.5),.05,1.0,.05,IRON,0,'solid');bake(sphere,...L(0,0,top+3.35),.14,.14,.14,LANTERN,0,'solid');}
 

@@ -9,6 +9,7 @@
 // two-tier walls, ground arches, ochre central pavilion on the harbour face. Coast Guard fence: inferred, plain.
 import * as THREE from 'three/webgpu';
 import {streetKit,IRON} from './sj-street-kit.js';
+import { glowPane } from './sj-glow.js';
 import {palmInstances} from './sj-palm.js';
 import {boxInstances,formInstances,lowTreeForm,lowPalmForm,mergedMesh} from './sj-seams-kit.js';
 import {minusConvex} from './sj-seams-geo.js';
@@ -52,7 +53,8 @@ export function buildPuntilla(n,ctx) {
     const P=(u,d)=>[f.a[0]+ux*u+f.n[0]*d,f.a[1]+uz*u+f.n[1]*d];
     return {L:f.length,ux,uz,ry,P,g:(u,d=.3)=>height(...P(u,d)),
       box:(u,y,d,w,h,dep,c,kind='facade')=>{const [x,z]=P(u,d);bake(box,x,y,z,w,h,dep,c,ry,kind);},
-      arch:(u,y0,d,w,h,c)=>{const [x,z]=P(u,d);bake(arch,x,y0,z,w,h/1.1,1,c,out?ry:ry+Math.PI,'facade');}};};
+      arch:(u,y0,d,w,h,c)=>{const [x,z]=P(u,d);bake(arch,x,y0,z,w,h/1.1,1,c,out?ry:ry+Math.PI,'facade');},
+      glow:(u,y,d,w,h,kind)=>{const [x,z]=P(u,d);glowPane(x,y,z,Math.atan2(f.n[0],f.n[1]),w,h,kind);}};};   // glazing lit at blue hour (sj-glow.js)
   // Box from a to b (local +X along the segment): bake turns Ry·Rz, rz = asin(dy/l), ry = atan2(−dz,dx).
   const bar=(a,b,w,h,colour,kind='solid')=>{const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],l=Math.hypot(dx,dy,dz);if(l<1e-4)return;
     bake(box,(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2,l,h,w,colour,Math.atan2(-dz,dx),kind,Math.asin(Math.max(-1,Math.min(1,dy/l))));};
@@ -161,7 +163,7 @@ export function buildPuntilla(n,ctx) {
       if(f.role!=='plain'&&F.L>=6){
       const k=Math.max(1,Math.floor(F.L/4.2)),bw=F.L/k,centre=F.L/2,pav=f.role==='harbour'?8:0;
       for(let i=0;i<k;i++){const u=(i+.5)*bw;if(pav&&Math.abs(u-centre)<pav+.8)continue;const [,hi]=gRange(F,u-1.2,u+1.2);
-        const top=Math.min(mid-.35,hi+3.4);if(top-hi>2.2){if(f.role==='street'){draw.push(()=>{F.box(u,(hi+.9+top)/2,.035,1.25,top-hi-.9+.2,.07,'#f1e3cf');F.box(u,(hi+.9+top)/2,.065,1.0,top-hi-.9,.05,glaze(u,hi,f.i));
+        const top=Math.min(mid-.35,hi+3.4);if(top-hi>2.2){if(f.role==='street'){draw.push(()=>{F.box(u,(hi+.9+top)/2,.035,1.25,top-hi-.9+.2,.07,'#f1e3cf');F.box(u,(hi+.9+top)/2,.065,1.0,top-hi-.9,.05,glaze(u,hi,f.i));F.glow(u,(hi+.9+top)/2,.091,1.0,top-hi-.9,'civic');
             F.box(u,(hi+.9+top)/2,.1,.05,top-hi-.9,.02,'#f1e3cf');});}
           else{cuts.push([u-1.25,u+1.25,hi+.2]);draw.push(()=>{const y0=hi+.2,h=top-hi-.45,spring=y0+.6*h/1.1;
             F.arch(u,y0,.04,2.5,top-hi-.2,'#f1e3cf');
@@ -170,9 +172,9 @@ export function buildPuntilla(n,ctx) {
             const [x,z]=F.P(u,.08);bake(fan,x,spring+.07,z,1.025,.5*h/1.1-.07,1,'#'+FAN,F.ry+(Math.abs(-F.uz-f.n[0])<1e-6&&Math.abs(F.ux-f.n[1])<1e-6?0:Math.PI),'facade');
             F.box(u,hi+1.4,.125,1.9,.06,.02,'#cdbfae');});}openings++;}
         const u0=mid+.6,u1=R-.8;if(u1-u0>1.2){
-          if(f.role==='north'){F.arch(u,u0-.08,.035,1.45,u1-u0+.16,'#f1e3cf');F.arch(u,u0,.06,1.15,u1-u0,glaze(u,u0,f.i));
+          if(f.role==='north'){F.arch(u,u0-.08,.035,1.45,u1-u0+.16,'#f1e3cf');F.arch(u,u0,.06,1.15,u1-u0,glaze(u,u0,f.i));F.glow(u,u0+(u1-u0)*.545/2,.062,1.15,(u1-u0)*.545,'civic');
             const sp=u0+.6*(u1-u0)/1.1;F.box(u,(u0+sp)/2,.075,.05,sp-u0,.02,'#f1e3cf');F.box(u,sp,.075,1.15,.05,.02,'#f1e3cf');}
-          else{F.box(u,(u0+u1)/2,.035,1.25,u1-u0+.2,.07,'#f1e3cf');F.box(u,(u0+u1)/2,.065,1.0,u1-u0,.05,glaze(u,u0,f.i));F.box(u,(u0+u1)/2,.1,.05,u1-u0,.02,'#f1e3cf');}openings++;}}
+          else{F.box(u,(u0+u1)/2,.035,1.25,u1-u0+.2,.07,'#f1e3cf');F.box(u,(u0+u1)/2,.065,1.0,u1-u0,.05,glaze(u,u0,f.i));F.glow(u,(u0+u1)/2,.091,1.0,u1-u0,'civic');F.box(u,(u0+u1)/2,.1,.05,u1-u0,.02,'#f1e3cf');}openings++;}}
       if(pav)cuts.push([centre-pav,centre+pav,null]);}
       course(F,f,cuts);
       // Thresholds under the cut openings: ground − .25 up to the opening's sill, front .10 (proud of the course).

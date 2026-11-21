@@ -5,6 +5,7 @@
 // white-cup lamps, green handrails, Tótem). All dimensions come from sj-norzagaray-layout.js, which owns the matching
 // solids, tops and cuts.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 import {surfaceBuffer} from './sj-gate.js';
 
 const IRON='#1f2523',TURF='#7e9866',TOP='#a59d8b',STONE='#d5cdbb',RAIL='#e6e0d2',HANDRAIL='#2e4a3c';
@@ -129,7 +130,7 @@ export function buildNorzagaray(n,{scene,bake,own,box,cylinder,sphere,mat,meshes
     bake(capG,x,y+.52*s,z,s,s,s,IRON,0,'solid');bake(sphere,x,y+.63*s,z,.035*s,.05*s,.035*s,IRON,0,'solid');};
   for(const {x,y,z,foot} of n.lamps){const f=Number.isFinite(foot)?Math.min(y-.05,foot):y-.05; // seated foot (sj-street-kit seatKitLamps)
     bake(cylinder,x,f<y-.05?(f+y+.45)/2:y+.2,z,.15,f<y-.05?y+.45-f:.5,.15,IRON,0,'solid');bake(cylinder,x,y+.5,z,.1,.12,.1,IRON,0,'solid');
-    bake(cylinder,x,y+2.05,z,.055,3.0,.055,IRON,0,'solid');bake(cylinder,x,y+3.58,z,.08,.08,.08,IRON,0,'solid');lantern(x,y+3.6,z);}
+    bake(cylinder,x,y+2.05,z,.055,3.0,.055,IRON,0,'solid');bake(cylinder,x,y+3.58,z,.08,.08,.08,IRON,0,'solid');lantern(x,y+3.6,z);glowLamp(x,y+3.6+.25,z,'post',{ground:y});}
 
   // ---- Las Ánimas flight (public stairs ride up and down): treads and cheeks from the layout. ----
   if(n.animas){const an=n.animas,[ux,uz]=an.axis,ry=Math.atan2(-uz,ux),C=r=>[(r[0][0]+r[2][0])/2,(r[0][1]+r[2][1])/2];
@@ -192,7 +193,7 @@ export function buildNorzagaray(n,{scene,bake,own,box,cylinder,sphere,mat,meshes
     scene.add(m);meshes.push(m);}
   // White-cup lamps (Wikimedia Commons curid=38237168): dark post with a white tapered diffuser.
   const cup=own(new THREE.CylinderGeometry(.24,.08,.55,10));
-  for(const {x,y,z,foot} of q.lamps){const lb=Number.isFinite(foot)?Math.min(y,foot):y;bake(cylinder,x,(lb+y+.5)/2,z,.12,y+.5-lb,.12,IRON,0,'solid');/* seated foot */bake(cylinder,x,y+1.95,z,.05,3.0,.05,IRON,0,'solid');bake(cup,x,y+3.72,z,1,1,1,'#f2f0ea',0,'solid');}
+  for(const {x,y,z,foot} of q.lamps){const lb=Number.isFinite(foot)?Math.min(y,foot):y;bake(cylinder,x,(lb+y+.5)/2,z,.12,y+.5-lb,.12,IRON,0,'solid');/* seated foot */bake(cylinder,x,y+1.95,z,.05,3.0,.05,IRON,0,'solid');bake(cup,x,y+3.72,z,1,1,1,'#f2f0ea',0,'solid');glowLamp(x,y+3.72,z,'cup',{ground:y});}
 
   const material=mat({map:rubbleTexture(textures),vertexColors:true,roughness:.95,metalness:0});
   const g=own(rubble.geometry()),m=new THREE.Mesh(g,material);m.name='sj-plaza-norzagaray-masonry';m.castShadow=true;m.receiveShadow=true;scene.add(m);meshes.push(m);

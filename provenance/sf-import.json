@@ -9,7 +9,7 @@
       "path": "FORK_GUIDE.md",
       "bytes": 7611,
       "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
-      "editionSha256": "a07c87031f76a4c0b58fd5cf88a90c7a46eea924e5e7d0c7fda2264cafe09fb0"
+      "editionSha256": "4e6b1998b25bb5e3bd4684ce2ba213e417c4267955f05bc7c5327a8e0e5513e7"
     },
     {
       "path": "LICENSE",
@@ -171,7 +171,7 @@
       "path": "js/euc-headlight.js",
       "bytes": 1182,
       "sha256": "c4860717e46de002d9d0e1b8897d5d88dcdc8cd84bb0f5406612bd5a6f047d10",
-      "editionSha256": "13790057db00f00d94aa0b7d77359e47017598782d0e3acabcfbeb41fabef6d3"
+      "editionSha256": "3b6e7e383611f08fc2bbffa32eef697573f205ae520f8ac6ba8ae1939ab126aa"
     },
     {
       "path": "js/euc-hud.js",
@@ -189,7 +189,7 @@
       "path": "js/euc-rider.js",
       "bytes": 20345,
       "sha256": "70fb0d53a9955f5b6d0bae1b9930941a316f1b041e06b8f55538abf9018f6513",
-      "editionSha256": "30b501143e23cf5bdfa4babcc436abdd1e45e42d0efa46af8159779a3f0b5613"
+      "editionSha256": "0bb27c9698168213d96ee28a1149306fbc7441f3db1bc6550a471ddb98dc99ee"
     },
     {
       "path": "js/euc-roster.js",
@@ -770,7 +770,7 @@
       "path": "js/sf-terrain-sampler.js",
       "bytes": 65554,
       "sha256": "f8b804d2874b05e7aa8c09b2430ca00b4554dead2fa291934efe545a519f7e92",
-      "editionSha256": "1c6e6cd98b56bd97f4b8805a17e5da462de50ea25ab30fea73fb3d44ed41019f"
+      "editionSha256": "3999c53ca01c8a7289427e36408bce3e456582fd10a6621349a53811e2619ee1"
     },
     {
       "path": "js/touch-controls.js",

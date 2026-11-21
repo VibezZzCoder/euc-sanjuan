@@ -9,6 +9,7 @@
 // Mesh budget: this builder keeps its own pools (boxes in two bands, cylinders, spheres, merged batches) instead of the
 // shared 64 m chunk pools, so a 600 m stretch costs a fixed handful of draw calls.
 import * as THREE from 'three/webgpu';
+import { glowLamp,glowPane } from './sj-glow.js';
 import {streetKit} from './sj-street-kit.js';
 import {palmInstances} from './sj-palm.js';
 import {paseoTexture} from './sj-gate.js';
@@ -91,7 +92,9 @@ export function buildWaterfront(n,ctx) {
         // Ends that land exactly on a face end (the building corner, where the next wall's plane is) stop 12–36 mm short (per class).
         const ic=.012+.008*(fr<.1?0:fr<.3?1:fr<.55?2:3);let u0=u-w/2,u1=u+w/2;if(Math.abs(u0)<.006)u0=ic;if(Math.abs(u1-f.length)<.006)u1=f.length-ic;if(u1-u0<.01)return;
         const [x,z]=Pt((u0+u1)/2,(fr+bk)/2);bake(box,x,(y0+y1)/2,z,u1-u0,y1-y0,fr-bk,c,ry,kind);},   // (not for parts reaching the roof plane)
-      arch:(u,y0,d,w,h,c)=>{const [x,z]=Pt(u,d);bake(arch,x,y0,z,w,h/1.1,1,c,out?ry:ry+Math.PI,'facade');}};};
+      arch:(u,y0,d,w,h,c)=>{const [x,z]=Pt(u,d);bake(arch,x,y0,z,w,h/1.1,1,c,out?ry:ry+Math.PI,'facade');},
+      // glazing that may be lit at blue hour (sj-glow.js): centre of its front face at depth d; long runs in ~3 m panes
+      glow:(u,y,d,w,h,kind)=>{const n=Math.max(1,Math.round(w/3.2));for(let i=0;i<n;i++){const [x,z]=Pt(u-w/2+(i+.5)*w/n,d);glowPane(x,y,z,out?ry:ry+Math.PI,w/n-.08,h,kind);}}};};
   const range=(F,u0,u1)=>{let lo=Infinity,hi=-Infinity;for(let k=0;k<=4;k++){const g=F.g(u0+(u1-u0)*k/4);lo=Math.min(lo,g);hi=Math.max(hi,g);}return [lo,hi];};
   // Runs of a horizontal band at height y: the u-intervals whose ground stays `clear` below it.
   const runs=(F,y,clear,margin=.6)=>{const out=[];let s=null;for(let u=margin;u<=F.L-margin+1e-6;u+=1){const ok=F.g(u)<y-clear;
@@ -122,11 +125,11 @@ export function buildWaterfront(n,ctx) {
               // #100 right-hand block (identity inferred from position): recessed loggia bays at the ends of long faces.
 
               if(b.style==='hotel'&&k>=8&&i%7===3)continue;   // quiet wall strips between the window groups (Wikimedia Commons curid=110093131)
-              F.box(u,y+wh/2,.02,ww+.38,wh+.4,.03,SURROUND);F.box(u,y+wh/2,.03,ww,wh,.03,glass);
+              F.box(u,y+wh/2,.02,ww+.38,wh+.4,.03,SURROUND);F.box(u,y+wh/2,.03,ww,wh,.03,glass);F.glow(u,y+wh/2,.045,ww,wh,'office');
               // Wikimedia Commons curid=110093131: balcony stacks on two bays per long face, every storey (vertical accents).
               if(b.style==='hotel'&&k>=8&&(i===Math.round(k*.25)||i===Math.round(k*.75))&&!f.water){F.box(u,y-.04,.38,ww+.8,.1,.76,WHITE);F.box(u,y+.45,.74,ww+.8,.05,.04,'#e9e4d8');}
               facadeBoxes++;}}
-          else for(const [u0,u1] of runs(F,y,.8)){F.box((u0+u1)/2,y+h/2,.04,u1-u0,h,.06,glass);if(b.style!=='ochoa')F.box((u0+u1)/2,y-.04,.07,u1-u0,.1,.12,shade(wall,1.1));facadeBoxes++;}
+          else for(const [u0,u1] of runs(F,y,.8)){F.box((u0+u1)/2,y+h/2,.04,u1-u0,h,.06,glass);F.glow((u0+u1)/2,y+h/2,.07,u1-u0,h,'office');if(b.style!=='ochoa')F.box((u0+u1)/2,y-.04,.07,u1-u0,.1,.12,shade(wall,1.1));facadeBoxes++;}
           // a strong white tier break over the hotel's street base and every third storey (Wikimedia Commons curid=110093131).
           if(b.style==='hotel'&&(floors===0||floors%3===2))F.box(L/2,y+S.floor-.15,.18,L-.2,floors===0?.45:.22,.28,WHITE);
           // a white belt under the top storey (the crown tier, Wikimedia Commons curid=110093131).
@@ -144,9 +147,9 @@ export function buildWaterfront(n,ctx) {
             for(let i=0;i<k;i++){const u=u0+(i+.5)*bw,[,gh]=range(F,u-bw/2,u+bw/2),y0=gh+.55;if(gTop-y0<1.6)continue;
 
               const door=i%3===1;if(b.style==='hotel')F.box(u,(gh+.2+gTop+.5)/2,.075,bw,gTop+.5-gh-.2,.01,'#efe5cc');   // the distinct pale ground storey
-              F.box(u,(y0+gTop)/2,b.style==='hotel'?.11:.09,bw-.7,gTop-y0,.04,door?'#6f838b':'#8ea3aa');
+              F.box(u,(y0+gTop)/2,b.style==='hotel'?.11:.09,bw-.7,gTop-y0,.04,door?'#6f838b':'#8ea3aa');if(!door)F.glow(u,(y0+gTop)/2,(b.style==='hotel'?.11:.09)+.02,bw-.7,gTop-y0,'shop');
               F.box(u,gTop-.65,.15,bw-.7,.08,.03,WHITE);F.box(u,(y0+gTop-.65)/2,.15,.08,gTop-.65-y0,.03,WHITE);
-              if(door){F.box(u,y0+1.15,.16,2.3,2.4,.03,WHITE);F.box(u,y0+1.1,.18,1.95,2.2,.03,'#5b6c73');F.box(u,y0+1.1,.2,.06,2.2,.02,WHITE);}
+              if(door){F.box(u,y0+1.15,.16,2.3,2.4,.03,WHITE);F.box(u,y0+1.1,.18,1.95,2.2,.03,'#5b6c73');F.glow(u,y0+1.1,.195,1.95,2.2,'shop');F.box(u,y0+1.1,.2,.06,2.2,.02,WHITE);}
               // Wikimedia Commons curid=110093131: dark green awnings over the hotel's street bays.
               if(b.style==='hotel'&&!door)F.box(u,gTop+.05,.7,bw-1.1,.32,1.3,'#3f5b4b','solid');}   // awnings broken at doors and piers
             for(let i=0;i<=k;i++){const u=Math.max(.35,Math.min(L-.35,u0+i*bw)),[gl]=range(F,Math.max(0,u-.4),Math.min(L,u+.4));F.box(u,(gl-.45+gTop)/2,.12,.62,gTop-(gl-.45),.2,SURROUND);}
@@ -169,7 +172,7 @@ export function buildWaterfront(n,ctx) {
             // rounder arches (height ≤ 1.3 × width) and a pale fanlight above the springing over darker
             // teal door glazing, green transom and mullion (Wikimedia Commons curid=122894933).
             F.arch(u,gh+.05,.05,bw-pw-.2,h+.15,WHITE);F.arch(u,gh+.05,.08,bw-pw-.5,h,'#2f4a3c');F.arch(u,gh+.1,.11,bw-pw-.8,h-.25,'#a9bcbf');
-            const sp=(h-.25)*.545;F.box(u,gh+.1+sp/2,.135,bw-pw-.8,sp,.01,'#5f777c');
+            const sp=(h-.25)*.545;F.box(u,gh+.1+sp/2,.135,bw-pw-.8,sp,.01,'#5f777c');F.glow(u,gh+.1+sp/2,.14,bw-pw-.8,sp,'shop');
             F.box(u,gh+.1+sp,.15,bw-pw-.8,.08,.03,'#2f4a3c');F.box(u,gh+.1+sp/2,.15,.07,sp,.03,'#2f4a3c');
             for(const a of [-.6,0,.6])F.box(u+a*(bw-pw-.8)*.35,gh+.1+sp+(h-.25-sp)*.4,.15,.04,(h-.25-sp)*.7,.02,'#2f4a3c');}
           for(let i=0;i<=k;i++){const u=Math.max(.3,Math.min(L-.3,i*bw));F.box(u,R+1.2+(i%2?0:.35),.0,.55,1.3+(i%2?0:.7),.32,'#f6f1e2','solid');}}
@@ -203,7 +206,7 @@ export function buildWaterfront(n,ctx) {
           // Fabric's garage vocabulary: a glazed pedestrian door beside the vehicle entrance and louvred vents
           // in some bays, between the arched openings.
           for(let i=0;i<kb;i++){const u=(i+.5)*bb,[gl,gh]=range(F,u-bb/2+.3,u+bb/2-.3);if(gh-gl>.9||hi+S.floor-gh<2.9||(ent!==null&&Math.abs(u-ent)<bb*.9))continue;
-            if(ent!==null&&Math.abs(u-ent-bb)<bb*.5){F.box(u,gh+1.3,.12,1.9,2.6,.04,SURROUND);F.box(u,gh+1.22,.15,1.5,2.36,.03,'#6f838b');F.box(u,gh+1.22,.18,.06,2.36,.02,SURROUND);
+            if(ent!==null&&Math.abs(u-ent-bb)<bb*.5){F.box(u,gh+1.3,.12,1.9,2.6,.04,SURROUND);F.box(u,gh+1.22,.15,1.5,2.36,.03,'#6f838b');F.glow(u,gh+1.22,.165,1.5,2.36,'stair');F.box(u,gh+1.22,.18,.06,2.36,.02,SURROUND);
               F.box(u,gh+2.75,.16,2.2,.16,.24,WHITE,'solid');continue;}
             if((i+b.id)%5===2){F.box(u,gh+1.7,.1,bb-1.6,1.3,.04,'#868c8b');for(let k=0;k<5;k++)F.box(u,gh+1.15+k*.26,.13,bb-1.7,.06,.04,'#a6acab');continue;}
             // the three garages keep their own ground storeys (mapped heights 33.8 / 19.7 / 18.2 m differ):
@@ -220,7 +223,7 @@ export function buildWaterfront(n,ctx) {
             F.box(u-1,gh+1.05,.15,4.2,.12,.06,'#e8e2d0','solid');}
           if(L>30){const u=L*.72,[gl]=range(F,u-3,u+3);F.box(u,(gl-.3+R+1.8)/2,.32,6,R+1.8-(gl-.3),.64,shade(wall,.92),'solid');
             for(let y=hi+2;y<R-1;y+=S.floor)F.box(u,y,.65,.9,1.6,.04,'#7c868a');}}
-        else{for(const [u0,u1] of runs(F,hi+3.4,2.2)){F.box((u0+u1)/2,hi+2.2,.03,u1-u0,2.2,.05,'#71868d');   // muted glass, not black
+        else{for(const [u0,u1] of runs(F,hi+3.4,2.2)){F.box((u0+u1)/2,hi+2.2,.03,u1-u0,2.2,.05,'#71868d');F.glow((u0+u1)/2,hi+2.2,.055,u1-u0,2.2,'terminal');   // muted glass, not black
             for(let u=u0+1.5;u<u1-.3;u+=3)F.box(u,hi+2.2,.07,.1,2.2,.04,SURROUND);}
           for(const [u0,u1] of runs(F,hi+3.9,3.4,.05))F.box((u0+u1)/2,hi+3.95,.45,u1-u0,.45,.9,WHITE,'solid');}
         let leaf=null;if(b.style==='terminal'){const g=n.gates.find(q=>q.road===294776923),e=g?[g.x,g.z]:[659.5,156.45],t=(e[0]-f.a[0])*F.ux+(e[1]-f.a[1])*F.uz,dd=Math.abs((e[0]-f.a[0])*f.n[0]+(e[1]-f.a[1])*f.n[1]);
@@ -250,12 +253,12 @@ export function buildWaterfront(n,ctx) {
           F.box(u,(y0+top)/2,.2,.36,top-y0,.4,'#e6e8e3','solid');facadeBoxes++;}
         // recessed pale-blue glazing behind the posts with green screens in only some bays (Wikimedia Commons curid=182041799).
         for(const [u0,u1] of runs(F,f.water?1.6:hi+2.8,f.water?.2:2.4,.5)){const y0=f.water?1.5:hi+.1,k=Math.max(1,Math.round((u1-u0)/4.5)),bw=(u1-u0)/k;
-          for(let i=0;i<k;i++){const u=u0+(i+.5)*bw,green=i%3===1;F.box(u,y0+1.3,green?.08:.02,bw-.5,2.6,.05,green?'#3f7d5a':'#8fa6ad');
+          for(let i=0;i<k;i++){const u=u0+(i+.5)*bw,green=i%3===1;F.box(u,y0+1.3,green?.08:.02,bw-.5,2.6,.05,green?'#3f7d5a':'#8fa6ad');if(!green)F.glow(u,y0+1.3,.045,bw-.5,2.6,'terminal');
             if(!green)F.box(u,y0+1.3,.05,.06,2.6,.03,'#e6e8e3');}}
         if(!f.water)for(const [u0,u1] of runs(F,hi+3.2,2.6,.5))F.box((u0+u1)/2,hi+2.95,.05,u1-u0,.5,.04,'#cfd6d2');
         // The closed passenger entrance where footway 1031719744 meets the face: dark glass doors in a white frame.
         if(!f.water){const e=[367.237,235.259],t=(e[0]-f.a[0])*F.ux+(e[1]-f.a[1])*F.uz,dd=Math.abs((e[0]-f.a[0])*f.n[0]+(e[1]-f.a[1])*f.n[1]);
-          if(dd<.6&&t>-.5&&t<L+.5){const u=Math.max(2,Math.min(L-2,t)),[,gh]=range(F,u-1.6,u+1.6);F.box(u,gh+1.4,.09,3.6,2.8,.06,WHITE);F.box(u,gh+1.3,.13,3.0,2.5,.04,'#40525c');for(const du of [-.75,0,.75])F.box(u+du,gh+1.3,.16,.08,2.5,.04,WHITE);F.box(u,gh+1.25,.16,3.0,.08,.04,WHITE);F.box(u,gh+1.3,.19,1.4,.12,.03,'#2c2c2a');}}
+          if(dd<.6&&t>-.5&&t<L+.5){const u=Math.max(2,Math.min(L-2,t)),[,gh]=range(F,u-1.6,u+1.6);F.box(u,gh+1.4,.09,3.6,2.8,.06,WHITE);F.box(u,gh+1.3,.13,3.0,2.5,.04,'#40525c');F.glow(u,gh+1.3,.15,3.0,2.5,'terminal');for(const du of [-.75,0,.75])F.box(u+du,gh+1.3,.16,.08,2.5,.04,WHITE);F.box(u,gh+1.25,.16,3.0,.08,.04,WHITE);F.box(u,gh+1.3,.19,1.4,.12,.03,'#2c2c2a');}}
         if(f.water){for(let u=2;u<L-1;u+=5.5){const [x,z]=F.P(u,.55);bake(cylinder,x,.6,z,.2,3.6,.2,'#2f6f73',0,'solid');}
           F.box(L/2,1.0,.32,L,.35,.22,'#2f7f86','solid');F.box(L/2,1.38,.75,L,.1,1.1,'#7a5a3e','solid');}}
       else if(b.style==='casita'||b.style==='kiosk'){// Wikimedia Commons curid=49348487: white window surrounds with dark green leaves; porch arches.
@@ -406,7 +409,7 @@ export function buildWaterfront(n,ctx) {
     const f=Math.min(l.y,l.foot??l.y);bake(cylinder,l.x,(f+l.y+.5)/2,l.z,.16,l.y+.5-f,.16,'#4d5355',0,'solid');bake(cylinder,l.x,l.y+2.45,l.z,.07,4.4,.07,'#5d6466',0,'solid');
     // Arm leaning over the walk (away from the water) and a flat luminaire.
     const tip=[l.x-sx*.9,l.y+4.55,l.z-sz*.9];kit.seg([l.x,l.y+4.5,l.z],tip,.045,'#5d6466');
-    bake(box,tip[0],tip[1]-.05,tip[2],.62,.12,.3,'#5d6466',Math.atan2(-sz,sx),'solid');bake(box,tip[0],tip[1]-.12,tip[2],.5,.03,.22,'#f2eedc',Math.atan2(-sz,sx),'solid');}
+    bake(box,tip[0],tip[1]-.05,tip[2],.62,.12,.3,'#5d6466',Math.atan2(-sz,sx),'solid');bake(box,tip[0],tip[1]-.12,tip[2],.5,.03,.22,'#f2eedc',Math.atan2(-sz,sx),'solid');glowLamp(tip[0],tip[1]-.14,tip[2],'port',{ground:l.y});}
   // Moored ferry (Wikimedia Commons curid=182041799, inferred catamaran proportions): twin dark hulls, white main deck cabin with a dark window band,
   // a smaller upper cabin and a teal sheer stripe. Static and render-only.
   if(n.boat){const B=n.boat,ry=-Math.atan2(B.uz,B.ux),nx=B.uz,nz=-B.ux,at=(u,o)=>[B.x+B.ux*u+nx*o,B.z+B.uz*u+nz*o];

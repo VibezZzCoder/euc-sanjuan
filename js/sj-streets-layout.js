@@ -620,6 +620,12 @@ function runtimeLayout({city,detail,height,terrain,surface,land,gate,fort,corrid
   // ---- Dressing. Clearance helpers. ----
   const carIdx=grid(16);for(const c of carriage)carIdx.add({...c,bb:[Math.min(c.a[0],c.b[0])-c.hw-6,Math.max(c.a[0],c.b[0])+c.hw+6,Math.min(c.a[1],c.b[1])-c.hw-6,Math.max(c.a[1],c.b[1])+c.hw+6]});
   const nearestCar=(x,z)=>{let best=null;for(const c of carIdx.query([x,x,z,z])){const dd=segDist(x,z,c.a,c.b)-c.hw;if(!best||dd<best.d)best={d:dd,c};}return best;};
+  // Pedestrian lanes of the old grid (Calle del Cristo, Callejón de la Capilla …) carry wall lanterns too (D1/G3 iron
+  // wall brackets): their centrelines, for the lantern rule only.
+  const pedIdx=grid(16);for(const r of city.roads)if(r.kind==='pedestrian'||r.kind==='living_street')for(let i=1;i<r.points.length;i++){const a=r.points[i-1],b=r.points[i],hw=(r.width??4)/2;
+    pedIdx.add({a,b,hw,bb:[Math.min(a[0],b[0])-hw-6,Math.max(a[0],b[0])+hw+6,Math.min(a[1],b[1])-hw-6,Math.max(a[1],b[1])+hw+6]});}
+  const nearestLane=(x,z)=>{const car=nearestCar(x,z);if(car&&car.d<=3.5)return car;let best=car;
+    for(const c of pedIdx.query([x,x,z,z])){const dd=segDist(x,z,c.a,c.b)-c.hw;if(!best||dd<best.d)best={d:dd,c};}return best;};
   const bIdx=grid(16);city.buildings.forEach((b,i)=>bIdx.add({b,i,bb:bbox(b.outer)}));
   const inBuilding=(x,z,r=0)=>{for(const it of bIdx.query([x-r,x+r,z-r,z+r])){if(inRing(x,z,it.b.outer))return true;
     if(r)for(let q=0;q<it.b.outer.length;q++)if(segDist(x,z,it.b.outer[q],it.b.outer[(q+1)%it.b.outer.length])<r)return true;}return false;};
@@ -764,7 +770,7 @@ function runtimeLayout({city,detail,height,terrain,surface,land,gate,fort,corrid
     const R=b.outer,sa=signedArea(R);if(R.some(p=>inDetail(...p)||inCorridor(...p)||ownedAt(p[0],p[1])))continue;
     for(let i=0;i<R.length;i++){const c=R[i],p=R[(i+R.length-1)%R.length],q=R[(i+1)%R.length];
       if(Math.sign(cross2(p,c,q))!==Math.sign(sa))continue;  // reflex (inner) corner
-      const n=nearestCar(c[0],c[1]);if(!n||n.d>3.5||n.d<-.2)continue;
+      const n=nearestLane(c[0],c[1]);if(!n||n.d>3.5||n.d<-.2)continue;
       // Facade edge most parallel to the street.
       const sd=[n.c.b[0]-n.c.a[0],n.c.b[1]-n.c.a[1]],sl=Math.hypot(...sd);
       const edges=[[c,p],[c,q]].map(([o,e])=>{const l=Math.hypot(e[0]-o[0],e[1]-o[1]);return {o,e,l,par:Math.abs(((e[0]-o[0])*sd[0]+(e[1]-o[1])*sd[1])/(l*sl||1))};}).filter(e=>e.l>2.5);
@@ -774,6 +780,19 @@ function runtimeLayout({city,detail,height,terrain,surface,land,gate,fort,corrid
       const fx=mx+nxo*.5,fz=mz+nzo*.5;
       if(lampIdx.query([mx-S.lanternSpacing,mx+S.lanternSpacing,mz-S.lanternSpacing,mz+S.lanternSpacing]).size||inBuilding(fx,fz)||ownedAt(fx,fz))continue;
       if(privates.some(f=>f(mx,mz,height(mx,mz))||f(fx,fz,height(fx,fz))))continue;  // never in a sealed (off-limits) zone
+      const ground=Math.max(height(mx+nxo*.1,mz+nzo*.1),height(fx,fz)),y=ground+S.lanternHeight;
+      if(b.roof<y+.9||b.base>ground+.5)continue;
+      lanterns.push({at:[mx,y,mz],dir:[nxo,nzo],building:b.id});lampIdx.add({bb:[mx,mx,mz,mz]});}}
+  // Fronts round a mapped square (Plaza de San José; old-grid lanterns L1): one lantern mid-front on each facade that
+  // faces the square, under the same wall, height, spacing and sealed-zone checks.
+  for(const sq of [...city.places,...others.flatMap(([,a])=>a.places??[])].filter(p=>p.name==='Plaza de San José'))for(const b of city.buildings){if(ownedB.has(b.id))continue;
+    const R=b.outer;if(R.some(p=>inDetail(...p)||inCorridor(...p)||ownedAt(p[0],p[1])))continue;
+    for(let i=0;i<R.length;i++){const c=R[i],q=R[(i+1)%R.length],l=Math.hypot(q[0]-c[0],q[1]-c[1]);if(l<4)continue;
+      const ux=(q[0]-c[0])/l,uz=(q[1]-c[1])/l,mx=(c[0]+q[0])/2,mz=(c[1]+q[1])/2;let nxo=-uz,nzo=ux;if(inRing(mx+nxo*.2,mz+nzo*.2,R)){nxo=-nxo;nzo=-nzo;}
+      const tx=sq.x-mx,tz=sq.z-mz,td=Math.hypot(tx,tz);if(td>30||(tx*nxo+tz*nzo)/td<.6)continue;
+      const fx=mx+nxo*.5,fz=mz+nzo*.5;
+      const sp=S.lanternSpacing*.6;if(lampIdx.query([mx-sp,mx+sp,mz-sp,mz+sp]).size||inBuilding(fx,fz))continue;   // the square's paving is its owner's; a wall lantern 3.4 m up does not use it
+      if(privates.some(f=>f(mx,mz,height(mx,mz))||f(fx,fz,height(fx,fz))))continue;
       const ground=Math.max(height(mx+nxo*.1,mz+nzo*.1),height(fx,fz)),y=ground+S.lanternHeight;
       if(b.roof<y+.9||b.base>ground+.5)continue;
       lanterns.push({at:[mx,y,mz],dir:[nxo,nzo],building:b.id});lampIdx.add({bb:[mx,mx,mz,mz]});}}

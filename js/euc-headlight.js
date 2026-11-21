@@ -4,8 +4,9 @@
 // Keep the classic SF vehicle light module and its shared NPC consumers independent.
 import * as THREE from 'three/webgpu';
 
-export const EUC_HEADLIGHT = Object.freeze({ color: 0xfff4e2, intensity: 150, distance: 22,
-  angle: 0.5, penumbra: 0.7, decay: 1.3, pitch: 0.27, noseOffset: 0.02, lensNight: 2.4 });
+// San Juan: aimed about 7° down so the pool lands a few metres ahead of the wheel instead of at its foot.
+export const EUC_HEADLIGHT = Object.freeze({ color: 0xfff4e2, intensity: 150, distance: 26,
+  angle: 0.45, penumbra: 0.75, decay: 1.3, pitch: 0.12, noseOffset: 0.02, lensNight: 2.4 });
 
 export function headlightBeamScale(glow) {
   return Math.max(0, Math.min(1.28, (glow - 0.60) * 1.45));

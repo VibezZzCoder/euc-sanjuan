@@ -295,7 +295,7 @@ export function createPuntillaLayout({city,height,terrain,surface,land:landMask,
       palms.push({x,z,y:height(x,z),yaw:Math.atan2(-f.n[1],f.n[0])+(hash(Math.round(x*10),Math.round(z*10))-.5)*.8});}
     run+=f.length;}
   for(const h of hedges){const w=.42,r=[[-h.len/2,-w],[h.len/2,-w],[h.len/2,w],[-h.len/2,w]].map(([u,v])=>[h.x+h.ux*u+h.n[0]*v,h.z+h.uz*u+h.n[1]*v]);
-    h.ring=signedArea(r)<0?[...r].reverse():r;h.lo=Math.min(...h.ring.map(p=>height(...p)));prism(h.ring,h.lo-.1,h.y+.9);}
+    h.ring=signedArea(r)<0?[...r].reverse():r;h.lo=Math.min(...h.ring.map(p=>height(...p)));const c=prism(h.ring,h.lo-.1,h.y+.9);if(c)c.soft=true;}
   for(const p of palms)prism(circle(p.x,p.z,.24,8),p.y-.15,p.y+3.5);
   // Inmigrante island (Wikimedia Commons curid=184238581): a low lip round the planted island, dense broadleaf trees and dark lanterns inside.
   {const c=ISLAND.reduce((s,p)=>[s[0]+p[0]/ISLAND.length,s[1]+p[1]/ISLAND.length],[0,0]);

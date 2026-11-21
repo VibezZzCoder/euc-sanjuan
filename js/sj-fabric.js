@@ -6,6 +6,7 @@
 // One shared 256² atlas (paired panelled/louvred leaves, alpha-tested railing). Nothing casts shadows.
 import * as THREE from 'three/webgpu';
 import {PART_STRIDE} from './sj-fabric-layout.js';
+import {glowPanes} from './sj-glow.js';
 // Tier limits (m, from the camera to a cell's bounding sphere): [near, mid, far]; beyond the last the cell is not drawn.
 // Openings: near 20 triangles (surround, reveals, hood, sill, leaf), mid 8 (surround ring + leaf), far 2 (leaf only).
 // Boxes: near 10 (no back), mid 4 (front + top), far 2 (front). Railings: near only. Fog starts at 500 m; at the phone's
@@ -142,5 +143,6 @@ export function buildFabric(layout,{scene,mat,meshes,textures,own}) {
       mesh.castShadow=false;mesh.receiveShadow=true;mesh.computeBoundingSphere();mesh.computeBoundingBox();mesh.name='sj-fabric-'+(kind==='frame'?'open':kind);
       culled.push({mesh,geos,counts,limits:FABRIC_TIERS[kind],box:mesh.boundingBox});
       scene.add(mesh);meshes.push(mesh);instances+=N;count++;}}
+  glowPanes(layout.fabric.glowPanes);   // glazing that may be lit at blue hour (sj-glow.js)
   return {...layout.fabric.stats,instances,meshes:count};
 }

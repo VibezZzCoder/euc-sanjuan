@@ -14,6 +14,7 @@ import { createFramePacer,createFrameRatePreference } from './frame-rate.js';
 import { waitForRenderCompletion } from './render-completion.js';
 import { RidingCamera } from './sj-camera.js';
 import { createWaterWatchdog } from './euc-water-watchdog.js';
+import { createAtmosphere,createTimePreference,timeOverride } from './sj-atmosphere.js';
 
 import {animasTurnHint} from './sj-norzagaray-layout.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
@@ -22,6 +23,7 @@ let busy=false,resizePending=true,parked=false,sizeKey='',last=0,lastView=0,mute
 const keys={},touchKeys={},padKeys={},lookKeys={},pulses={},suppressed=new Set();
 const preferences=initialRenderPreferences(),resolution=createRenderResolutionPreference(undefined,preferences.resolution);
 const framePreference=createFrameRatePreference(),pacer=createFramePacer(framePreference.value);
+const timePreference=createTimePreference();let atmos,timeOfDay=timeOverride(params)??timePreference.value;
 const hudModel=createHudModel();
 const manager={inputEnabled:false,setTouchInput:(k,v)=>{if(manager.inputEnabled){if(v&&!touchKeys[k]&&['up','reset'].includes(k))pulses[k==='up'?'hopPressed':'resetPressed']=true;touchKeys[k]=v;}},clearTouchInput:()=>{clear(touchKeys);clear(pulses);},
   cancelTouchInput(){this.clearTouchInput();entity?.clearInput();},
@@ -44,7 +46,7 @@ function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);camer
   renderer.setDrawingBufferSize(1,1,1);renderer.setDrawingBufferSize(w,h,resolution.scale);resizePending=false;}
 function updateCamera(dt,snap=false){cameraControls.update(camera,entity,world,dt,snap);}
 function draw(now,dt=0,snap=false){if(resizePending)resize();entity.prepareView(now);updateCamera(lastView?Math.min(.1,(now-lastView)/1000):dt,snap);lastView=now;
-  const p=entity.position;sun.position.set(p.x-45,p.y+70,p.z+25);sun.target.position.copy(p);sun.target.updateMatrixWorld();renderer.render(scene,camera);}
+  atmos.aim(entity.position,camera);renderer.render(scene,camera);}
 // Start-of-ride warm-up (perf, 2026-11-19; ). Behind the loading screen, with
 // physics paused: one fenced real frame (normal sun shadow pass, the scene's cull/LOD updaters, chase camera) along each
 // of the four headings out of the spawn, so turning into those streets does not compile/upload on the first ride frames;
@@ -60,6 +62,15 @@ async function warmRidingView(){const start=performance.now();
     const now=await new Promise(requestAnimationFrame),t=performance.now();draw(now,0,true);times.push(performance.now()-t);
     if(times.length>=WARM.minFrames){const floor=Math.max(8,1.25*Math.min(...times));if(times.slice(-WARM.stable).every(v=>v<=floor))break;}}
   await waitForRenderCompletion(renderer);return {ms:performance.now()-start,frames:times.length};}
+// Boot compile of every material, geometry and pass variant in the city, whatever the spawn camera sees: objects first
+// seen after a rotation, a teleport or an hour change (and their shadow-pass variants) otherwise build pipelines then.
+// Behind the loading screen: the spatial cull updaters pause, every mesh is shown and unculled for one async compile
+// and one real frame (main and shadow pass), then every flag is restored.
+async function compileWholeCity(){const saved=[];
+  scene.traverse(o=>{if(o.isLOD&&o.autoUpdate){saved.push([o,'autoUpdate',true]);o.autoUpdate=false;}
+    if(o.isMesh||o.isLine||o.isPoints||o.isSprite){if(!o.visible){saved.push([o,'visible',false]);o.visible=true;}if(o.frustumCulled){saved.push([o,'frustumCulled',true]);o.frustumCulled=false;}}});
+  try{await renderer.compileAsync(scene,camera);sun.shadow.needsUpdate=true;renderer.render(scene,camera);await waitForRenderCompletion(renderer);}
+  finally{for(const [o,k,v] of saved)o[k]=v;}}
 let sun,spawn,arrivals=[],waterWatch;
 function arrival(point,headingY){return world.sampler.findPlacementTarget({x:point.x,z:point.z,headingY,referenceY:world.height(point.x,point.z),maxStepUp:entity?.controller.tuning.maxStepUp??.216});}
 function findArrival(point){
@@ -91,7 +102,7 @@ function tick(now){if(busy)return;const dt=last?Math.min(.05,(now-last)/1000):0;
   try{pad.update(dt);if(state!=='riding'||document.hidden)return;
     cameraControls.applyGamepadInput((lookKeys.KeyL||0)-(lookKeys.KeyJ||0),(lookKeys.KeyK||0)-(lookKeys.KeyI||0),(lookKeys.Minus||0)-(lookKeys.Equal||0),dt);
     const blended={...pulses};clear(pulses);for(const source of [keys,touchKeys,padKeys])for(const k in source)blended[k]=Math.max(blended[k]??0,source[k]);
-    entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));scenery.update(dt,entity.position);audio?.update(entity,entity.drainEvents());updateHud();
+    atmos.advance(dt);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));scenery.update(dt,entity.position);audio?.update(entity,entity.drainEvents());updateHud();
     if(pacer.shouldRender(now))draw(now,dt);
   }catch(error){failure(error);}}
 async function sound(){if(muted)return;if(!context){const Context=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Context)return;
@@ -167,25 +178,29 @@ function syncCamera(mode){for(const id of ['camera-mode','camera-setting'])$(id)
   $('camera-status').textContent=`Camera: ${mode==='look'?'Look-around':mode==='wide'?'Wide':'Chase'} · C / Y to switch`;
   $('camera-hint').textContent=mode==='look'?'Look around: drag to look up/down and turn. Pinch or +/− to magnify.':'Drag to orbit. Pinch or +/− to zoom. Look-around gives a rider-height view.';}
 
+// Time of day: uniforms and one environment bake, no shader rebuild; redraw the still frame behind a menu.
+function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;timePreference.set(next);atmos.apply(next);
+  for(const id of ['time-title','time-of-day'])$(id).value=next;if(state==='title'||state==='paused')draw(performance.now(),0,true);}
 async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms:{uInteriorGlow:{value:0}}};
   renderer=new THREE.WebGPURenderer({antialias:true,forceWebGL:params.get('webgpu')==='0'||(preferences.phone&&params.get('webgpu')!=='1'),powerPreference:'high-performance'});
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;renderer.shadowMap.enabled=true;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=1;renderer.shadowMap.enabled=true;
   await renderer.init();$('world').append(renderer.domElement);renderer.domElement.tabIndex=-1;
   renderer.domElement.addEventListener('webglcontextlost',event=>{event.preventDefault();failure(new Error('Graphics context lost. Retry to reload the city.'));});
   if(renderer.backend.device){renderer.backend.device.addEventListener('uncapturederror',event=>{event.preventDefault();if(!fallback('validation'))failure(event.error);});
     renderer.backend.device.lost.then(info=>{if(info.reason!=='destroyed'&&!fallback('device-lost'))failure(new Error('Graphics device lost'));});}
   scene=new THREE.Scene();scene.background=new THREE.Color('#a7cbd0');scene.fog=new THREE.Fog('#a7cbd0',350,2200);
-  camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.15,5000);scene.add(new THREE.HemisphereLight('#dbeaf1','#9b8665',2.1));
-  sun=new THREE.DirectionalLight('#fff0d4',2.8);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);
-  Object.assign(sun.shadow.camera,{left:-48,right:48,top:48,bottom:-48,near:1,far:180});sun.shadow.normalBias=.08;scene.add(sun,sun.target);
+  camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.15,5000);
+  // Sky, sun, environment light, haze and exposure for the chosen hour (js/sj-atmosphere.js).
+  atmos=createAtmosphere({renderer,scene,phone:preferences.phone});sun=atmos.sun;sun.userData.aim=(x,y,z)=>atmos.aim({x,y,z},camera);
   stage('Reading Old San Juan terrain and streets…',.12);world=await loadCity();
   stage('Building the compact city…',.25);scenery=await buildWorld(scene,world,p=>stage('Building streets and hills…',.25+p*.3));
   // Post-build handoff: drop construction-only area records (js/sj-handoff.js; ?handoff=0 keeps them).
   if(HANDOFF&&params.get('handoff')!=='0')releaseConstruction(world,Object.keys(AREA_LAYOUTS));
+  atmos.apply(timeOfDay);
   stage('Preparing Cool Rider…',.65);const appearance=await prepareEucRider('cool-rider');
   const candidate=world.city.places.find(p=>p.name==='Plaza de Armas')??{name:'Plaza de Armas',x:0,z:0};spawn=findArrival(candidate);
   if(!spawn)throw new Error('No safe Plaza de Armas spawn');
-  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,appearance});
+  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,appearance,softBodies:world.softBodies});
   // Immersion watchdog: a rider left in the sea without a native recovery is placed back at a checked dry public spot.
   waterWatch=createWaterWatchdog({sampler:world.sampler,spawn,arrivals:()=>arrivals,recovery:world.coast?.recoveryPoints,maxStepUp:entity.controller.tuning.maxStepUp,
     place:(x,z,h,y)=>entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2})});
@@ -200,6 +215,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
     onActivity:()=>document.body.dataset.input='gamepad'});
   for(const type of ['pointerdown','keydown'])document.addEventListener(type,()=>delete document.body.dataset.input,{capture:true});
   $('resolution').value=resolution.value;$('frame-limit').value=framePreference.value;
+  for(const id of ['time-title','time-of-day']){$(id).value=timeOfDay;$(id).onchange=()=>setTime($(id).value);}
   $('resolution').onchange=()=>{resolution.set($('resolution').value);resizePending=true;};
   $('frame-limit').onchange=()=>{framePreference.set($('frame-limit').value);pacer.set(framePreference.value);};
   $('sound').onchange=()=>{muted=!$('sound').checked;if(context)context.suspend();};
@@ -235,7 +251,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   window.addEventListener('blur',()=>{if(state==='riding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='riding')pause();last=0;});
   window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();});
   $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · Cool Rider`;
-  stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);await renderer.compileAsync(scene,camera);
+  stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);await compileWholeCity();
   stage('Finishing the first frame…',.95);draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
   stage('Warming the riding view…',.97);await warmRidingView();
   $('loading').hidden=true;$('title').hidden=false;gate('title');$('ride').focus();renderer.setAnimationLoop(tick);

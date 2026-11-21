@@ -4,6 +4,7 @@
 // slat benches on their own ground, Wikimedia Commons curid=80420009, curid=195143828, curid=122996449, curid=184241561 broad shade trees (tapered trunk, limbs into canopy lobes).
 // Every part sits on the layout's measured ground; the layouts own the matching solids.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 
 export const IRON='#1f2523';
 
@@ -16,18 +17,19 @@ export function streetKit({bake,own,box,cylinder,sphere}) {
   const capG=own(new THREE.ConeGeometry(.15,.14,4));capG.rotateY(Math.PI/4);
   // ---- Lamps: Wikimedia Commons curid=80420009 posts on stone bases along the seawall; Wikimedia Commons curid=131971361 black posts with curled arms and framed lanterns
   // (the lanterns hovered over a bare crossbar). Every lantern stands on a cup or the post top. ----
-  const lantern=(x,y,z,s=1)=>{bake(box,x,y+.025*s,z,.2*s,.05*s,.2*s,IRON,0,'solid');bake(box,x,y+.21*s,z,.18*s,.32*s,.18*s,'#e6d49c',0,'solid');
+  let lampGround;   // ground under the post being drawn (light-field height reference), else the kind's default
+  const lantern=(x,y,z,s=1)=>{glowLamp(x,y+.21*s,z,'kit',{ground:lampGround,scale:s});bake(box,x,y+.025*s,z,.2*s,.05*s,.2*s,IRON,0,'solid');bake(box,x,y+.21*s,z,.18*s,.32*s,.18*s,'#e6d49c',0,'solid');
     bake(capG,x,y+.43*s,z,s,s,s,IRON,0,'solid');bake(sphere,x,y+.52*s,z,.03*s,.04*s,.03*s,IRON,0,'solid');};
   // the foot ended at the centre-point ground (l.y), so on a slope its downhill edge floated (up to
   // 23.55 cm). `l.foot` (set by seatKitLamps from the drawn ground under the whole footprint, shared with the collider)
   // carries only the foot down; post, mouldings and lantern keep their heights. Without `l.foot` the old bytes result.
-  const lamps=list=>{for(const l of list){const {x,y,z}=l,f=Number.isFinite(l.foot)?Math.min(y,l.foot):y;
+  const lamps=list=>{for(const l of list){const {x,y,z}=l,f=Number.isFinite(l.foot)?Math.min(y,l.foot):y;lampGround=y;
     if(l.base){bake(cylinder,x,f<y?(f+y+1.2)/2:y+.6,z,.3,f<y?y+1.2-f:1.2,.3,'#cfc4aa',0,'solid');bake(cylinder,x,y+1.24,z,.34,.08,.34,'#ddd3bd',0,'solid');
       bake(cylinder,x,y+2.62,z,.06,2.76,.06,IRON,0,'solid');lantern(x,y+3.98,z,1.5);}
     else{bake(cylinder,x,f<y?(f+y+.5)/2:y+.25,z,.18,f<y?y+.5-f:.5,.18,IRON,0,'solid');bake(cylinder,x,y+2.045,z,.06,3.19,.06,IRON,0,'solid');
       bake(sphere,x,y+3.15,z,.09,.07,.09,IRON,0,'solid');lantern(x,y+3.62,z);
       for(const sd of [-1,1]){const a=[x,y+3.12,z],b=[x+.38*sd,y+3.28,z],e=[x+.5*sd,y+3.42,z];seg(a,b,.028,IRON);seg(b,e,.028,IRON);
-        bake(cylinder,x+.5*sd,y+3.44,z,.05,.06,.05,IRON,0,'solid');lantern(x+.5*sd,y+3.47,z);}}}};
+        bake(cylinder,x+.5*sd,y+3.44,z,.05,.06,.05,IRON,0,'solid');lantern(x+.5*sd,y+3.47,z);}}}lampGround=undefined;};
   // Benches: legs on their own ground, seat slats, backrest slats on two iron uprights (no floating backrest).
   const benches=list=>{for(const b of list){
     const P=(u,yy,d=0)=>[b.x+Math.cos(b.heading)*u+Math.sin(b.heading)*d,yy,b.z-Math.sin(b.heading)*u+Math.cos(b.heading)*d];

@@ -4,6 +4,7 @@
 // curid=127996363, curid=71286745, curid=31949754 (Plaza Colón: column, stair, cascade basins, round balustraded bastion, globe lamps, broadleaf trees).
 // All dimensions come from sj-cristobal-layout.js, which owns the matching solids, deck tops and terrain cut.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 import {surfaceBuffer,drawGarita,masonryTexture} from './sj-gate.js';
 import {createStatueBuilder,statueFrame} from './sj-statues.js';
 
@@ -219,9 +220,9 @@ export function buildCristobal(c,{scene,bake,own,box,cylinder,sphere,mat,meshes,
     else bake(cylinder,l.x,(l.bottom+y+.4)/2,l.z,.16,y+.4-l.bottom,.16,LAMP_IRON,0,'solid');
     bake(cylinder,l.x,y+1.7,l.z,.06,3.4,.06,LAMP_IRON,0,'solid');
     if(l.globes===2){cube(l.x,y+3.3,l.z,1.0,.05,.05,LAMP_IRON);for(const d of [-.5,.5]){bake(cylinder,l.x+d,y+3.36,l.z,.08,.1,.08,SOCKET,0,'solid');
-        bake(cylinder,l.x+d,y+3.33,l.z,.11,.03,.11,SOCKET,0,'solid');bake(sphere,l.x+d,y+3.55,l.z,.23,.23,.23,'#f4f3ee',0,'solid');}}
+        bake(cylinder,l.x+d,y+3.33,l.z,.11,.03,.11,SOCKET,0,'solid');bake(sphere,l.x+d,y+3.55,l.z,.23,.23,.23,'#f4f3ee',0,'solid');glowLamp(l.x+d,y+3.55,l.z,'globe',{ground:l.base});}}
     else{bake(cylinder,l.x,y+3.38,l.z,.09,.14,.09,SOCKET,0,'solid');bake(cylinder,l.x,y+3.33,l.z,.12,.04,.12,SOCKET,0,'solid');
-      bake(sphere,l.x,y+3.62,l.z,.25,.25,.25,'#f4f3ee',0,'solid');}}
+      bake(sphere,l.x,y+3.62,l.z,.25,.25,.25,'#f4f3ee',0,'solid');glowLamp(l.x,y+3.62,l.z,'globe',{ground:l.base});}}
   // Benches (OSM, backrest): iron legs, timber slats.
   for(const b of pl.benches){const pt=(u,y,d=0)=>[b.x+Math.cos(b.heading)*u+Math.sin(b.heading)*d,y,b.z-Math.sin(b.heading)*u+Math.cos(b.heading)*d];
     for(const l of b.legs){const lo=l.ground-.05;bake(box,...pt(l.u,(lo+b.y+.47)/2),.08,b.y+.47-lo,.5,IRON,b.heading,'solid');}

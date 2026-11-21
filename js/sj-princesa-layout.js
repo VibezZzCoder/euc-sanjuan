@@ -2,7 +2,9 @@
 // Paseo de la Princesa east to Raíces (Wikimedia Commons curid=80420009, curid=182263283, curid=195143828, curid=122996449) — © 2026 VibezZzCoder, MIT. OSM / ODbL; heights: USGS DEM.
 // area module. Shared physical/render owner: sj-princesa.js draws exactly these numbers.
 // Area contract (all fields consumed generically by sj-world.js / sj-plaza.js / main.js):
-//   colliders  — SfTerrainSampler colliders (prisms {outer,holes,minY,maxY,surface,support} or boxes {centre,halfExtents,rotationY})
+//   colliders  — SfTerrainSampler colliders (prisms {outer,holes,minY,maxY,surface,support} or boxes {centre,halfExtents,rotationY});
+//                a prism with `soft: true` is foliage (shrub, hedge): construction still treats it as occupied, the rider drags
+//                through it (js/sj-soft-foliage.js) and it is never a solid (no crash, no camera or placement obstacle)
 //   tops       — replacement/support floors (same shape as sj-gate-layout / sj-fort-layout tops)
 //   cuts       — render-only convex terrain cuts {planes,minX,maxX,minZ,maxZ}
 //   tint       — Map(terrain vertex index → tone name ('rock','lawn','paseo','stone','masonry') or '#rrggbb')

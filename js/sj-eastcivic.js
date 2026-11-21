@@ -11,6 +11,7 @@
 // parapet; lions on the Leones exedra (OECH District 1).
 import * as THREE from 'three/webgpu';
 import {streetKit,IRON} from './sj-street-kit.js';
+import { glowPane } from './sj-glow.js';
 import {tallPalm} from './sj-palm.js';
 import {createStatueBuilder,statueFrame} from './sj-statues.js';
 import {faceList,STYLE,CAPITOL_ID,CAMARA_ID,SENADO_ID,ESPANA_ID,CARNEGIE_ID,ATENEO_ID,OLIMPICA_ID,TROPICAL_ID} from './sj-eastcivic-layout.js';
@@ -142,7 +143,8 @@ export function buildEastcivic(n,ctx) {
   const frame=f=>{const ux=(f.b[0]-f.a[0])/f.length,uz=(f.b[1]-f.a[1])/f.length,ry=-Math.atan2(uz,ux),P=(u,d)=>[f.a[0]+ux*u+f.n[0]*d,f.a[1]+uz*u+f.n[1]*d];
     return {L:f.length,ux,uz,ry,P,g:u=>height(...P(Math.max(0,Math.min(f.length,u)),.3)),
       box:(u,y,d,w,h,dep,c,kind='facade')=>{if(Math.abs(d-dep/2)<.006){const k=backInset(c);dep+=k;d-=k/2;}const [x,z]=P(u,d);bake(box,x,y,z,w,h,dep,c,ry,kind);},
-      cyl:(u,y,d,r,h,c,kind='solid')=>{const [x,z]=P(u,d);bake(cylinder,x,y,z,r,h,r,c,0,kind);}};};
+      cyl:(u,y,d,r,h,c,kind='solid')=>{const [x,z]=P(u,d);bake(cylinder,x,y,z,r,h,r,c,0,kind);},
+      glow:(u,y,d,w,h,kind)=>{const [x,z]=P(u,d);glowPane(x,y,z,Math.atan2(f.n[0],f.n[1]),w,h,kind);}};};   // glazing lit at blue hour (sj-glow.js)
   // wall-mounted trim boxes all had their back face on the wall plane; hidden inside
   // the building mass, but differently coloured backs shared one plane. Each colour's back now sits at its own depth inside
   // the wall (6 mm steps from 8 mm, one step per colour; same-colour backs may share a plane).
@@ -215,9 +217,9 @@ export function buildEastcivic(n,ctx) {
       for(let k=0;k<=bays;k++)Fr.box(Math.max(.25,Math.min(Lf-.25,k*bw)),(pn+R-1.4)/2,.09,.5,R-1.4-pn,.14,TRIM);
       for(let k=0;k<bays;k++){const u=(k+.5)*bw;if(bw<1.9)continue;
         // lower contrast (grey-blue glass), a mullion, transom and sill on every opening.
-        const WG='#4f5960';Fr.box(u,17.0,.06,1.75,5.0,.1,TRIM);Fr.box(u,17.0,.1,1.35,4.6,.06,WG);Fr.box(u,17.0,.14,.08,4.6,.03,TRIM);Fr.box(u,18.3,.14,1.35,.08,.03,TRIM);
+        const WG='#4f5960';Fr.box(u,17.0,.06,1.75,5.0,.1,TRIM);Fr.box(u,17.0,.1,1.35,4.6,.06,WG);Fr.glow(u,17.0,.131,1.35,4.6,'civic');Fr.box(u,17.0,.14,.08,4.6,.03,TRIM);Fr.box(u,18.3,.14,1.35,.08,.03,TRIM);
         Fr.box(u,14.45,.16,1.95,.12,.26,TRIM);Fr.box(u,19.75,.14,2.1,.22,.22,TRIM);
-        Fr.box(u,22.4,.06,1.55,2.8,.1,TRIM);Fr.box(u,22.4,.1,1.15,2.4,.06,WG);Fr.box(u,22.4,.14,.07,2.4,.03,TRIM);Fr.box(u,20.95,.15,1.7,.1,.2,TRIM);windows+=2;
+        Fr.box(u,22.4,.06,1.55,2.8,.1,TRIM);Fr.box(u,22.4,.1,1.15,2.4,.06,WG);Fr.glow(u,22.4,.131,1.15,2.4,'civic');Fr.box(u,22.4,.14,.07,2.4,.03,TRIM);Fr.box(u,20.95,.15,1.7,.1,.2,TRIM);windows+=2;
         const [,hi]=gRange(Fr,u-.8,u+.8);if(pn-hi>2.6){Fr.box(u,(hi+1.0+pn-.6)/2,.1,1.0,pn-.6-hi-1.0,.06,WG);windows++;}}}
     // Urns on the roof-edge corners.
     for(const p of n.capOuter){newAsm();bake(cyl8,p[0],R+1.25,p[1],.22,.35,.22,TRIM,0,'solid');bake(sphere,p[0],R+1.6,p[1],.3,.38,.3,TRIM,0,'solid');urns++;}
@@ -356,7 +358,7 @@ export function buildEastcivic(n,ctx) {
           if(arcade&&s2===0&&arcade(f)){archOn(Fr,f,u,ghi+.7,Math.min(2.4,bw*.7),Math.min(sh-.3,3.4),trim,.05);archOn(Fr,f,u,ghi+.7,Math.min(2.4,bw*.7)-.4,Math.min(sh-.3,3.4)-.25,'#2c2a27',.08);count++;continue;}
           const parts=pair&&w>.9?[-.3,.3]:[0],pw=pair&&w>.9?w*.42:w;
           Fr.box(u,(y0+y1)/2,.05,w+.3,y1-y0+.3,.08,trim);
-          for(const du of parts){Fr.box(u+du*w,(y0+y1)/2,.08,pw,y1-y0,.05,glass);Fr.box(u+du*w,(y0+y1)/2,.11,.06,y1-y0,.02,trim);Fr.box(u+du*w,y0+(y1-y0)*.7,.11,pw,.06,.02,trim);}
+          for(const du of parts){Fr.box(u+du*w,(y0+y1)/2,.08,pw,y1-y0,.05,glass);Fr.glow(u+du*w,(y0+y1)/2,.106,pw,y1-y0,'civic');Fr.box(u+du*w,(y0+y1)/2,.11,.06,y1-y0,.02,trim);Fr.box(u+du*w,y0+(y1-y0)*.7,.11,pw,.06,.02,trim);}
           Fr.box(u,y0-.08,.13,w+.45,.1,.24,trim);if(arch)Fr.box(u,y1+.12,.09,w*.55,.24,.1,trim);count++;}}}
     return count;};
   n.shells=Object.fromEntries(n.constants.OWNED.map(id=>[id,n.shellOf(id)]).filter(([,v])=>v));

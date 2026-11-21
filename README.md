@@ -12,6 +12,11 @@ world data and save settings.
 **Status: work in progress.** Ride from Plaza de Armas past the cathedral and through Puerta de San Juan, or
 follow Paseo del Morro along the city walls. Explore La Perla, the southern waterfront and La Puntilla, and
 ride public stairs in both directions, including the Capitol steps. Use the searchable map to jump to landmarks.
+The Caribbean sea has waves, surf, turquoise shallows, sky reflections and sun glitter, with gentler ripples in
+fountains and the pond. At blue hour, lamps, windows and floodlit landmarks come on, and the El Morro light flashes.
+The rebuilt riding camera pulls in around walls and tunnels,
+keeps clear of the sea, frames for portrait screens and eases back after a manual orbit. The Polvorín de Santa Elena
+roof and wall are repaired, and the wheel pushes through shrubs and hedges with drag instead of hitting a solid obstacle.
 
 ## Run it locally
 
@@ -23,13 +28,15 @@ python3 tools/serve.py
 ```
 
 Then open **http://127.0.0.1:8004** in a current browser on the same machine. The game tries WebGPU with a
-WebGL2 fallback, and defaults to WebGL2 on phones. Add `?webgpu=0` to force WebGL2 or `?webgpu=1` to request WebGPU.
-To play from another device, use a web server that device can reach.
+WebGL2 fallback, and defaults to WebGL2 on phones. Add `?webgpu=0` to force WebGL2 or `?webgpu=1` to request WebGPU;
+`?time=midday`, `?time=golden` or `?time=blue` overrides the saved hour for that visit.
+City materials are compiled during loading rather than on the ride. To play from another device, use a web server
+that device can reach.
 
 Controls: WASD or arrow keys ride, Space hops, Shift charges or tucks, R gets up, M opens the map and Esc pauses.
 Touch screens get a floating stick and buttons, and standard game controllers are supported. Choose Chase, Wide
-or Look-around from the Camera menu, or cycle views with C or controller Y. The pause menu sets 3D resolution
-and frame limit.
+or Look-around from the Camera menu, or cycle views with C or controller Y. Choose Midday, Golden hour (the default)
+or Blue hour on the title screen or in Pause; your choice is saved. Pause also sets 3D resolution and frame limit.
 
 Checks (Node.js 22.15 or newer, Python 3.9+):
 
@@ -52,8 +59,10 @@ Neither upstream checkout nor GIS tooling is needed to play the game.
 ## Current limits
 
 - Cool Rider is the only playable rider. Source assets for the other ten riders are included, but rider
-  selection and pursuit gameplay aren't available.
-- The city uses fixed daylight and a static sea surface.
+  selection and pursuit gameplay aren't available. The city has placeholder walkers and no traffic yet.
+- Blue hour is the darkest hour by design, and it is deliberately dim away from lamps, which use baked lighting without
+  per-lamp shadows. The sea stays physically flat; the reef shelf is an approximation and does not reflect lamps.
+- Orbiting into a wall at a tunnel mouth can still bump the camera or briefly pull it close.
 - Fort interiors, some gates, the cemetery and the Coast Guard base remain closed. A map arrival is not a
   promise that every route between places is rideable.
 - Building shapes, heights and colours are simplified or inferred from mapped footprints and photographs; this is not

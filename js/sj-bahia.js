@@ -8,7 +8,9 @@
 // Mobile budget: the whole area draws through a handful of area-wide pools (instanced box/cylinder/icosahedron, one merged
 // solid and one merged leaf batch, one water batch) instead of the 64 m spatial pools, plus the shared palm instancing.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 import {streetKit} from './sj-street-kit.js';
+import {smallWaterMaterial,compileAtBoot} from './sj-sea.js';
 
 const hash01=(x,z)=>{let h=Math.imul(Math.round(x*10)|0,374761393)^Math.imul(Math.round(z*10)|0,668265263);h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967296;};
 const CONCRETE='#c9c4b8',PYLON='#a19e97',RAIL_POST='#2f3433',HANDRAIL='#c8ccca',ROD='#8d9493',WHITE='#eeece6',BRONZE='#6f5236';
@@ -118,12 +120,12 @@ export function buildBahia(n,ctx) {
     const f=l.foot??y-.05,pt=(t0)=>Math.max(y+t0,(l.hi??-1e9)+.06);   // plinth top: level, ≥6 cm above the uphill ground
     if(l.kind==='pylon'){{const t=pt(.25);bake(box,x,(f-.02+t)/2,z,.62,t+.02-f,.48,'#8b8880',ang);}bake(box,x,(f+y+4.0)/2,z,.46,y+4.0-f,.34,PYLON,ang);   // shaft rooted with the base (seating scan reads the shaft)
       for(const [u,v] of [[-.27,-.21],[.27,-.21],[.27,.21],[-.27,.21]]){const [px,pz]=P(u,v);bake(box,px,y+4.3,pz,.05,.6,.05,'#3b3f3e',ang);}
-      bake(box,x,y+4.28,z,.42,.48,.32,'#f1e8c8',ang);bake(box,x,y+4.64,z,.66,.08,.52,'#3b3f3e',ang);bake(box,x,y+4.02,z,.62,.06,.5,'#3b3f3e',ang);}
+      bake(box,x,y+4.28,z,.42,.48,.32,'#f1e8c8',ang);glowLamp(x,y+4.28,z,'pylon',{ground:y});bake(box,x,y+4.64,z,.66,.08,.52,'#3b3f3e',ang);bake(box,x,y+4.02,z,.62,.06,.5,'#3b3f3e',ang);}
     else{// an open lattice — four corner angles and crossed braces on every face, a boxed head.
       const C=[[-.16,-.16],[.16,-.16],[.16,.16],[-.16,.16]].map(([u,v])=>P(u,v));{const t=pt(.24);bake(box,x,(f+t)/2,z,.44,t-f,.44,'#5d6260',ang);}
       for(const [px,pz] of C)bake(box,px,y+2.15,pz,.04,4.1,.04,'#646a68',ang);
       for(let k=0;k<4;k++){const a=C[k],b=C[(k+1)%4];for(let lv=0;lv<3;lv++){const y0=y+.4+lv*1.23,y1=y0+1.23,[p,q]=lv%2?[b,a]:[a,b];bar([p[0],y0,p[1]],[q[0],y1,q[1]],.02,.02,'#7c8280');}}
-      bake(box,x,y+4.45,z,.42,.6,.42,'#e8e6de',ang);bake(box,x,y+4.8,z,.5,.1,.5,'#5d6260',ang);}}
+      bake(box,x,y+4.45,z,.42,.6,.42,'#e8e6de',ang);glowLamp(x,y+4.45,z,'lattice',{ground:y});bake(box,x,y+4.8,z,.5,.1,.5,'#5d6260',ang);}}
   // ---- Benches (shared kit), palms (shared instancing) with round planter rings on paving, raised planters with trees. ----
   kit.benches(n.benches);
   // Perf: a low-poly coconut palm (curved 5-sided trunk, boot, three nuts, eight fronds; ~100-triangle crown) instanced per
@@ -197,7 +199,7 @@ export function buildBahia(n,ctx) {
   // ---- El Faro monument (node only; form inferred): a dark granite stele on a pale base with a bronze plaque and a small
   // lantern. Obelisk (B4). Pond (421337002) with its jet (4211120239). ----
   {const m=n.faro,f=m.foot??m.y-.02;bake(box,m.x,(f+m.y+.18)/2,m.z,1.7,m.y+.18-f,.9,'#cfcabd');bake(box,m.x,m.y+1.3,m.z,1.2,2.3,.5,'#4d5052');bake(box,m.x,m.y+1.35,m.z+.26,.7,.5,.02,'#8a6a3e');
-    bake(box,m.x,m.y+2.55,m.z,.36,.2,.36,'#2f3231');bake(box,m.x,m.y+2.72,m.z,.26,.18,.26,'#f0e3b8');}
+    bake(box,m.x,m.y+2.55,m.z,.36,.2,.36,'#2f3231');bake(box,m.x,m.y+2.72,m.z,.26,.18,.26,'#f0e3b8');glowLamp(m.x,m.y+2.72,m.z,'faro',{ground:m.y});}
   // Obelisk (B4, B09): a tall flat-topped white blade on a low base, with the curved cream seat wall and hedge.
   {const m=n.obelisk,f=m.foot??m.y;bake(box,m.x,(f+m.y+.6)/2,m.z,1.5,m.y+.6-f,1.5,'#dedbd2');bake(box,m.x,m.y+3.65,m.z,.55,6.1,1.25,'#f0eee8',.35);bake(box,m.x,m.y+6.74,m.z,.62,.08,1.32,'#e2dfd7',.35);
     for(const sg of n.obeliskSet.seat){const L=Math.hypot(sg.q[0]-sg.p[0],sg.q[1]-sg.p[1]),ry=Math.atan2(-(sg.q[1]-sg.p[1]),sg.q[0]-sg.p[0]),H=sg.y+sg.h-(sg.g-.1);
@@ -239,12 +241,12 @@ export function buildBahia(n,ctx) {
   for(const [id,pool] of pools){const count=pool.c.length/3,mesh=new THREE.InstancedMesh(pool.g,pool.leaf?leafMat:solidMat,count);mesh.userData.cast=pool.cast;
     mesh.instanceMatrix.array.set(pool.m);mesh.instanceColor=new THREE.InstancedBufferAttribute(new Float32Array(pool.c),3);
     mesh.name='sj-plaza-bahia-'+id.replaceAll('|','-');mesh.castShadow=!!pool.cast;mesh.receiveShadow=true;mesh.computeBoundingSphere();scene.add(mesh);meshes.push(mesh);}
-  const waterMat=mat({vertexColors:true,roughness:.18,metalness:.05});
+  const waterMat=smallWaterMaterial({vertexColors:true});ctx.materials?.add(waterMat);   // js/sj-sea.js: ripple, sky Fresnel, sun
   for(const [key,b] of Object.entries(batches)){const kind=b.kind;if(!b.p.length)continue;const g=own(new THREE.BufferGeometry());
     g.setAttribute('position',new THREE.Float32BufferAttribute(b.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(b.n,3));
     g.setAttribute('color',new THREE.Float32BufferAttribute(b.c,3));g.computeBoundingSphere();
     const mesh=new THREE.Mesh(g,kind==='leaf'?leafMat:kind==='water'?waterMat:solidMat);mesh.name='sj-plaza-bahia-'+key.replace('|','-');
-    mesh.castShadow=false;mesh.receiveShadow=true;scene.add(mesh);meshes.push(mesh);}
+    mesh.castShadow=false;mesh.receiveShadow=true;if(kind==='water')compileAtBoot(mesh);scene.add(mesh);meshes.push(mesh);}
   return {...stats,lamps:n.lamps.length,benches:n.benches.length,palms:n.palms.length,trees:n.trees.length,planters:n.planters.length,
     pergolas:n.pergolas.length,canopies:n.canopies.length,bollards:n.bollards.length,racks:n.racks.length,pools:pools.size};
 }

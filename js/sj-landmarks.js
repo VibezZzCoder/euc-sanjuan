@@ -13,6 +13,7 @@
 // plinth. Barandilla (2018): brick-red plates, trees, lanterns.
 import * as THREE from 'three/webgpu';
 import {streetKit,IRON} from './sj-street-kit.js';
+import { glowPane } from './sj-glow.js';
 import {settTexture} from './sj-streets.js';
 
 const WHITE='#f5f3ec',DARK='#2a2724';
@@ -162,6 +163,7 @@ export function buildLandmarks(n,ctx) {
         // hidden bottoms never share a plane; the top stays
         {const b0=y-h/2,g=height(...P(Math.max(0,Math.min(f.length,u)),.02));if(b0<g-.001){const nb=Math.floor(b0/.03)*.03-.006*(botN++%5),e=b0-nb;y-=e/2;h+=e;}}/* buried bottoms on a 3 cm lattice minus an emission-order step */
         const [x,z]=P(u,d);bake(box,x,y,z,w,h,dep,c,ry,kind);stats.boxes++;},
+      glow:(u,y,d,w,h,kind)=>{const [x,z]=P(u,d);glowPane(x,y,z,Math.atan2(f.n[0],f.n[1]),w,h,kind);},   // glazing lit at blue hour (sj-glow.js)
       disk:(u,y,d,r,dep,c,kind='facade')=>{[d,dep]=sink(d,dep);const [x,z]=P(u,d);bake(cylinder,x,y,z,r,dep,r,c,ry+Math.PI/2,kind,Math.PI/2);},
       open:u=>!n.covered(...P(Math.max(.05,Math.min(f.length-.05,u)),.35))};
     // `lo` is the lowest ground both at the wall foot and 0.3 m out (previously only 0.3 m out, so
@@ -198,7 +200,8 @@ export function buildLandmarks(n,ctx) {
     for(let k=0;k<bays;k++){const u=(k+.5)*bw;if(!F.open(u)||!F.open(u-bw*.3)||!F.open(u+bw*.3))continue;const [,hi]=F.range(u-.9,u+.9);
       for(let y=hi+s.first,row=0;y+s.win[1]<R-.9;y+=s.storey,row++){const w=s.win[0]*(row===0&&s.groundWide?1.25:1),h=s.win[1],fill=s.glass?glaze(s.fill,u,y,f.i):s.fill;
         if(holes.some(([u0,u1,y0,y1])=>u+w/2+.4>u0&&u-w/2-.4<u1&&y+h+.4>y0&&y-.4<y1))continue;
-        if(s.arched&&(row>0||s.arched==='all'))F.arched(u,y,w,y+h-w/2,s.trim,fill,.15,.05);else F.window(u,y,y+h,w,s.trim,fill);
+        if(s.arched&&(row>0||s.arched==='all')){F.arched(u,y,w,y+h-w/2,s.trim,fill,.15,.05);if(s.glass){const top=y+h-w/2-.03-w/20;F.glow(u,(y+top)/2,.127,w,top-y,'civic');}}
+        else{F.window(u,y,y+h,w,s.trim,fill);if(s.glass)F.glow(u,y+h/2,.152,w,h,'civic');}
         if(s.muntin){F.box(u,y+h*.45,.16,.045,h*.9,.02,s.trim);F.box(u,y+h*.62,.165,w,.045,.02,s.trim);}
         if(s.balcony&&row===1){A0();F.box(u,y-.08,.22,w+.6,.1,.42,s.trim,'solid');for(let b=-w/2-.15;b<=w/2+.16;b+=.18)F.box(u+b,y+.33,.38,.04,.8,.04,IRON,'solid');F.box(u,y+.74,.38,w+.6,.05,.06,IRON,'solid');A1();}}}
     return F;}

@@ -8,6 +8,7 @@
 // (across, along, carriage half-width, kind) lets the shader draw the carriageway, the yellow kerb line and the slab
 // sidewalk from one vertex set: no extra kerb geometry.
 import * as THREE from 'three/webgpu';
+import { glowLamp } from './sj-glow.js';
 import {tallPalm} from './sj-palm.js';
 import {subtractRing,signedArea} from './sj-paving.js';
 import {bandSpan} from './sj-streets-layout.js';
@@ -441,6 +442,7 @@ export function buildStreets(layout,{scene,own,mat,meshes,textures,world:ctxWorl
       ...[[-1,-1],[-1,1],[1,-1],[1,1]].map(([a,b])=>seg([a*.1,.04,.52+b*.1],[a*.1,.36,.52+b*.1],.016,iron,4,true)),
       {g:cap,at:[0,.43,.52],rot:[0,Math.PI/4,0],colour:iron}];
     const lanterns=placeLanterns(layout.lanterns,ctxWorld);stats.lanternsDropped=layout.lanterns.length-lanterns.length;
+    for(const l of lanterns){const n=Math.hypot(l.dir[0],l.dir[1])||1;glowLamp(l.at[0]+l.dir[0]/n*.52,l.at[1]+.2,l.at[2]+l.dir[1]/n*.52,'lantern');}
     instanced(merged(parts),solid,lanterns,(l,o)=>{o.position.set(...l.at);o.rotation.set(0,Math.atan2(l.dir[0],l.dir[1]),0);o.scale.set(1,1,1);},'sj-streets-lanterns');}
   // ---- Bollard (Wikimedia Commons curid=182287159; kit form: tapered body, neck, domed cap) ----
   {const body=keep(new THREE.CylinderGeometry(.1,.14,1.12,10)),neck=keep(new THREE.CylinderGeometry(.075,.09,.08,10)),dome=keep(new THREE.SphereGeometry(.1,10,5,0,Math.PI*2,0,Math.PI/2));
