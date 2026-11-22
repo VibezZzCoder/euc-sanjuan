@@ -91,7 +91,8 @@ Neither upstream checkout nor GIS tooling is needed to play the game.
   promise that every route between places is rideable.
 - Building shapes, heights and colours are simplified or inferred from mapped footprints and photographs; this is not
   a surveyed replica.
-- The game with city life has been played in desktop Chrome and on an iPhone. Other browsers and devices may vary.
+- The game has been played in desktop Chrome and on an iPhone, and its menus and touch handling are checked on older
+  and current WebKit. Other browsers and devices may vary. Game text cannot be selected or copied.
 
 ## Build on the city
 

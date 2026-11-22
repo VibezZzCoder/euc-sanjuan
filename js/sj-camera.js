@@ -20,6 +20,7 @@ const ease=(rate,dt)=>1-Math.exp(-rate*dt);
 const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
 // Exact critically damped step toward `target` (any dt is stable). Returns [x, v].
 const SPRING=[0,0];
+const LOOK_SLOP=8; // CSS px a touch must travel before it turns the view
 export function springStep(x,v,target,w,dt){
   const e=x-target,c=v+w*e,k=Math.exp(-w*dt),a=e+c*dt;SPRING[0]=target+a*k;SPRING[1]=(c-w*a)*k;return SPRING;
 }
@@ -102,7 +103,9 @@ export class RidingCamera {
     const ndc=y=>1-2*(y-r.top)/r.height,mid0=r.left+r.width*.3,mid1=r.left+r.width*.7;let top=1,bottom=-1;
     const visible=e=>e&&!e.closest('[hidden]')&&e.getClientRects().length>0;
     for(const e of doc.querySelectorAll('#hud,#ride-status')){if(!visible(e))continue;const b=e.getBoundingClientRect();if(b.bottom<r.top+r.height*.4)top=Math.min(top,ndc(b.bottom));}
-    for(const e of doc.querySelectorAll('#touch-controls button,#touch-controls #touch-stick')){if(!visible(e))continue;const b=e.getBoundingClientRect();
+    // The floating stick is not measured: it appears under the thumb, and treating it as an obstacle tilted the view the
+    // moment a thumb touched the screen.
+    for(const e of doc.querySelectorAll('#touch-controls button')){if(!visible(e))continue;const b=e.getBoundingClientRect();
       if(b.right>mid0&&b.left<mid1&&b.top>r.top+r.height*.5)bottom=Math.max(bottom,ndc(b.top));}
     this.setSafeArea(top,bottom);
   }
@@ -111,7 +114,9 @@ export class RidingCamera {
     canvas.addEventListener('pointerdown',e=>{
       if(!enabled()||e.button!==0||this.pointers.size>=2)return;
       e.preventDefault();canvas.focus({preventScroll:true});
-      this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});canvas.setPointerCapture(e.pointerId);
+      // A finger settles before it drags: a touch turns the view only after it has moved LOOK_SLOP px from where it landed.
+      this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,armed:e.pointerType!=='touch'});
+      try{canvas.setPointerCapture(e.pointerId);}catch{/* the pointer ended already: window-less capture is optional */}
     });
     canvas.addEventListener('pointermove',e=>{
       const point=this.pointers.get(e.pointerId);if(!point||!enabled())return;
@@ -119,7 +124,10 @@ export class RidingCamera {
         const other=[...this.pointers.entries()].find(([id])=>id!==e.pointerId)[1];
         const before=Math.hypot(point.x-other.x,point.y-other.y),after=Math.hypot(e.clientX-other.x,e.clientY-other.y);
         this.zoom((before-after)*.035);
-      }else this.turn((e.clientX-point.x)*.006,(e.clientY-point.y)*.005);
+      }else if(point.armed)this.turn((e.clientX-point.x)*.006,(e.clientY-point.y)*.005);
+      else{const dx=e.clientX-point.x0,dy=e.clientY-point.y0,d=Math.hypot(dx,dy);
+        // Crossing the slop: only the first LOOK_SLOP px are spent; the rest of this move already turns the view.
+        if(d>=LOOK_SLOP){point.armed=true;const k=LOOK_SLOP/d;this.turn((dx-dx*k)*.006,(dy-dy*k)*.005);}}
       point.x=e.clientX;point.y=e.clientY;
     });
     for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>this.pointers.delete(e.pointerId));
@@ -130,7 +138,7 @@ export class RidingCamera {
   // layout), visibility/classes of the HUD and touch controls, the body state (camera tools, riding/paused), rotation.
   watchLayout(canvas){
     const doc=canvas.ownerDocument,view=doc?.defaultView;if(!doc||!view)return;const dirty=()=>{this.safeDirty=true;};
-    const els=()=>[canvas,...doc.querySelectorAll('#hud,#ride-status,#touch-controls,#touch-controls button,#touch-stick')];
+    const els=()=>[canvas,...doc.querySelectorAll('#hud,#ride-status,#touch-controls,#touch-controls button')];
     if(view.ResizeObserver){this._layoutRO=new view.ResizeObserver(()=>{this.safeDirty=false;this.measureSafeArea();});for(const e of els())this._layoutRO.observe(e);}
     if(view.MutationObserver){this._layoutMO=new view.MutationObserver(dirty);this._layoutMO.observe(doc.body,{attributes:true,attributeFilter:['class','data-state']});
       for(const e of els())this._layoutMO.observe(e,{attributes:true,attributeFilter:['hidden','class','style']});}

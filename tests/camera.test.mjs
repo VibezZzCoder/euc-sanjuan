@@ -143,3 +143,37 @@ test('unobstructed camera motion is independent of render cadence',()=>{
     step(f,1.5,hz,t=>{f.entity.heading=Math.min(1.2,t);f.entity.position.set(Math.sin(t)*3,10,t*3);});positions.push(f.camera.position.clone());}
   assert.ok(positions[0].distanceTo(positions[1])<.03&&positions[1].distanceTo(positions[2])<.015,positions.map(p=>p.toArray().join(',')).join(' | '));
 });
+
+// Touch look: a canvas stand-in that records the listeners the camera binds.
+const fakeCanvas=()=>{const on={},captured=new Set();return {on,captured,ownerDocument:null,addEventListener:(t,f)=>{on[t]=f;},focus(){},
+  setPointerCapture:id=>captured.add(id),hasPointerCapture:id=>captured.has(id),releasePointerCapture:id=>captured.delete(id)};};
+const pointer=(id,x,y,pointerType='touch')=>({pointerId:id,clientX:x,clientY:y,pointerType,button:0,preventDefault(){}});
+test('a finger settling on the screen does not turn the view; a drag does, from where it crossed the slop',()=>{
+  const c=new RidingCamera(),canvas=fakeCanvas();c.bind(canvas,()=>true);
+  canvas.on.pointerdown(pointer(1,200,300));
+  for(const [x,y] of [[202,301],[204,303],[203,298],[205,304]])canvas.on.pointermove(pointer(1,x,y));
+  assert.equal(c.orbit,0,'placement jitter under 8 px leaves the orbit alone');assert.equal(c.pitch,CAMERA_PRESETS.chase.pitch);
+  canvas.on.pointermove(pointer(1,214,300)); // crosses the slop: the first 8 px are spent, the other 6 turn the view
+  assert.ok(Math.abs(c.orbit+6*.006)<1e-9,'crossing the slop spends only the slop');
+  canvas.on.pointermove(pointer(1,264,300));
+  assert.ok(Math.abs(c.orbit+56*.006)<1e-9,'then the drag turns the view by its own travel');
+  canvas.on.pointerup(pointer(1,264,300));assert.equal(c.pointers.size,0);
+});
+test('a fast swipe delivered as one move still turns the view',()=>{
+  const c=new RidingCamera(),canvas=fakeCanvas();c.bind(canvas,()=>true);
+  canvas.on.pointerdown(pointer(1,200,300));canvas.on.pointermove(pointer(1,260,300));canvas.on.pointerup(pointer(1,260,300));
+  assert.ok(Math.abs(c.orbit+52*.006)<1e-9);
+});
+test('a mouse drag turns the view at once; two fingers pinch at once',()=>{
+  const c=new RidingCamera(),canvas=fakeCanvas();c.bind(canvas,()=>true);
+  canvas.on.pointerdown(pointer(1,100,100,'mouse'));canvas.on.pointermove(pointer(1,103,100,'mouse'));
+  assert.ok(Math.abs(c.orbit+3*.006)<1e-9);canvas.on.pointerup(pointer(1,103,100,'mouse'));canvas.captured.delete(1); // a browser drops capture on release
+  const d0=c.distance;canvas.on.pointerdown(pointer(2,100,300));canvas.on.pointerdown(pointer(3,200,300));
+  canvas.on.pointermove(pointer(3,260,300));assert.ok(c.distance<d0,'spreading two fingers zooms in without waiting for a slop');
+  c.resetInput();assert.equal(c.pointers.size,0);assert.equal(canvas.captured.size,0);
+});
+test('the floating stick is not part of the safe frame the camera measures',async()=>{
+  const fs=await import('node:fs');const src=fs.readFileSync(new URL('../js/sj-camera.js',import.meta.url),'utf8');
+  const measured=[...src.matchAll(/querySelectorAll\('([^']+)'\)/g)].map(m=>m[1]);
+  assert.ok(measured.length>=3);assert.ok(measured.every(s=>!s.includes('touch-stick')),'no selector reads #touch-stick: '+measured.join(' | '));
+});

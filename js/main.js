@@ -18,9 +18,12 @@ import { createAtmosphere,createTimePreference,timeOverride } from './sj-atmosph
 import { createCityLife } from './sj-life.js';
 
 import {animasTurnHint} from './sj-norzagaray-layout.js';
-import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp} from './sj-ui.js';
+import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp,keepPageHome,bindHeldFingerTaps} from './sj-ui.js';
 import {GROUND_AREAS} from './sj-streets-data.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
+const QUIET={preventScroll:true}; // focusing a menu control must never scroll the page on a phone
+keepPageHome();
+const heldTaps=bindHeldFingerTaps();for(const type of ['blur','resize','pagehide'])window.addEventListener(type,()=>heldTaps.reset());
 let state='loading',renderer,entity,touch,pad,audio,context,master,world,scene,camera,scenery,life,lifeAudio;
 let busy=false,resizePending=true,parked=false,sizeKey='',last=0,lastView=0,muted=false,transition=0,audioPreparation,cameraControls;
 const keys={},touchKeys={},padKeys={},lookKeys={},pulses={},suppressed=new Set();
@@ -57,7 +60,7 @@ function gate(next){transition++;state=next;document.body.dataset.state=next;fps
 function failure(error){if(state==='error')return;console.error(error);gate('error');renderer?.setAnimationLoop(null);
   audio?.dispose();lifeAudio?.dispose();
   for(const id of ['map','pause'])if($(id).open)$(id).close();$('loading').hidden=false;$('title').hidden=true;
-  $('loading-status').textContent='Could not continue: '+error.message;$('retry').hidden=false;$('retry').focus();}
+  $('loading-status').textContent='Could not continue: '+error.message;$('retry').hidden=false;$('retry').focus(QUIET);}
 function fallback(reason){if(renderer?.backend?.isWebGPUBackend&&params.get('webgpu')!=='0'){
   const url=new URL(location.href);url.searchParams.set('webgpu','0');url.searchParams.set('fallback',reason);location.replace(url);return true;}return false;}
 function stage(message,value){$('loading-status').textContent=message;$('progress').value=value;}
@@ -161,9 +164,11 @@ async function resume(){if(busy||!entity||!['title','paused','map'].includes(sta
     if(parked||sizeKey!==bufferKey())resizePending=true;parked=false;draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
     if(revision!==transition||document.hidden)return;
   for(const id of ['pause','map'])if($(id).open)$(id).close();$('map-canvas').width=$('map-canvas').height=1;
-  $('title').hidden=true;$('hud').hidden=false;$('ride-status').hidden=false;refitStreet();gate('riding');last=0;pacer.reset();renderer.domElement.focus();
+  $('title').hidden=true;$('hud').hidden=false;$('ride-status').hidden=false;refitStreet();gate('riding');last=0;pacer.reset();renderer.domElement.focus(QUIET);
   }catch(e){failure(e);}finally{busy=false;action.textContent=label;$('ride').disabled=$('resume').disabled=false;$('ride').removeAttribute('aria-busy');}}
-async function pause(){if(busy||state!=='riding')return;gate('paused');showHelp?.(inputDevice(document.body));$('pause').showModal();document.querySelector('#pause .sheet-body').scrollTop=0;$('resume').focus();}
+// The device is read before the gate (the gate hides the touch controls); a failure here must not leave a frozen ride.
+function pause(){if(busy||state!=='riding')return;const device=inputDevice(document.body);
+  try{gate('paused');showHelp?.(device);$('pause').showModal();document.querySelector('#pause .sheet-body').scrollTop=0;$('resume').focus(QUIET);}catch(error){failure(error);}}
 // Map palette: deep bay teal with paler shallows, warm sand land, plaster-coloured buildings, pale streets,
 // gate-red destinations, the yellow rider arrow.
 const MAP={sea:'#1c6a68',shallow:'#2f8c85',land:'#f0dcb0',building:'#d9a57c',road:'#fff8ea',edge:'#b78f68',dest:'#a62d23',ring:'#f8f1e3',ink:'#182c40',you:'#fee17d',water:'#d3ece8'};
@@ -210,7 +215,7 @@ function listPlaces(){const search=searchKey($('search').value);$('places').repl
   const none=!$('places').childElementCount?'No places match. Try another name.':'';if($('map-status').textContent!==none)$('map-status').textContent=none;}
 async function openMap(){if(busy||state!=='riding')return;busy=true;gate('map');try{await waitForRenderCompletion(renderer);
   if(state!=='map')return;
-  $('map').showModal();$('search').value='';listPlaces();for(const el of document.querySelectorAll('#map .directory,#map .map-body'))el.scrollTop=0;mapDrawing();$('close-map').focus();renderer.setDrawingBufferSize(1,1,1);parked=true;
+  $('map').showModal();$('search').value='';listPlaces();for(const el of document.querySelectorAll('#map .directory,#map .map-body'))el.scrollTop=0;mapDrawing();$('close-map').focus(QUIET);renderer.setDrawingBufferSize(1,1,1);parked=true;
   }catch(e){failure(e);}finally{busy=false;}}
 
 // D-pad up/down: nearest control in the next visual row (map destination grid wraps); same-row ties go to the
@@ -334,11 +339,11 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   life.focus(entity,camera);life.warm(true);try{await compileWholeCity();}finally{life.warm(false);}
   stage('Finishing the first frame…',.95);draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
   stage('Warming the riding view…',.97);await warmRidingView();
-  $('loading').hidden=true;$('title').hidden=false;gate('title');$('ride').focus();renderer.setAnimationLoop(tick);
+  $('loading').hidden=true;$('title').hidden=false;gate('title');$('ride').focus(QUIET);renderer.setAnimationLoop(tick);
   // Page lifecycle retains BFCache state; terminal Retry is a full reload. No pagehide renderer destruction.
   window.addEventListener('pagehide',()=>{gate(['riding','map'].includes(state)?'paused':state);last=0;});
   window.addEventListener('pageshow',e=>{if(!e.persisted)return;gate(state);last=0;resizePending=true;
-    if(state==='paused'){if($('map').open)$('map').close();if(!$('pause').open)$('pause').showModal();$('resume').focus();}
-    else if(state==='title')$('ride').focus();else if(state==='error')$('retry').focus();});
+    if(state==='paused'){if($('map').open)$('map').close();if(!$('pause').open)$('pause').showModal();$('resume').focus(QUIET);}
+    else if(state==='title')$('ride').focus(QUIET);else if(state==='error')$('retry').focus(QUIET);});
 }
 await boot().catch(error=>{if(!fallback('startup'))failure(error);});

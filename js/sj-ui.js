@@ -5,6 +5,49 @@
 
 export const SHOW_FPS_KEY='euc-sanjuan-show-fps';
 
+/** The page never scrolls. iOS can still shift it (a closing keyboard, an installed copy coming back to the front), and
+ *  taps then land beside what is drawn; put it back, except while a field is being edited (iOS scrolls to keep that
+ *  above the keyboard). The New York and San Francisco editions carry the same guard. */
+export function keepPageHome(view=globalThis.window){
+  const doc=view?.document;if(!doc||!view.addEventListener)return ()=>{};
+  const editing=()=>{const el=doc.activeElement;return !!el&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));};
+  const snap=()=>{if(!editing()&&(view.scrollX!==0||view.scrollY!==0))view.scrollTo(0,0);};
+  for(const type of ['load','pageshow','resize','orientationchange','scroll'])view.addEventListener(type,snap,{passive:true});
+  view.addEventListener('focusout',()=>view.setTimeout(snap,0));
+  view.visualViewport?.addEventListener('resize',snap);view.visualViewport?.addEventListener('scroll',snap);
+  // Nothing outside a text field can start a selection (a long press or a double tap on game text).
+  doc.addEventListener('selectstart',event=>{const t=event.target?.nodeType===1?event.target:event.target?.parentElement;
+    if(!t?.closest?.('input,textarea,[contenteditable]'))event.preventDefault();});
+  return snap;
+}
+
+/** A tap by a second finger while another is held (a thumb on the stick) gets no `click` from the browser, so Pause,
+ *  Map and Camera did nothing while steering. Such a tap on a button outside the touch controls is activated on
+ *  release, once. It must be a tap: short, never further than `slop` from where it landed, still on its button, with no
+ *  long-press menu; and when one button's tap is taken, other buttons still held under resting fingers are disarmed.
+ *  An only finger keeps the browser's own click. If the browser sends a click for a release already activated here,
+ *  with no new contact in between, that click is dropped: it would act twice, or press whatever the first opened under
+ *  the finger. A new contact always gets its own click. */
+export function bindHeldFingerTaps(doc=globalThis.document,{slop=12,echo=400,hold=1000,now=()=>performance.now()}={}){
+  if(!doc?.addEventListener)return {reset(){}};
+  const presses=new Map();let touches=0,pending=null; // pointerId → {button,x,y,at,held,dead}
+  const buttonOf=t=>{const el=t?.nodeType===1?t:t?.parentElement,b=el?.closest?.('button');return b&&!b.disabled&&!b.closest('#touch-controls')?b:null;};
+  doc.addEventListener('pointerdown',e=>{pending=null;if(e.pointerType!=='touch')return;touches++;for(const p of presses.values())p.held=true;
+    const button=buttonOf(e.target);if(button)presses.set(e.pointerId,{button,x:e.clientX,y:e.clientY,at:now(),held:touches>1,dead:false});},true);
+  // A busy frame merges several moves into one event; the merged points still show a finger that left and came back.
+  doc.addEventListener('pointermove',e=>{const p=presses.get(e.pointerId);if(!p||p.dead)return;
+    for(const m of [e,...(e.getCoalescedEvents?.()??[])])if(Math.hypot(m.clientX-p.x,m.clientY-p.y)>slop){p.dead=true;break;}},{capture:true,passive:true});
+  doc.addEventListener('contextmenu',()=>{for(const p of presses.values())p.dead=true;},true);
+  const end=(e,released)=>{if(e.pointerType!=='touch')return;touches=Math.max(0,touches-1);const p=presses.get(e.pointerId);presses.delete(e.pointerId);
+    if(!released||!p?.held||p.dead||now()-p.at>hold||Math.hypot(e.clientX-p.x,e.clientY-p.y)>slop||buttonOf(doc.elementFromPoint?.(e.clientX,e.clientY))!==p.button)return;
+    for(const other of presses.values())other.dead=true;
+    pending={at:now(),x:e.clientX,y:e.clientY};p.button.click();};
+  doc.addEventListener('pointerup',e=>end(e,true),true);doc.addEventListener('pointercancel',e=>end(e,false),true);
+  doc.addEventListener('click',e=>{if(!e.isTrusted||!pending)return;const echoed=now()-pending.at<echo&&Math.hypot(e.clientX-pending.x,e.clientY-pending.y)<=slop*2;pending=null;
+    if(echoed){e.preventDefault();e.stopImmediatePropagation();}},true);
+  return {reset(){presses.clear();touches=0;pending=null;}};
+}
+
 /** Saved on/off for the FPS counter. Off by default; unreadable or blocked storage keeps the choice in memory. */
 export function createShowFpsPreference(getStorage=()=>globalThis.localStorage){
   let value=false;

@@ -97,3 +97,73 @@ test('a venue with its own footprint names its ground on the plaque, and the str
   assert.equal(idx.at(60,60),'');
   assert.deepEqual(splitStreetName('Skatepark del Muelle'),['Skatepark','del Muelle']);
 });
+
+test('phones: Pause has a definite height and no zero-basis flex item, game text is not selectable, fields stay at 16 px',()=>{
+  const css=fs.readFileSync(new URL('../css/game.css',import.meta.url),'utf8');
+  // Older WebKit (every iOS browser and Home Screen apps before 2026) gives `flex:1` in an auto-height column no height:
+  // Pause opened as a dimmed screen with a 4 px line and nothing to tap.
+  assert.match(css,/#pause\{height:calc\(100dvh[^}]*\)[^}]*\}/,'Pause is sized like the Map, not by its content');
+  for(const sel of ['.dialog-content,.map-content','.sheet-body']){
+    const rule=css.match(new RegExp(sel.replace(/[.,]/g,m=>'\\'+m)+'\\{([^}]*)\\}'))?.[1];assert.ok(rule,sel);
+    assert.doesNotMatch(rule,/flex:1(;|$)/,sel+' must not use the zero-basis shorthand');assert.match(rule,/flex:1 1 auto/,sel);}
+  const root=css.match(/\nhtml,dialog\{([^}]*)\}/)?.[1]??'';
+  for(const decl of ['-webkit-user-select:none','user-select:none','-webkit-touch-callout:none','-webkit-tap-highlight-color:transparent','touch-action:manipulation','-webkit-text-size-adjust:100%'])
+    assert.ok(root.includes(decl),'html{'+decl+'}');
+  assert.match(css,/input\[type=search\][^{]*\{-webkit-user-select:text;user-select:text[^}]*\}/,'the map search can still be edited and selected');
+  // iOS zooms the page when a field under 16 px takes focus.
+  for(const m of css.matchAll(/(select|input\[type=search\])[^{}]*\{[^}]*font-size:([\d.]+)px/g))assert.ok(+m[2]>=16,m[0].slice(0,80));
+  const main=fs.readFileSync(new URL('../js/main.js',import.meta.url),'utf8');
+  assert.doesNotMatch(main,/\$\('[a-z-]+'\)\.focus\(\)/,'menu focus never scrolls the page: use focus(QUIET)');
+  assert.match(main,/keepPageHome\(\);/);
+});
+test('the page-home guard snaps a scrolled page back, but not while a field is being edited',async()=>{
+  const {keepPageHome}=await import('../js/sj-ui.js');
+  const on={},docOn={};let scrolled=0;const doc={activeElement:null,addEventListener:(t,f)=>{docOn[t]=f;}};
+  const view={document:doc,scrollX:0,scrollY:0,addEventListener:(t,f)=>{on[t]=f;},setTimeout:f=>f(),scrollTo:()=>{scrolled++;view.scrollX=view.scrollY=0;},visualViewport:{addEventListener(){}}};
+  keepPageHome(view);on.scroll();assert.equal(scrolled,0,'nothing to do at the origin');
+  view.scrollY=40;on.scroll();assert.equal(scrolled,1);
+  view.scrollY=40;doc.activeElement={tagName:'INPUT'};on.resize();assert.equal(scrolled,1,'a focused field is left where iOS put it');
+  doc.activeElement={tagName:'BUTTON'};on.focusout();assert.equal(scrolled,2);
+  let stopped=0;const ev=t=>({target:t,preventDefault(){stopped++;}});
+  docOn.selectstart(ev({nodeType:1,closest:()=>null}));assert.equal(stopped,1,'game text cannot start a selection');
+  docOn.selectstart(ev({nodeType:1,closest:()=>({})}));assert.equal(stopped,1,'a text field can');
+});
+test('a second finger\'s tap on a button is activated on release, once; an only finger is left to the browser',async()=>{
+  const {bindHeldFingerTaps}=await import('../js/sj-ui.js');
+  const on={};let clock=0,under=null;const doc={addEventListener:(t,f)=>{on[t]=f;},elementFromPoint:()=>under};
+  const mk=(inTouch=false)=>{const b={nodeType:1,disabled:false,clicks:0,click(){this.clicks++;},closest(sel){return sel==='button'?b:sel==='#touch-controls'&&inTouch?{}:null;}};return b;};
+  const ev=(id,target,x,y,pointerType='touch')=>({pointerId:id,target,clientX:x,clientY:y,pointerType});
+  const canvas={nodeType:1,closest:()=>null},pauseButton=mk(),hop=mk(true);
+  const taps=bindHeldFingerTaps(doc,{now:()=>clock});
+  // an only finger: nothing synthesized
+  on.pointerdown(ev(1,pauseButton,350,30));under=pauseButton;on.pointerup(ev(1,pauseButton,351,31));assert.equal(pauseButton.clicks,0);
+  // a thumb on the stick, then the other thumb taps Pause
+  on.pointerdown(ev(2,canvas,100,600));on.pointerdown(ev(3,pauseButton,350,30));on.pointerup(ev(3,pauseButton,352,31));assert.equal(pauseButton.clicks,1);
+  // the browser's own click for that tap, if it comes, is dropped once; a later click is not
+  let stopped=0;const click=(x,y,isTrusted=true)=>({isTrusted,clientX:x,clientY:y,preventDefault(){stopped++;},stopImmediatePropagation(){}});
+  clock=30;on.click(click(352,31));assert.equal(stopped,1);on.click(click(352,31));assert.equal(stopped,1);
+  // the button finger went down first and the stick thumb joined during the press: still a held-finger tap
+  on.pointerup(ev(2,canvas,100,600));on.pointerdown(ev(4,pauseButton,350,30));on.pointerdown(ev(5,canvas,90,610));on.pointerup(ev(4,pauseButton,350,30));assert.equal(pauseButton.clicks,2);
+  clock=900;on.click(click(350,30));assert.equal(stopped,1,'a click long after is a new, intended one');
+  // dragged off, cancelled, a touch-control button, a mouse: nothing
+  on.pointerdown(ev(6,pauseButton,350,30));on.pointerup(ev(6,pauseButton,390,30));
+  on.pointerdown(ev(7,pauseButton,350,30));on.pointercancel(ev(7,pauseButton,350,30));
+  on.pointerdown(ev(8,pauseButton,350,30));under=canvas;on.pointerup(ev(8,pauseButton,351,30));under=pauseButton;
+  on.pointerdown(ev(9,hop,300,700));under=hop;on.pointerup(ev(9,hop,300,700));under=pauseButton;
+  on.pointerdown(ev(10,pauseButton,350,30,'mouse'));on.pointerup(ev(10,pauseButton,350,30,'mouse'));
+  assert.equal(pauseButton.clicks,2);assert.equal(hop.clicks,0);
+  // a new contact straight after an activated tap gets its own click (Close under the Map button, a second Camera tap)
+  taps.reset();stopped=0;clock=2000;on.pointerdown(ev(20,canvas,100,600));on.pointerdown(ev(21,pauseButton,350,30));on.pointerup(ev(21,pauseButton,350,30));assert.equal(pauseButton.clicks,3);
+  on.pointerup(ev(20,canvas,100,600));clock=2096;on.pointerdown(ev(22,pauseButton,352,31));on.pointerup(ev(22,pauseButton,352,31));on.click(click(352,31));assert.equal(stopped,0,'not an echo: a new finger went down');
+  // a finger resting on one button is disarmed when another button's tap is taken, and by a long-press menu, and by time
+  const resume=mk();taps.reset();clock=3000;on.pointerdown(ev(30,resume,200,100));on.pointerdown(ev(31,pauseButton,350,30));under=pauseButton;on.pointerup(ev(31,pauseButton,350,30));
+  under=resume;on.pointerup(ev(30,resume,200,100));assert.equal(pauseButton.clicks,4);assert.equal(resume.clicks,0,'the resting finger does not press Resume when it lifts');
+  taps.reset();on.pointerdown(ev(32,canvas,100,600));on.pointerdown(ev(33,resume,200,100));on.contextmenu({});on.pointerup(ev(33,resume,200,100));assert.equal(resume.clicks,0,'a long press is not a tap');
+  on.pointerdown(ev(34,resume,200,100));clock+=1500;on.pointerup(ev(34,resume,200,100));assert.equal(resume.clicks,0,'nor is a long hold');
+  // a drag that leaves the slop and comes back is not a tap
+  on.pointerdown(ev(35,resume,200,100));on.pointermove(ev(35,resume,100,134));on.pointermove(ev(35,resume,200,100));on.pointerup(ev(35,resume,200,100));assert.equal(resume.clicks,0);
+  on.pointerdown(ev(36,resume,200,100));on.pointermove(ev(36,resume,203,102));on.pointerup(ev(36,resume,203,102));assert.equal(resume.clicks,1,'a small wobble still is');
+  under=pauseButton;
+  // after a reset (blur, rotation) a lone tap is single again
+  taps.reset();on.pointerdown(ev(11,pauseButton,350,30));on.pointerup(ev(11,pauseButton,350,30));assert.equal(pauseButton.clicks,4);
+});
