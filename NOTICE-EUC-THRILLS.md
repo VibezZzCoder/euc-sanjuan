@@ -9,7 +9,7 @@ read that file for the complete upstream notice. The MIT licence text is in `js/
 scope, adaptations and rights summaries follow the second rule; they do not amend the upstream grants.
 
 **San Juan adaptation:** this notice carries the reviewed eleven-rider source baseline and audio provenance adapted
-through the owner's NYC and SF destinations. All eleven reviewed identities are included; only Cool Rider is playable. It does not assert
+through the owner's NYC and SF destinations. All eleven reviewed identities are included and playable (chosen from the title or Pause). It does not assert
 a new identity or asset grant; see the README for current features and testing limitations.
 [Fork authors and coding agents: start here](FORK_GUIDE.md).
 
@@ -102,7 +102,8 @@ Only the public identities below are credited; no additional legal/private ident
 | Gnarwheel | `gnarwheel` | `gnarwheel` | Real persona; [@\_gnarwheel\_](https://www.instagram.com/_gnarwheel_/). Participated, supplied copyrighted logo, crash and spoken recordings. |
 
 **Officer Dorkins (`cop`) is not a playable rider.** SF includes his NYC-derived look, pursuit and booking behavior,
-adapted to its city and terrain. He is a fictional original character, not a real officer; generic
+adapted to its city and terrain. San Juan adapts SF's pursuit and booking to its own streets and to an invented
+outdoor desk, the *Cuartelillo del Monociclo* ([file record](provenance/dorkins-import.json)). He is a fictional original character, not a real officer; generic
 police styling conveys no real force's identity. Cool Rider, Trollina, The Drunkard and the cop's original geometry
 and project-authored asset work fall within the original-asset grant, with audio exceptions below. The grant over
 project-authored geometry/materials does not license the real participants' identities.

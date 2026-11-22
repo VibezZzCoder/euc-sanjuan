@@ -48,6 +48,13 @@ export function findPlacementTarget(sampler, { x, z, headingY = 0, referenceY = 
   const hw = hull.halfWidthMetres + MARGIN, hl = hull.halfLengthMetres + MARGIN;
   const c = Math.cos(headingY), s = Math.sin(headingY);
   if (![hw, hl, hull.heightMetres].every(v => Number.isFinite(v) && v > 0)) return null;
+  // The standing volume needs only the centre floor: test it before the footprint grid. Every test here is a pure query
+  // and all must pass, so the order changes no answer; a pose beside a bench or a wall is refused after one query
+  // instead of after the whole grid (the rider's get-up search tries many such poses).
+  const body = { x, z, headingY, halfWidthMetres: hw, halfLengthMetres: hl,
+    minY: floor + 0.03, maxY: floor + hull.heightMetres, floorY: floor,
+    floorPlane: { x, y: floor, z, dx: slope.x, dz: slope.z }, velocityX: 0, velocityZ: 0 };
+  if (!recoveryVolumeClear(sampler, body)) return null;
   const nx = Math.ceil(2 * hw / SAMPLE_STEP), nz = Math.ceil(2 * hl / SAMPLE_STEP);
   for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) {
     const u = -hw + 2 * hw * i / nx, v = -hl + 2 * hl * j / nz;
@@ -57,10 +64,7 @@ export function findPlacementTarget(sampler, { x, z, headingY = 0, referenceY = 
     if (!Number.isFinite(sample.height) || !gradient(sample) || !matchesRegistration(px, pz, predicted)
       || Math.abs(sample.height - predicted) > maxStepUp + 1e-6 || !dry(sampler, px, pz, sample)) return null;
   }
-  const body = { x, z, headingY, halfWidthMetres: hw, halfLengthMetres: hl,
-    minY: floor + 0.03, maxY: floor + hull.heightMetres, floorY: floor,
-    floorPlane: { x, y: floor, z, dx: slope.x, dz: slope.z }, velocityX: 0, velocityZ: 0 };
-  return recoveryVolumeClear(sampler, body) ? { x, y: floor, z, headingY } : null;
+  return { x, y: floor, z, headingY };
 }
 
 /** Preflight from an already validated standing target, using recovery's 0.2 m sampling / 1.2 m maximum departure.

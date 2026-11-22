@@ -1,0 +1,116 @@
+/*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
+/* The rider picker (dialog #riders and the buttons that open it). Tokens and components come from game.css.
+   The crew is a sheet of postage stamps (ivory, perforated, the rider's colour as the stamp's ink); the highlighted
+   rider's details are the back of a postcard. Text and swatches only. The dialog has a definite height and no flex
+   item uses a zero basis (older WebKit gives such an item no height). */
+
+/* Each rider's ink (the swatch from the rider data; tests/riders.test.mjs keeps these equal to it). */
+[data-rider=cool-rider]{--stamp:#2f7fe8}[data-rider=trollina]{--stamp:#ff3fb4}[data-rider=red-rider]{--stamp:#e03a3a}
+[data-rider=adonisb2]{--stamp:#72ec16}[data-rider=maribel-vargas]{--stamp:#a95ff0}[data-rider=wheel-in-motion]{--stamp:#f0c419}
+[data-rider=drunkard]{--stamp:#e8951f}[data-rider=flo-with-zo]{--stamp:#23c9d6}[data-rider=seal-on-a-wheel]{--stamp:#e94689}
+[data-rider=wyldist]{--stamp:#28aad8}[data-rider=gnarwheel]{--stamp:#121418}
+
+/* ---- The buttons that open it (title plaque, Pause) ---- */
+.rider-pick{justify-content:flex-start;gap:10px;min-height:44px;margin-top:8px}
+#change-rider{margin:0 0 6px}
+.rider-dot{flex:none;width:18px;height:22px;background:var(--stamp,var(--cobalt));border:1.5px solid var(--ink);outline:1px solid var(--ivory);outline-offset:-4px}
+
+/* ---- The dialog ---- */
+#riders{height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));max-height:780px;
+  width:min(900px,calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)))}
+.riders-content{display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.riders-head{flex:none;position:relative;padding:16px 24px 14px;margin-bottom:14px;background:var(--p-pale);border-bottom:2px solid var(--ink)}
+.riders-head::after{content:'';position:absolute;left:0;right:0;bottom:-16px;height:14px;background:url(../assets/losa.svg) 0 0/14px 14px repeat-x}
+.riders-head h2{margin:2px 0 0;font-size:30px}
+.riders-body{flex:1 1 auto;min-height:0;display:flex;gap:16px;padding:10px 20px 10px}
+
+/* The sheet of stamps */
+.stamps{flex:none;width:min(400px,46%);min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;gap:10px;align-content:start;scroll-padding:8px;padding:10px;background:var(--paper);border:1.5px solid var(--rule)}
+.stamp{position:relative;display:block;width:100%;min-height:88px;padding:6px 6px 8px;margin:0;
+  background:var(--ivory);color:var(--ink);border:3px dotted var(--masonry);border-radius:0;box-shadow:2px 2px 0 var(--rule);
+  font:700 13px/1.15 var(--text);text-align:center}
+.stamp-ink{position:relative;display:block;height:42px;margin-bottom:6px;background:var(--stamp);border:1.5px solid var(--ink);outline:1px solid var(--ivory);outline-offset:-5px}
+.stamp-no{position:absolute;left:4px;top:4px;min-width:20px;padding:2px 4px 1px;background:var(--ivory);color:var(--ink);border:1px solid var(--ink);font:700 10px/1.1 var(--caps);letter-spacing:.06em}
+.stamp-name{display:block;overflow-wrap:break-word}
+.stamp:hover{background:#fffaf0}
+.stamp[aria-pressed=true]{border:3px solid var(--cobalt);box-shadow:4px 4px 0 var(--ink)}
+.stamp[aria-current=true]::after{content:'Riding';position:absolute;right:3px;top:30px;padding:3px 5px 2px;background:var(--ivory);color:var(--red);
+  border:2px solid var(--red);font:800 9.5px/1 var(--caps);letter-spacing:.12em;text-transform:uppercase;transform:rotate(-8deg);pointer-events:none}
+.stamp[aria-disabled=true]{cursor:wait;opacity:.55}
+.riders-actions [aria-disabled=true]{cursor:wait;opacity:.8}
+
+/* The back of a postcard: message on the left, the wheel on the ruled address side */
+.postcard{flex:1 1 auto;min-width:0;min-height:0;overflow:auto;overscroll-behavior:contain;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  align-content:start;padding:18px 18px 16px;background:var(--ivory);border:1.5px solid var(--ink);box-shadow:4px 5px 0 var(--rule)}
+#riders-card:focus-visible,body[data-input=gamepad] #riders-card:focus{outline-offset:-5px}
+.postcard-message{padding-right:16px;border-right:1.5px solid var(--cobalt)}
+.postcard-state{display:inline-block;padding:3px 8px 2px;background:var(--ochre);border:1.5px solid var(--ink);font:700 11px/1.2 var(--caps);letter-spacing:.14em;text-transform:uppercase}
+.postcard h3{margin:10px 0 8px;font:800 28px/1.05 var(--display);letter-spacing:-.01em}
+.postcard p{font:500 15px/1.5 var(--text)}
+.postcard .style-note{margin-top:12px;padding:8px 10px;border-left:4px solid var(--red);background:#fbf4e6;font-size:14px}
+.postcard-address{position:relative;padding:74px 0 0 16px}
+.postcard-address::after{content:'';display:block;height:56px;margin-top:10px;background:repeating-linear-gradient(transparent 0 27px,var(--rule) 27px 28px)}
+.postcard-stamp{position:absolute;top:0;right:0;width:50px;height:60px;background:var(--stamp);border:4px solid var(--ivory);outline:3px dotted var(--masonry);box-shadow:0 0 0 1.5px var(--ink)}
+.postcard-address .kicker{color:var(--cobalt)}
+.postcard h4{margin:4px 0 6px;font:800 19px/1.15 var(--display)}
+
+/* Status and actions */
+.riders-foot{flex:none;display:flex;flex-direction:column;gap:8px;padding:10px 20px 14px;border-top:2px solid var(--rule)}
+#riders-status{min-height:1.45em;font:500 14px/1.45 var(--text);color:var(--muted)}
+.riders-actions{display:flex;gap:10px}
+.riders-actions .primary{flex:1 1 auto;width:auto;min-width:0}
+.riders-actions .secondary{flex:none;width:auto;min-width:112px}
+#riders[aria-busy] #riders-status{color:var(--ink)}
+
+/* Compact (phones either way up): small stamps and a stacked postcard */
+@media (max-width:700px),(max-aspect-ratio:1/1),(max-height:500px){
+  .stamps{gap:8px;padding:8px;grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+  .stamp{min-height:60px;padding:4px 4px 6px;font-size:12.5px;overflow-wrap:normal}.stamp-ink{height:24px;margin-bottom:4px}
+  .stamp-no{top:2px;left:2px;padding:1px 3px 0;font-size:9px}
+  .stamp[aria-current=true]::after{top:-4px;right:2px}
+  .postcard{position:relative;grid-template-columns:minmax(0,1fr);padding:14px 14px 12px}
+  .postcard-message{padding:0 0 12px;border-right:0;border-bottom:1.5px solid var(--cobalt);margin-right:56px}
+  .postcard-address{position:static;padding:12px 0 0}
+  .postcard-stamp{top:12px;right:12px;width:42px;height:50px}
+  .postcard h3{font-size:24px}
+}
+/* Portrait: the sheet above the card */
+@media (max-width:700px) and (min-height:501px),(max-aspect-ratio:1/1){
+  .riders-body{flex-direction:column;gap:12px;padding:8px 14px 8px}
+  .stamps{width:auto;flex:none;max-height:34dvh}
+  .postcard{flex:1 1 auto;min-height:96px}
+  .riders-head{padding:14px 18px 12px}.riders-head h2{font-size:26px}
+  .riders-foot{padding:8px 14px 12px}
+}
+/* Short portrait: a one-line heading, a shorter sheet */
+@media (max-aspect-ratio:1/1) and (max-height:700px),(max-width:700px) and (min-height:501px) and (max-height:700px){
+  .riders-head{padding:10px 16px 9px;margin-bottom:12px}.riders-head .kicker{display:none}.riders-head h2{font-size:22px}
+  .stamps{max-height:30dvh}
+  #riders-status{font-size:13px}.riders-actions .primary{min-height:48px;font-size:16px}
+}
+@media (max-width:360px){.stamps{gap:6px;padding:6px;grid-template-columns:repeat(3,minmax(0,1fr))}.stamp{padding:3px 2px 5px;font-size:11.5px;border-width:2px}
+  .riders-actions .secondary{min-width:80px}.riders-actions .primary{font-size:16px;padding:10px 12px;gap:8px}}
+@media (max-width:300px){.stamps{grid-template-columns:repeat(2,minmax(0,1fr))}.postcard h3{font-size:20px}.postcard-message{margin-right:50px}.riders-actions .primary::after{display:none}}
+/* Short landscape: one-line header, sheet and card side by side, status beside the actions */
+@media (max-height:500px){
+  #riders{height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+  .riders-head{display:flex;align-items:baseline;gap:14px;padding:8px 18px 7px;margin-bottom:12px}.riders-head h2{font-size:21px}.riders-head .kicker{order:2}
+  .riders-body{flex-direction:row;padding:4px 14px 4px;gap:12px}
+  .stamps{flex:none;width:min(330px,44%);max-height:none}
+  .riders-foot{flex-direction:row;align-items:center;gap:12px;padding:6px 14px 8px}#riders-status{flex:1 1 auto;min-width:0;font-size:13px}
+  .riders-actions{flex:none;width:min(380px,56%)}.riders-actions .primary{min-height:46px;font-size:16px}
+}
+/* Small windows (short, or narrow): the footer always fits its buttons. Choose / Keep / Getting ready… without the
+   rider's name (it stays in the accessible name and in the status line) and without the arrow; the status line has its
+   own row above the actions, which never overlap. The postcard drops its decorative stamp so the name has the width. */
+@media (max-height:500px) and (max-width:619px),(max-width:360px){
+  .confirm-name{display:none}.riders-actions .primary::after{display:none}
+  .riders-foot{flex-direction:column;align-items:stretch;gap:4px}.riders-actions{width:auto}
+  .riders-actions .primary{justify-content:center;padding:8px 10px}.riders-actions .secondary{min-width:96px;padding:8px 10px}
+  .postcard-stamp{display:none}.postcard-message{margin-right:0}.postcard h3{font-size:20px}
+}
+/* The smallest windows (320px wide and short): one column of stamps, a narrower sheet, smaller card headings that break
+   inside a word only when the word cannot fit at all. */
+@media (max-height:500px) and (max-width:360px){.stamps{width:36%;grid-template-columns:minmax(0,1fr)}.postcard{padding:10px}
+  .postcard h3{font-size:17px}.postcard h4{font-size:15px}.postcard h3,.postcard h4{overflow-wrap:anywhere}}

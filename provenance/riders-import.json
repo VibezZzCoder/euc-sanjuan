@@ -1,0 +1,31 @@
+{
+  "cityEdition": "El Viejo San Juan: EUC Thrills by VibezZzCoder — https://github.com/VibezZzCoder/euc-sanjuan",
+  "note": "Rider-swap code adapted from the San Francisco edition of EUC Thrills (MIT: VibezZzCoder). Each entry records a San Juan file, the donor source file with its bytes and hash at the pinned commit, and the San Juan file's hash (checked by tests/riders.test.mjs). The listed public release has identical bytes for the donor file.",
+  "donors": {
+    "sanfrancisco": {
+      "source": "https://github.com/VibezZzCoder/euc-sanfrancisco",
+      "commit": "2526eb83dfc0ddfc90440ce6b73c2b522a67f363",
+      "publicRelease": "dd2bbab53c88671a182cbb6854010dea1d2b386f"
+    }
+  },
+  "files": [
+    {
+      "path": "js/sj-riders-selection.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/game-menu.js",
+      "sourceBytes": 20246,
+      "sourceSha256": "9cd91946119d96b502d90cfc4523c2fff51dd413a2ce31d6b07742f75c56ba49",
+      "editionSha256": "0eacd47b56418263c3a0c158fc84ba41fedd5c679b96672a76b65af0fb11c1c3",
+      "derived": "RiderSelection (donor lines 13-89): cancel the previous request, prepare the rig and the crash voice concurrently, abort the sibling on a fault, wait for both, check the latest request, both tickets' validity and a visible page, then commit both in one synchronous turn or dispose both. Changed: rig and audio are passed as small adapters instead of the donor's controller manager and audio system; no audio unlock (San Juan creates its audio context on the first Ride and decodes on a suspended one); no audio adapter means a rig-only swap; an extra 'allowed' check (the menu the picker was opened from is still showing); fault classification (Retry or Reload) moved into faultKind. GameMenu, TitleScreen and the donor's DOM and styles were not taken."
+    },
+    {
+      "path": "js/sj-riders.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/game-menu.js",
+      "sourceBytes": 20246,
+      "sourceSha256": "9cd91946119d96b502d90cfc4523c2fff51dd413a2ce31d6b07742f75c56ba49",
+      "editionSha256": "c7ad9257afd040d7037b67376657b41ddc5e872218f30c4036cb308a902b92d5",
+      "derived": "Only the two riding-style sentences of GameMenu.render (standard riders; The Drunkard's weave, sway and stumble), the Keep/choose labelling idea and the reload-with-the-committed-rider rule (onReload in the donor's main.js). The stamp sheet, the postcard, the San Juan host flow, the compile under San Juan's scene and shadow pass, and the input wiring were written for San Juan."
+    }
+  ]
+}

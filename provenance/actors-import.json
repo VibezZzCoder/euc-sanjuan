@@ -47,7 +47,7 @@
       "sourcePath": "js/traffic.js",
       "sourceBytes": 112039,
       "sourceSha256": "20365f1d36f5c8001e7fc07980b53c391927ec0a445a036639c919b8b90f867d",
-      "editionSha256": "6c6cc6844786026ad8babd34df0d6d70798f501e513a0e4882416616dd8b343d",
+      "editionSha256": "74c8bae21b118312fb75f6e9c03356f6d55bbfca5d5bce5a1f4a614100f53e70",
       "derived": "Car following (Intelligent Driver Model braking and free acceleration), the stop-sign sequence (full stop, order of arrival, timeout only with a clear junction), grade slowing with the uphill crawl, and the steering, signal and body-pitch pose; the lane graph, junction claims, manners towards people and the rider, and the population are new."
     },
     {

@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-PUBLIC = {'index.html','credits.html','LICENSE','NOTICE.md','NOTICE-EUC-THRILLS.md','FORK_GUIDE.md','README.md','LICENSING.md','PACKAGE.json'}
+PUBLIC = {'index.html','credits.html','manifest.webmanifest','LICENSE','NOTICE.md','NOTICE-EUC-THRILLS.md','FORK_GUIDE.md','README.md','LICENSING.md','PACKAGE.json'}
 DIRS = {'js','css','data','vendor','assets','audio','fonts','provenance'}
 
 
@@ -16,6 +16,8 @@ RUNTIME_DATA = {'boundary.geojson','city.json','ground.bin','land.u8','plaza-det
 
 
 class Handler(SimpleHTTPRequestHandler):
+    extensions_map={**SimpleHTTPRequestHandler.extensions_map,'.webmanifest':'application/manifest+json'}
+
     def end_headers(self):
         self.send_header('Cache-Control','no-store')
         self.send_header('X-Content-Type-Options','nosniff')

@@ -978,6 +978,7 @@ export async function createTraffic(context) {
   }
 
   return {
+    lanes: G, // the lane graph, read-only for other parts (js/sj-life.js graphs)
     update(dt, camera) {
       readCamera(camera);
       if (!N) return;

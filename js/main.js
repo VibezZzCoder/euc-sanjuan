@@ -20,6 +20,10 @@ import { createCityLife } from './sj-life.js';
 import {animasTurnHint} from './sj-norzagaray-layout.js';
 import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp,keepPageHome,bindHeldFingerTaps} from './sj-ui.js';
 import {GROUND_AREAS} from './sj-streets-data.js';
+import {RIDERS} from './euc-roster.js';
+import {createRiders,startingRider} from './sj-riders.js';
+import {createDorkins} from './sj-dorkins.js';
+import {createShell} from './sj-shell.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
 const QUIET={preventScroll:true}; // focusing a menu control must never scroll the page on a phone
 keepPageHome();
@@ -54,12 +58,51 @@ const manager={inputEnabled:false,setTouchInput:(k,v)=>{if(manager.inputEnabled)
   cancelTouchInput(){this.clearTouchInput();entity?.clearInput();},
   setGamepadInput:(k,v)=>{if(manager.inputEnabled)padKeys[k]=v;},clearGamepadInput:()=>clear(padKeys)};
 function clear(record){for(const k of Object.keys(record))delete record[k];}
-function gate(next){transition++;state=next;document.body.dataset.state=next;fpsMeter.reset();manager.inputEnabled=next==='riding';clear(keys);clear(touchKeys);clear(padKeys);clear(pulses);
+// ---- Host parts. The rider picker, the officer and the page shell plug in here instead of editing the loop. ----
+// MENUS: state → the element whose controls the gamepad drives in that state. A part may wrap an entry (for a dialog it
+// opens on top of that menu) or add a state of its own.
+// parts: objects with any of these methods, each called where its name appears below:
+//   warm(on)            around the boot compile: show everything you will ever draw, then hide it again
+//   sound(context,out)  once, when the audio context is created from the first Ride
+//   gate(next,prev)     after every state change
+//   frame(dt,now)       every riding frame, after the rider stepped and before the rider's sounds; may change the state
+//   idle(dt,now,state)  every frame of every other state while the page is visible (menus poll the gamepad themselves)
+//   cancel()            Esc or pad B: return true when you closed something of your own
+//   menu(input,dt)      every gamepad poll while a menu is open (sticks and edges); return true to consume it
+//   placed(reason)      the rider was put somewhere: 'map' | 'restart' | 'rescue'
+//   hour(name)          the time of day changed
+//   resize()            the window changed size or orientation
+//   view(camera)        a frame is being drawn and the riding camera is placed: a part may take the camera over (a cinematic)
+//   map(ctx,k)          the map is being drawn, in world metres; k is one CSS pixel in metres
+//   away() / returned(persisted)   the page is being left / shown again
+//   interrupted()       the player looked away (window blur, page hidden or left): drop any start that is still pending
+//   failed()            the game stopped on an error: close what you opened
+const MENUS={title:()=>$('title'),paused:()=>$('pause'),map:()=>$('map')},parts=[];
+const AUDIBLE=new Set(['riding']); // the states in which sound plays; every other state suspends the audio context
+const RESUMABLE=new Set(['title','paused','map']); // the states Ride/Resume may start riding from
+const each=(name,...args)=>{for(const part of parts)part[name]?.(...args);};
+const cancelled=()=>parts.some(part=>part.cancel?.());
+let riderId=startingRider(params);
+const host={$,params,QUIET,MENUS,AUDIBLE,RESUMABLE,parts,notify:(name,...args)=>each(name,...args),manager,preferences,keys,touchKeys,padKeys,pulses,clear,
+  get state(){return state;},get busy(){return busy;},set busy(value){busy=value;},get transition(){return transition;},
+  get renderer(){return renderer;},get scene(){return scene;},get camera(){return camera;},get world(){return world;},
+  get entity(){return entity;},get life(){return life;},get atmosphere(){return atmos;},get sun(){return sun;},
+  get audio(){return audio;},get lifeAudio(){return lifeAudio;},get context(){return context;},get master(){return master;},get muted(){return muted;},
+  get spawn(){return spawn;},get arrivals(){return arrivals;},get timeOfDay(){return timeOfDay;},
+  get cameraControls(){return cameraControls;},get pad(){return pad;},get touch(){return touch;},
+  get riderId(){return riderId;},set riderId(id){riderId=id;},
+  gate:(...a)=>gate(...a),draw:(...a)=>draw(...a),resume:()=>resume(),pause:()=>pause(),openMap:()=>openMap(),
+  failure:error=>failure(error),stage:(...a)=>stage(...a),sound:()=>sound(),arrival:(...a)=>arrival(...a),
+  arrivalFor:point=>arrivalFor(point),setText:(...a)=>setText(...a),resizeSoon:()=>{resizePending=true;},
+  restartClock:()=>{last=0;lastView=0;pacer.reset();},enterPause:()=>enterPause(),cancelStart:()=>{if(!pendingStart)return false;pendingStart.abort();return true;},redrawMap:()=>{if(state==='map'&&$('map').open)mapDrawing();}};
+// ---- end host parts ----
+function gate(next){const prev=state;transition++;state=next;document.body.dataset.state=next;fpsMeter.reset();manager.inputEnabled=next==='riding';clear(keys);clear(touchKeys);clear(padKeys);clear(pulses);
   clear(lookKeys);cameraControls?.resetInput();showCameraTools(false);
-  entity?.clearInput();touch?.setEnabled(next==='riding');pad?.reset();if(context)context[next==='riding'&&!muted?'resume':'suspend']().catch(()=>{});}
+  entity?.clearInput();touch?.setEnabled(next==='riding');pad?.reset();if(context)context[AUDIBLE.has(next)&&!muted?'resume':'suspend']().catch(()=>{});
+  each('gate',next,prev);}
 function failure(error){if(state==='error')return;console.error(error);gate('error');renderer?.setAnimationLoop(null);
   audio?.dispose();lifeAudio?.dispose();
-  for(const id of ['map','pause'])if($(id).open)$(id).close();$('loading').hidden=false;$('title').hidden=true;
+  for(const id of ['map','pause'])if($(id).open)$(id).close();try{each('failed');}catch(e){console.error(e);}$('loading').hidden=false;$('title').hidden=true;
   $('loading-status').textContent='Could not continue: '+error.message;$('retry').hidden=false;$('retry').focus(QUIET);}
 function fallback(reason){if(renderer?.backend?.isWebGPUBackend&&params.get('webgpu')!=='0'){
   const url=new URL(location.href);url.searchParams.set('webgpu','0');url.searchParams.set('fallback',reason);location.replace(url);return true;}return false;}
@@ -70,7 +113,7 @@ function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);camer
   // Same logical-pixel resolution policy as SF; DOM/map remain independently sharp.
   renderer.setDrawingBufferSize(1,1,1);renderer.setDrawingBufferSize(w,h,resolution.scale);resizePending=false;}
 function updateCamera(dt,snap=false){cameraControls.update(camera,entity,world,dt,snap);}
-function draw(now,dt=0,snap=false){if(resizePending)resize();entity.prepareView(now);updateCamera(lastView?Math.min(.1,(now-lastView)/1000):dt,snap);lastView=now;
+function draw(now,dt=0,snap=false){if(resizePending)resize();entity.prepareView(now);updateCamera(lastView?Math.min(.1,(now-lastView)/1000):dt,snap);each('view',camera);lastView=now;
   atmos.aim(entity.position,camera);renderer.render(scene,camera);}
 // Start-of-ride warm-up (perf, 2026-11-19; ). Behind the loading screen, with
 // physics paused: one fenced real frame (normal sun shadow pass, the scene's cull/LOD updaters, chase camera) along each
@@ -142,33 +185,41 @@ function updateHud(now){const speed=Math.abs(entity.speed),mph=(speed*2.23694).t
     animasTurnHint(entity.position.x,entity.position.z,entity.heading,entity.speed))||'');
   if(streets&&!(now-streetAt<500&&now>=streetAt)){streetAt=now;setStreet(streets.at(entity.position.x,entity.position.z));} // at most twice a second
   touch.setDown(entity.controller.crashed);}
-function tick(now){if(busy)return;const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
-  try{pad.update(dt);if(state!=='riding'||document.hidden)return;
+function tick(now){const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
+  // The gamepad is polled even while something is being prepared, so B can still cancel it; nothing else runs then.
+  try{pad.update(dt);if(busy||document.hidden)return;if(state!=='riding'){each('idle',dt,now,state);return;}
     cameraControls.applyGamepadInput((lookKeys.KeyL||0)-(lookKeys.KeyJ||0),(lookKeys.KeyK||0)-(lookKeys.KeyI||0),(lookKeys.Minus||0)-(lookKeys.Equal||0),dt);
     const blended={...pulses};clear(pulses);for(const source of [keys,touchKeys,padKeys])for(const k in source)blended[k]=Math.max(blended[k]??0,source[k]);
-    atmos.advance(dt);life.update(dt,entity,camera);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));audio?.update(entity,entity.drainEvents());lifeAudio?.update(camera,dt);updateHud(now);
+    atmos.advance(dt);life.update(dt,entity,camera);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));
+    each('frame',dt,now);if(state!=='riding')return; // a part may end the ride (a capture)
+    audio?.update(entity,entity.drainEvents());lifeAudio?.update(camera,dt);updateHud(now);
     if(pacer.shouldRender(now)){draw(now,dt);if(showFps.value)fpsMeter.frame(now);}
   }catch(error){failure(error);}}
 async function sound(){if(muted)return;if(!context){const Context=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Context)return;
   context=new Context();master=context.createGain();master.gain.value=.65;master.connect(context.destination);audio=new EucAudio(context,master);
-  lifeAudio=life?.createAudio(context,master);} // the city's sound, under the rider's
+  lifeAudio=life?.createAudio(context,master);each('sound',context,master);} // the city's sound, under the rider's
   context.resume().catch(()=>{}); // Unlock synchronously from Ride/Resume, before fetching or decoding.
-  if(!audioPreparation)audioPreparation=(async()=>{const bank=await audio.riderBanks.prepareRider('cool-rider',context);
-    try{bank.commit();}finally{bank.dispose();}})();
-  await audioPreparation;
+  // The committed rider's crash voice: the boot rider, or one chosen before the first Ride or while muted.
+  if(audio.riderBanks.active?.id===riderId)return;
+  if(audioPreparation?.id!==riderId){audioPreparation?.stop.abort();const id=riderId,stop=new AbortController(),run=(async()=>{const bank=await audio.riderBanks.prepareRider(id,context,{signal:stop.signal});
+    try{if(bank.valid&&id===riderId)bank.commit();}finally{bank.dispose();}})();audioPreparation={id,stop,run};run.finally(()=>{if(audioPreparation?.run===run)audioPreparation=null;}).catch(()=>{});}
+  await audioPreparation.run;
 }
-async function resume(){if(busy||!entity||!['title','paused','map'].includes(state))return;busy=true;const revision=transition;
+let pendingStart=null; // the Ride/Resume being prepared; aborted when the player looks away (host.cancelStart)
+async function resume(){if(busy||!entity||!RESUMABLE.has(state))return;busy=true;const revision=transition,stop=pendingStart=new AbortController();
   const action=state==='title'?$('ride'):$('resume'),label=action.textContent;action.textContent='Preparing ride…';
   $('ride').disabled=$('resume').disabled=true;$('ride').setAttribute('aria-busy','true');
-  try{await sound();if(revision!==transition||document.hidden)return;
+  try{await Promise.race([sound(),new Promise(r=>stop.signal.addEventListener('abort',r))]);if(revision!==transition||document.hidden||stop.signal.aborted)return;
     if(parked||sizeKey!==bufferKey())resizePending=true;parked=false;draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
-    if(revision!==transition||document.hidden)return;
+    if(revision!==transition||document.hidden||stop.signal.aborted)return;
   for(const id of ['pause','map'])if($(id).open)$(id).close();$('map-canvas').width=$('map-canvas').height=1;
   $('title').hidden=true;$('hud').hidden=false;$('ride-status').hidden=false;refitStreet();gate('riding');last=0;pacer.reset();renderer.domElement.focus(QUIET);
-  }catch(e){failure(e);}finally{busy=false;action.textContent=label;$('ride').disabled=$('resume').disabled=false;$('ride').removeAttribute('aria-busy');}}
+  }catch(e){failure(e);}finally{if(pendingStart===stop)pendingStart=null;busy=false;action.textContent=label;$('ride').disabled=$('resume').disabled=false;$('ride').removeAttribute('aria-busy');}}
 // The device is read before the gate (the gate hides the touch controls); a failure here must not leave a frozen ride.
-function pause(){if(busy||state!=='riding')return;const device=inputDevice(document.body);
-  try{gate('paused');showHelp?.(device);$('pause').showModal();document.querySelector('#pause .sheet-body').scrollTop=0;$('resume').focus(QUIET);}catch(error){failure(error);}}
+function pause(){if(busy||state!=='riding')return;enterPause();}
+// Pause as if the player had paused here: also used when a part ends its own state without a ride (a released booking).
+function enterPause(){const device=inputDevice(document.body);
+  try{gate('paused');showHelp?.(device);if(!$('pause').open)$('pause').showModal();document.querySelector('#pause .sheet-body').scrollTop=0;$('resume').focus(QUIET);}catch(error){failure(error);}}
 // Map palette: deep bay teal with paler shallows, warm sand land, plaster-coloured buildings, pale streets,
 // gate-red destinations, the yellow rider arrow.
 const MAP={sea:'#1c6a68',shallow:'#2f8c85',land:'#f0dcb0',building:'#d9a57c',road:'#fff8ea',edge:'#b78f68',dest:'#a62d23',ring:'#f8f1e3',ink:'#182c40',you:'#fee17d',water:'#d3ece8'};
@@ -190,6 +241,7 @@ function mapDrawing(){const canvas=$('map-canvas'),rect=canvas.getBoundingClient
   const k=dpr/s; // marks are sized in CSS pixels, like the legend
   for(const p of arrivals){ctx.beginPath();ctx.arc(p.x,p.z,6.5*k,0,Math.PI*2);ctx.fillStyle=MAP.ink;ctx.fill();
     ctx.beginPath();ctx.arc(p.x,p.z,5*k,0,Math.PI*2);ctx.fillStyle=MAP.ring;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.z,3.5*k,0,Math.PI*2);ctx.fillStyle=MAP.dest;ctx.fill();}
+  each('map',ctx,k);
   ctx.save();ctx.translate(entity.position.x,entity.position.z);ctx.rotate(-entity.heading);ctx.fillStyle=MAP.you;ctx.strokeStyle=MAP.ink;ctx.lineWidth=2*k;
   ctx.beginPath();ctx.moveTo(0,10*k);ctx.lineTo(7*k,-7*k);ctx.lineTo(0,-3*k);ctx.lineTo(-7*k,-7*k);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
   // Quiet cartography in screen space: the two waters, a north mark and a scale bar.
@@ -211,7 +263,7 @@ function listPlaces(){const search=searchKey($('search').value);$('places').repl
   const button=document.createElement('button');button.textContent=p.name;button.onclick=async()=>{if(busy)return;
     life.clearAround(p.x,p.z);
     if(!entity.placeAt(p.x,p.z,p.headingY,p.y,{requireClear:true,departure:1})){ $('map-status').textContent='That arrival is blocked. Choose another place.';return;}
-    $('map-status').textContent='';if(streets?.hold(p.name,p.x,p.z))streetAt=-1e9;await resume();};$('places').append(button);}
+    $('map-status').textContent='';each('placed','map');if(streets?.hold(p.name,p.x,p.z))streetAt=-1e9;await resume();};$('places').append(button);}
   const none=!$('places').childElementCount?'No places match. Try another name.':'';if($('map-status').textContent!==none)$('map-status').textContent=none;}
 async function openMap(){if(busy||state!=='riding')return;busy=true;gate('map');try{await waitForRenderCompletion(renderer);
   if(state!=='map')return;
@@ -232,8 +284,8 @@ function verticalTarget(controls,current,direction){
   for(const c of rows)if(c.gap<=minGap+12&&(!best||c.dx<best.dx))best=c;
   return best?.el??null;
 }
-function menuInput({actions}){if(busy||(!actions?.navigate&&!actions?.vertical&&!actions?.activate))return;
-  const root=state==='title'?$('title'):state==='paused'?$('pause'):state==='map'?$('map'):null;
+function menuInput(input,dt){if(parts.some(part=>part.menu?.(input,dt)))return;const {actions}=input;if(busy||(!actions?.navigate&&!actions?.vertical&&!actions?.activate))return;
+  const root=MENUS[state]?.()??null;
   if(!root||!actions)return;
   const controls=[...root.querySelectorAll('button,a[href],input,select')].filter(el=>!el.disabled&&el.getClientRects().length);
   if(!controls.length)return;
@@ -255,7 +307,7 @@ function syncCamera(mode){for(const id of ['camera-mode','camera-setting'])$(id)
   $('camera-hint').textContent=mode==='look'?'Look around: drag to look up/down and turn. Pinch or +/− to magnify.':'Drag to orbit. Pinch or +/− to zoom. Look-around gives a rider-height view.';}
 
 // Time of day: uniforms and one environment bake, no shader rebuild; redraw the still frame behind a menu.
-function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;document.body.dataset.time=next;timePreference.set(next);atmos.apply(next);life?.setHour(next);
+function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;document.body.dataset.time=next;timePreference.set(next);atmos.apply(next);life?.setHour(next);each('hour',next);
   for(const id of ['time-title','time-of-day'])$(id).value=next;if(state==='title'||state==='paused')draw(performance.now(),0,true);}
 async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms:{uInteriorGlow:{value:0}}};
   renderer=new THREE.WebGPURenderer({antialias:true,forceWebGL:params.get('webgpu')==='0'||(preferences.phone&&params.get('webgpu')!=='1'),powerPreference:'high-performance'});
@@ -275,14 +327,14 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   // Post-build handoff: drop construction-only area records (js/sj-handoff.js; ?handoff=0 keeps them).
   if(HANDOFF&&params.get('handoff')!=='0')releaseConstruction(world,Object.keys(AREA_LAYOUTS));
   atmos.apply(timeOfDay);
-  stage('Preparing Cool Rider…',.65);const appearance=await prepareEucRider('cool-rider');
+  stage('Preparing '+RIDERS[riderId].name+'…',.65);const appearance=await prepareEucRider(riderId);
   const candidate=world.city.places.find(p=>p.name==='Plaza de Armas')??{name:'Plaza de Armas',x:0,z:0};spawn=findArrival(candidate);
   if(!spawn)throw new Error('No safe Plaza de Armas spawn');
   spawn=plazaStart(spawn);
-  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,appearance,softBodies:world.softBodies,dynamicWorld:life.dynamicWorld});
+  entity=createEucEntity(scene,world.sampler,{x:spawn.x,z:spawn.z,y:spawn.y,heading:spawn.headingY,rider:riderId,appearance,softBodies:world.softBodies,dynamicWorld:life.dynamicWorld});
   // Immersion watchdog: a rider left in the sea without a native recovery is placed back at a checked dry public spot.
   waterWatch=createWaterWatchdog({sampler:world.sampler,spawn,arrivals:()=>arrivals,recovery:world.coast?.recoveryPoints,maxStepUp:entity.controller.tuning.maxStepUp,
-    place:(x,z,h,y)=>{life.clearAround(x,z);return entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2});}});
+    place:(x,z,h,y)=>{life.clearAround(x,z);const ok=entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2});if(ok)each('placed','rescue');return ok;}});
   streets=createStreetIndex(world.city.roads,[...world.city.places,...world.corridor.places,...areasOf(world).flatMap(a=>a.places??[])],GROUND_AREAS);setStreet('');
   arrivals=[...world.city.places,...world.corridor.places,...(world.gate?.places??[]),...(world.fort?.places??[]),...areasOf(world).flatMap(a=>a.places??[])].map(arrivalFor).filter(Boolean);
   touch=new TouchControls(manager);touch.setEnabled(false);
@@ -290,8 +342,8 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   cameraControls.bind(renderer.domElement,()=>state==='riding'&&!busy&&!document.hidden);
   pad=new GamepadControls(manager,cameraControls,{onToggleMenu:()=>state==='paused'||state==='map'?resume():pause(),
     onCycleCamera:cycleCamera,
-    onToggleMap:()=>state==='map'?resume():openMap(),onCloseMenu:()=>['map','paused'].includes(state)&&resume(),
-    isMenuOpen:()=>['title','map','paused'].includes(state),onMenuInput:menuInput,
+    onToggleMap:()=>state==='map'?resume():openMap(),onCloseMenu:()=>cancelled()||(['map','paused'].includes(state)&&resume()),
+    isMenuOpen:()=>state in MENUS,onMenuInput:menuInput,
     onActivity:()=>document.body.dataset.input='gamepad'});
   for(const type of ['pointerdown','keydown'])document.addEventListener(type,()=>delete document.body.dataset.input,{capture:true});
   $('resolution').value=resolution.value;$('frame-limit').value=framePreference.value;
@@ -308,13 +360,13 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   for(const [id,action] of [['camera-in',()=>cameraControls.zoom(-2)],['camera-out',()=>cameraControls.zoom(2)],['camera-center',()=>cameraControls.resetOrbit()]])$(id).onclick=event=>{
     if(state!=='riding')return;action();if(event.detail)renderer.domElement.focus({preventScroll:true});};
   $('pause-button').onclick=pause;$('map-button').onclick=openMap;$('close-map').onclick=resume;$('search').oninput=listPlaces;
-  $('restart').onclick=()=>{life.clearAround(spawn.x,spawn.z);if(entity.placeAt(spawn.x,spawn.z,spawn.headingY,spawn.y,{requireClear:true,departure:1}))resume();};
+  $('restart').onclick=()=>{life.clearAround(spawn.x,spawn.z);if(entity.placeAt(spawn.x,spawn.z,spawn.headingY,spawn.y,{requireClear:true,departure:1})){each('placed','restart');resume();}};
   for(const id of ['pause','map'])$(id).addEventListener('cancel',event=>{event.preventDefault();resume();});
   const mapping={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',Space:'up',ShiftLeft:'boost',ShiftRight:'boost',KeyR:'reset'};
   document.addEventListener('keydown',event=>{
-    if(event.code==='Escape'){event.preventDefault();if(state==='riding')pause();else if(state==='paused'||state==='map')resume();return;}
+    if(event.code==='Escape'){event.preventDefault();if(cancelled())return;if(state==='riding')pause();else if(state==='paused'||state==='map')resume();return;}
     if(event.code==='KeyM'&&!event.repeat&&state==='map'&&['BUTTON','A'].includes(event.target?.tagName)){event.preventDefault();resume();return;} // not while typing in search
-    if(['INPUT','SELECT','TEXTAREA','BUTTON','A'].includes(event.target?.tagName))return;
+    if(['INPUT','SELECT','TEXTAREA'].includes(event.target?.tagName)||(['BUTTON','A'].includes(event.target?.tagName)&&!['KeyM','KeyC'].includes(event.code)))return; // M and C also from a focused HUD button
     if(event.code==='KeyM'&&!event.repeat){event.preventDefault();state==='map'?resume():openMap();return;}
     if(['KeyC','KeyV','KeyI','KeyJ','KeyK','KeyL','Minus','Equal'].includes(event.code)){
       if(event.ctrlKey||event.metaKey||event.altKey||event.isComposing)return;
@@ -332,18 +384,16 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   document.addEventListener('keyup',event=>{suppressed.delete(event.code);delete lookKeys[event.code];if(mapping[event.code])delete keys[mapping[event.code]];});
   document.addEventListener('focusin',event=>{if(['INPUT','SELECT','TEXTAREA','BUTTON','A'].includes(event.target?.tagName)){clear(keys);clear(lookKeys);entity.clearInput();}});
   window.addEventListener('blur',()=>{if(state==='riding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='riding')pause();last=0;fpsMeter.reset();});
-  window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();refitStreet();});
-  $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · Cool Rider`;
+  window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();refitStreet();each('resize');});
+  $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · ${RIDERS[riderId].name}`;
+  // The parts are built behind the loading screen, so whatever they will ever draw is compiled with the city.
+  for(const create of [createRiders,createDorkins,createShell]){const part=await create(host);if(part)parts.push(part);}
   stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);
   // Life gathers round the spawn; every actor pool draws at least one instance while the city compiles.
-  life.focus(entity,camera);life.warm(true);try{await compileWholeCity();}finally{life.warm(false);}
+  life.focus(entity,camera);life.warm(true);each('warm',true);try{await compileWholeCity();}finally{life.warm(false);each('warm',false);}
   stage('Finishing the first frame…',.95);draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
   stage('Warming the riding view…',.97);await warmRidingView();
   $('loading').hidden=true;$('title').hidden=false;gate('title');$('ride').focus(QUIET);renderer.setAnimationLoop(tick);
-  // Page lifecycle retains BFCache state; terminal Retry is a full reload. No pagehide renderer destruction.
-  window.addEventListener('pagehide',()=>{gate(['riding','map'].includes(state)?'paused':state);last=0;});
-  window.addEventListener('pageshow',e=>{if(!e.persisted)return;gate(state);last=0;resizePending=true;
-    if(state==='paused'){if($('map').open)$('map').close();if(!$('pause').open)$('pause').showModal();$('resume').focus(QUIET);}
-    else if(state==='title')$('ride').focus(QUIET);else if(state==='error')$('retry').focus(QUIET);});
+  // Page lifecycle (hide and a kept page shown again, calling away()/returned()): js/sj-shell.js. Retry is a full reload.
 }
 await boot().catch(error=>{if(!fallback('startup'))failure(error);});

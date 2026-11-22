@@ -5,7 +5,7 @@ city for a game that has nothing to do with electric unicycles. The Old San Juan
 **VibezZzCoder**: https://github.com/VibezZzCoder/euc-sanjuan. Credit the work you took and tell players what you
 changed. You don't have to call your game EUC Thrills to use the open-licensed parts.
 
-The source includes eleven reviewed rider identities. Only Cool Rider is playable.
+The source includes eleven reviewed rider identities, all playable, and Officer Dorkins as a non-playable character.
 Check the source and notices at the revision you actually use. This guide is not legal advice.
 
 ## What you can reuse

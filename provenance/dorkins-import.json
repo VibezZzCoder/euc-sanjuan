@@ -1,0 +1,189 @@
+{
+  "cityEdition": "El Viejo San Juan: EUC Thrills by VibezZzCoder — https://github.com/VibezZzCoder/euc-sanjuan",
+  "note": "Officer Dorkins and booking code adapted from the San Francisco edition of EUC Thrills (MIT, VibezZzCoder; several of these files were first written for the New York edition). The officer's look, paddle and sirens are EUC Thrills' own generated NPC assets already in js/euc/ and audio/euc/ (see NOTICE-EUC-THRILLS.md). Each entry records a San Juan file, the donor files with their bytes and SHA-256 at the recorded commit (identical in the listed public release), and the San Juan file's hash; tests/dorkins.test.mjs checks the San Juan hashes.",
+  "donors": {
+    "sanfrancisco": {
+      "source": "https://github.com/VibezZzCoder/euc-sanfrancisco",
+      "commit": "2526eb83dfc0ddfc90440ce6b73c2b522a67f363",
+      "publicRelease": "dd2bbab53c88671a182cbb6854010dea1d2b386f"
+    }
+  },
+  "files": [
+    {
+      "path": "js/sj-dorkins.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis.js",
+          "sourceBytes": 23093,
+          "sourceSha256": "f3937f4771801469c2869e7590a0e6612033764fc81f4c6df3fb3efdc86ddc0b"
+        },
+        {
+          "sourcePath": "js/main.js",
+          "sourceBytes": 70451,
+          "sourceSha256": "8e6a4a32fecfff4d6ae938714e94367936355bc011a0843f6fde7a6301baae22"
+        }
+      ],
+      "editionSha256": "e915af5c9a8d35e33b9a82b403a6de1a4e7e135ba1398d302aa4bdf4612d16ae",
+      "derived": "The hover-wheel rig (generated cop look and standard machine, hover ring, field, pods, exhaust, emissive light bar), the ground contact shadow, out-of-view spawn behind the rider, the checked departure, the per-frame chase loop and the officer as booking presenter. Not taken: the searchlight (no light is added), the MRT shadow node, SF's road graph. San Juan's own: open-sky, recent-arrival and desk exclusions for spawns, the skate-spot gate, the Pause switch, the chase notice, the map marker, ?cop=0."
+    },
+    {
+      "path": "js/sj-dorkins-brain.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis-brain.js",
+          "sourceBytes": 23984,
+          "sourceSha256": "4b1277f169222d1bbd7f474bdf948615f3d4f5ec88f5fd057985112a88f38861"
+        }
+      ],
+      "editionSha256": "07ba0b4d7d69a57689c5fab7a5145572e4f7ad981f9c1cc7e38aac01e51999e3",
+      "derived": "The kinematic flight brain (pursuit, route following with turn-limited speed, swoop, departure, search anchors). Changed: route planning spread over frames under a 1 ms budget, probes at 20 Hz, a route link the checked flight cannot follow is blocked; the SF road-graph builder is not taken."
+    },
+    {
+      "path": "js/sj-dorkins-graph.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis-brain.js",
+          "sourceBytes": 23984,
+          "sourceSha256": "4b1277f169222d1bbd7f474bdf948615f3d4f5ec88f5fd057985112a88f38861"
+        }
+      ],
+      "editionSha256": "5e36db389aa18631ede1c85287484237455ea73ca0df15a6855895fc5b889791",
+      "derived": "The bounded A* with reusable typed scratch and the nearest-node lookup. The graph itself is San Juan's own: a typed view over the walk network and the traffic lane graph with checked joins, components and a resumable, cached search."
+    },
+    {
+      "path": "js/sj-dorkins-flight.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis-flight.js",
+          "sourceBytes": 5744,
+          "sourceSha256": "4ab5e0111b6993872d87f0f9803fb4b711b852b47a0527f889474b8d7d361c84"
+        }
+      ],
+      "editionSha256": "06344f1f10e135f40e651b624d46fb329ce27bbe8ea6447432e2c172e3789f2d",
+      "derived": "Support, sight and swept-volume flight queries. Added: the where-he-may-be rule (dry, inside the world, not closed ground, west of the east fence) at every sample, and a cheaper corridor check for route links."
+    },
+    {
+      "path": "js/sj-dorkins-memory.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis-memory.js",
+          "sourceBytes": 2263,
+          "sourceSha256": "0618cb17fb4250e974f787dbe6a1f2520708f26cffd1f95e65dc6abb5721c0e7"
+        }
+      ],
+      "editionSha256": "1996808f780a956eb50d9563dd6e332a6b4fcc37bd711d00bfeec065f0d0cd0d",
+      "derived": "Last-seen memory and search anchors, unchanged in behaviour."
+    },
+    {
+      "path": "js/sj-dorkins-contact.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/sf-nemesis-contact.js",
+          "sourceBytes": 3989,
+          "sourceSha256": "bf965085e91082012187e22bc731e40ee475f36d06de4660230fcd17adc50e12"
+        }
+      ],
+      "editionSha256": "310740d87578630057da169d9de749a595601c4f69f49daf3c548262d2dc2ad6",
+      "derived": "Swept paddle contact admitted through the rider controller's hardKnock, unchanged in behaviour."
+    },
+    {
+      "path": "js/sj-dorkins-chase.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/nemesis-chase.js",
+          "sourceBytes": 6252,
+          "sourceSha256": "05ced1c1890a93fc7cff413e8750f6ab87385ac205c2352835cbb9d140c7e619"
+        },
+        {
+          "sourcePath": "js/sf-chase-hud.js",
+          "sourceBytes": 1554,
+          "sourceSha256": "74ffc089685dd9c71f4173652c8968460779ebca3602049017af7b45efc35afb"
+        }
+      ],
+      "editionSha256": "036adfc2520839c3caa2524240e3d648924aa9d43592d8cb71ff018fe0e247a8",
+      "derived": "The chase referee and the notice's text model. Changed: San Juan's intervals (40-75 s, then 75-150 s), the skate-spot gate, the patrol switch and the San Juan wording."
+    },
+    {
+      "path": "js/sj-dorkins-swing.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/nemesis-swing.js",
+          "sourceBytes": 6121,
+          "sourceSha256": "190019da2481d099da2d9e2fc187c7a95f88a366195eba353c929b475aecf6e0"
+        }
+      ],
+      "editionSha256": "92a8ace970230af7201f1d0447df8ace25cf8dde0f1fb44934b53854fb2911ca",
+      "derived": "Paddle timing and swept contact maths, unchanged."
+    },
+    {
+      "path": "js/sj-dorkins-audio.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/nemesis-audio.js",
+          "sourceBytes": 16822,
+          "sourceSha256": "89d87a229bcf3cc0ad212e1515c65ef3be0dd0b748877c9f3f6e2da1147a110a"
+        }
+      ],
+      "editionSha256": "cd947b8cdd033d57c9cdb6cf4d5759ebaabd368ea8949b60319a94d01508fbbd",
+      "derived": "Siren crossfade and range curve, settle and ducking, the sting, the hum and the paddle cues. Changed: no graph while he is away (buffers only), a low-pass on the siren, a lower settle, a paper-tear cue, a deterministic noise buffer."
+    },
+    {
+      "path": "js/sj-booking-rules.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/booking.js",
+          "sourceBytes": 12810,
+          "sourceSha256": "ae8968c2ea472184ece49f325ab109161459d99075678d496878b46d3305f37c"
+        },
+        {
+          "sourcePath": "js/sf-booking-placement.js",
+          "sourceBytes": 2224,
+          "sourceSha256": "373c991cf4da51d6b423fde8c28b3d92938e81e376e15cee0f27b15ae0aacadd"
+        }
+      ],
+      "editionSha256": "265a826832230ff5c89f6199dc22b4dfe29ac21d03ddcd5cf716e4b00c01d4e0",
+      "derived": "The booking director (clock, transfer retry, phases) and the ordered checked placement. Changed: the site (La Princesa forecourt), the San Juan wording."
+    },
+    {
+      "path": "js/sj-booking.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/booking.js",
+          "sourceBytes": 12810,
+          "sourceSha256": "ae8968c2ea472184ece49f325ab109161459d99075678d496878b46d3305f37c"
+        },
+        {
+          "sourcePath": "js/main.js",
+          "sourceBytes": 70451,
+          "sourceSha256": "8e6a4a32fecfff4d6ae938714e94367936355bc011a0843f6fde7a6301baae22"
+        }
+      ],
+      "editionSha256": "52b5ff18b6b0af16c5db7681e7f8e0d9722301a2366ba144504541d4f2806376",
+      "derived": "The booking host: one owner for clock, input and release; held keys cannot press a dialog button; the clock stops while blurred or hidden. Changed: the host state 'booking', the gamepad through San Juan's menu scheme, the plaque canvas, the native dialog markup in index.html."
+    },
+    {
+      "path": "js/sj-booking-scene.js",
+      "donor": "sanfrancisco",
+      "sources": [
+        {
+          "sourcePath": "js/booking-scene.js",
+          "sourceBytes": 6428,
+          "sourceSha256": "78b8147043b0385f6b1b82d94d7c3eea71803ea3e648fbf6d2343c445653626e"
+        }
+      ],
+      "editionSha256": "3821bdb96aa29d009a481503e03dce854efccf00594314c1aed23b3629b65305",
+      "derived": "The desk group, the tearing form, the officer presenting and the cinematic camera. Changed: the desk's paint and lamp, the free-standing plaque instead of the INTAKE sign, the camera framing around the dialog; no light."
+    }
+  ]
+}

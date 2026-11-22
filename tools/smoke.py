@@ -25,6 +25,24 @@ def main():
         for target in re.findall(r'\]\(([^)]+)\)',source.read_text()):
             if '://' in target or target.startswith('#'):continue
             check((source.parent/target.split('#')[0]).is_file(),f'Broken document link: {name} -> {target}')
+    # Home Screen install: the web manifest parses, its icons exist at the sizes it states, and every local file the
+    # page head links to is shipped (served and packaged).
+    app=json.loads((ROOT/'manifest.webmanifest').read_text())
+    check(app.get('start_url')=='./' and app.get('scope')=='./' and app.get('id')=='./' and app.get('display')=='standalone','Web manifest id/start/scope/display')
+    purposes=set()
+    for icon in app['icons']:
+        raw=(ROOT/icon['src'].removeprefix('./')).read_bytes()
+        check(raw[:8]==b'\x89PNG\r\n\x1a\n' and icon['type']=='image/png','Manifest icon is a PNG: '+icon['src'])
+        w,h,depth,colour=int.from_bytes(raw[16:20],'big'),int.from_bytes(raw[20:24],'big'),raw[24],raw[25]
+        check(icon['sizes']==f'{w}x{h}' and w==h and depth==8 and colour==2,f'Manifest icon {icon["src"]} is opaque RGB {icon["sizes"]}')
+        purposes.add(icon.get('purpose','any'))
+    check({'any','maskable'}<=purposes,'Manifest has any and maskable icons')
+    from serve import PUBLIC, DIRS
+    head=(ROOT/'index.html').read_text().split('</head>')[0]
+    for ref in re.findall(r'<(?:link|script)\b[^>]*\b(?:href|src)="([^"]+)"',head):
+        check('://' not in ref and (ROOT/ref).is_file() and (ref in PUBLIC or ref.split('/')[0] in DIRS),'Head link not shipped: '+ref)
+    apple=re.search(r'<link rel="apple-touch-icon" href="([^"]+)" sizes="180x180">',head)
+    check(apple is not None and (ROOT/apple[1]).read_bytes()[16:24]==(180).to_bytes(4,'big')*2,'Apple touch icon 180x180')
     manifest=json.loads((ROOT/'js/euc/MANIFEST.json').read_text())
     check(bool(manifest),'Generated EUC manifest exists')
     imported=json.loads((ROOT/'provenance/sf-import.json').read_text())

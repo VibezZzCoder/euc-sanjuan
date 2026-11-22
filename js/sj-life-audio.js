@@ -344,6 +344,8 @@ export function createLifeAudio({ context, destination, traffic, people, phone =
     setHour(name) { quiet = name === 'blue' ? 1 : 0; eventsLevel = quiet ? LIFE_MIX.blue.events : 1; },
     /** Drop everything scheduled and start the plan afresh (the host may call this on a jump). */
     reset() { if (!disposed) restartPlan(context.currentTime); },
+    /** Silence at once while the context keeps running (the booking scene); the next update fades the city back in. */
+    hush() { if (!disposed) silence(); },
     stats() {
       let active = 0, fading = 0;
       for (const m of plan.motors) { if (m.state === 1) active++; else if (m.state === 2) fading++; }

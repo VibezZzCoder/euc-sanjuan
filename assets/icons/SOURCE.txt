@@ -1,0 +1,16 @@
+Home Screen icons for San Juan Spin-off: EUC Thrills
+(c) 2026 VibezZzCoder, MIT (see LICENSE). Original artwork made for this game.
+
+icon.svg            The app icon: a garita (sentry box) on the city wall over the sea, at golden hour, in the same
+                    flat-ink style as the game's badge (assets/euc-badge.svg) and loading poster. Opaque edge to edge.
+icon-maskable.svg   The same art at 80 % so that all of it sits inside the central safe circle (radius 40 % of the
+                    width) used by launchers that crop icons to circles or other shapes; sky, sea and wall still fill
+                    the square.
+
+icon-180.png        Apple touch icon (index.html, rel=apple-touch-icon).
+icon-192.png        Web app manifest icon, purpose "any".
+icon-512.png        Web app manifest icon, purpose "any".
+icon-maskable-512.png  Web app manifest icon, purpose "maskable".
+
+The PNGs are rendered from the SVGs by tools/render-icons.py (ffmpeg's librsvg SVG decoder at the exact size, then saved
+as opaque 8-bit RGB with Pillow). `python3 tools/render-icons.py --check` compares the files with a fresh render.

@@ -15,6 +15,10 @@ Old San Juan riding world by VibezZzCoder, 2026. https://github.com/VibezZzCoder
   San Juan authored its own vehicle liveries, parked rows, wardrobe, lanes and walks. The liveries use no real
   maker, company or agency marks. The lane and walk networks are built from San Juan's OSM-derived geography
   (ODbL); the algorithms are MIT. No donor city maps or street recordings were imported for city life.
+- Changing rider: the swap transaction (rig and crash voice prepared together, committed in one turn) adapts
+  `RiderSelection` from the EUC Thrills San Francisco edition, MIT, by VibezZzCoder; see
+  [the file-by-file record](provenance/riders-import.json). The picker's stamp-and-postcard design was made for San
+  Juan. Rider looks, marks and recordings are the reviewed EUC Thrills set described in `NOTICE-EUC-THRILLS.md`.
 - Skatepark del Muelle (a fictional public skatepark on the harbour-front lot; the real lot is a private car park):
   its geometry kit adapts the EUC Thrills San Francisco edition's skatepark kit (exact support from the drawn
   triangles, inscribed bodies, wheel-sweep rail bars; including its New York inheritance) and the original EUC Thrills

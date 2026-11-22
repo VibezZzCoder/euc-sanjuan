@@ -8,6 +8,8 @@
   `js/euc-audio.js` is also a San Juan adaptation: removing the optional 4.1 kHz PWM/coil
   oscillator/modulation/filter/gain/glide branch leaves the useful motor/tyre/wind and event/warning paths intact.
   The original SF import hash remains provenance, not a claim of current byte equality.
+  `js/euc-recovery.js` is a San Juan adaptation too: `findPlacementTarget` tests the standing volume before the
+  footprint grid (same answers, proven on 72,000 placements and 400 get-up searches; the get-up search is ~2.5× faster).
   If `FORK_GUIDE.md` changes, refresh its `editionSha256`; the source hash still identifies the original SF file.
 - [actors-import.json](actors-import.json): vehicle lofts and street-sound synthesis and scheduling from EUC
   Thrills New York; traffic behaviour, skinned pedestrian figures and reactions, and the shared actor body index
@@ -17,6 +19,16 @@
   with the same donor file bytes. Check current San Juan hashes with `node tools/actors-provenance.mjs --check`.
   Wardrobe, unbranded liveries, parked rows and the lane and walk networks are San Juan work. The networks combine
   OSM-derived city data (ODbL) with authored details and are built by MIT code; neither donor's geography was used.
+- [dorkins-import.json](dorkins-import.json): Officer Dorkins's rig, flight, sight and paddle contact, chase rules,
+  siren and cue sound, and the booking (director, desk scene, checked placement) from EUC Thrills San Francisco
+  (several first written for the New York edition), MIT, VibezZzCoder. The officer's look, paddle and siren loops
+  are EUC Thrills' generated NPC assets already listed in `NOTICE-EUC-THRILLS.md`. The pursuit graph over San Juan's
+  walk and lane networks, the where-he-may-be rule, the Cuartelillo del Monociclo site and desk are San Juan work.
+  `tests/dorkins.test.mjs` checks the current San Juan hashes.
+- [riders-import.json](riders-import.json): the rider-swap transaction (`js/sj-riders-selection.js`) adapts
+  `RiderSelection` from EUC Thrills San Francisco (`js/game-menu.js`, MIT, VibezZzCoder), and the riding-style
+  sentences of the picker come from the same file. `tests/riders.test.mjs` checks the recorded San Juan hashes. The
+  picker's markup, styles and host flow (`js/sj-riders.js`, `css/riders.css`) are San Juan work.
 - `geodata.json`: cached OSM/USGS URLs, full hashes, query text, datum evidence and bounded build counts/limitations.
 - `../data/plaza-detail.json`: ODbL plaza/fountain/gazebo rings and bench points, extracted from the same cached OSM
   input by `tools/build-plaza-detail.py` with a recorded input hash. It does not rebuild or modify terrain/roads.

@@ -75,7 +75,10 @@ input[type=search]::placeholder{color:#5c6470}
 
 /* ---- Loading poster ---- */
 .overlay{position:fixed;inset:0;z-index:20;overflow:auto;padding:var(--st) var(--sr) var(--sb) var(--sl);display:grid}
-#loading{background:var(--p-sea);align-content:center;justify-items:start;padding-left:max(5vw,var(--sl))}
+#loading{background:var(--p-sea);justify-items:start;padding-left:max(5vw,var(--sl))}
+/* Centred by auto margins, not align-content: a plaque taller than the window then starts at the top and scrolls,
+   instead of being pushed above the window where nothing can reach it. */
+.loader-plaque,.title-plaque{margin-block:auto}
 .poster{position:fixed;inset:0;overflow:hidden;background:var(--p-sea);pointer-events:none}
 .poster svg{position:absolute;right:0;top:50%;transform:translateY(-50%);width:max(100%,160dvh);height:auto;aspect-ratio:1.6}
 .p-sky{fill:var(--p-sky)}.p-band{fill:var(--p-band)}.p-sun{fill:var(--p-sun)}.p-cloud{fill:var(--p-cloud)}.p-far{fill:var(--p-far)}.p-sea{fill:var(--p-sea)}.p-surf{fill:var(--p-surf)}
@@ -104,7 +107,7 @@ body[data-state=error] .poster svg{filter:saturate(.3) brightness(.78)}
 .noscript{margin-top:10px;font-weight:700;color:var(--red)}
 
 /* ---- Title over the live plaza ---- */
-#title{align-content:center;justify-items:start;padding-left:max(4.5vw,var(--sl))}
+#title{justify-items:start;padding-left:max(4.5vw,var(--sl))}
 .title-plaque{width:min(460px,100%);padding-top:0}
 .vignette{height:96px;margin:0 -28px 18px;border-bottom:2px solid var(--ink);overflow:hidden}
 .vignette svg{display:block;width:100%;height:100%}
@@ -166,9 +169,11 @@ body[data-input=gamepad] .primer>span{display:none}body[data-input=gamepad] .pri
 body:not([data-state=riding]) #camera-tools{display:none}
 
 /* Touch controls: same places and sizes as before; opaque two-tone faces */
-#touch-controls{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
-#stick-zone{position:absolute;left:0;bottom:0;width:48%;height:55%;pointer-events:auto;touch-action:none}
-.touch-buttons{position:absolute;right:max(18px,env(safe-area-inset-right));bottom:max(26px,env(safe-area-inset-bottom));display:grid;grid-template-columns:70px 92px;gap:12px;align-items:end;pointer-events:auto}
+#touch-controls{position:fixed;inset:0;z-index:4;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none;
+  --thumbs-right:max(18px,env(safe-area-inset-right));--thumbs-width:174px}
+/* The stick zone stops 8px short of the thumb buttons (HOP took part of it on narrow phones). */
+#stick-zone{position:absolute;left:0;bottom:0;width:min(48%,calc(100% - var(--thumbs-right) - var(--thumbs-width) - 8px));height:55%;pointer-events:auto;touch-action:none}
+.touch-buttons{position:absolute;right:var(--thumbs-right);bottom:max(26px,env(safe-area-inset-bottom));display:grid;grid-template-columns:70px 92px;gap:12px;align-items:end;pointer-events:auto}
 .touch-buttons button{height:64px;border-radius:32px;background:var(--ink);color:var(--ivory);border:2px solid var(--ivory);box-shadow:0 0 0 2px var(--ink);touch-action:none;
   font:800 12px/1 var(--caps);letter-spacing:.1em;padding:0}
 .touch-buttons [data-touch=up]{background:var(--sun);color:var(--ink);border-color:var(--ink);box-shadow:0 0 0 2px var(--ivory);font-size:14px}
@@ -187,6 +192,9 @@ dialog{padding:0;border:2px solid var(--cobalt);border-radius:2px;outline:1px so
   box-shadow:6px 7px 0 var(--ink);max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   width:min(540px,calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));overscroll-behavior:contain}
 dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+/* Centred inside the safe area: the sizes above already leave 12px plus each inset, so with uneven insets (a notch on
+   one side) the dialog keeps its 12px gutter on every side instead of sliding under the notch. */
+dialog:modal{inset:calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left))}
 dialog::backdrop{background:#0f1c2bc7}
 /* Pause has a definite height like the Map, and no flex item here uses a zero basis: older WebKit resolves `flex:1`
    in an auto-height column to no height at all, which left Pause as a dimmed screen with nothing on it. */
@@ -211,6 +219,7 @@ h2{margin:4px 0 14px;font:800 34px/1.05 var(--display);letter-spacing:-.01em}
 kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;border:1.5px solid var(--ink);border-bottom-width:3px;border-radius:3px;background:#fffaf0;color:var(--ink);
   font:700 12px/1.1 var(--caps);text-align:center}
 #build{margin:12px 0 24px;font-variant-numeric:tabular-nums}
+#install-help{margin:-16px 0 20px}
 .sheet-body>a{margin:2px 0}
 #pause .credits a{display:flex;min-height:44px;margin-top:2px}
 
@@ -219,7 +228,7 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
 #map header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px 12px;margin-bottom:14px;background:var(--p-pale);border-bottom:2px solid var(--ink)}
 #map header::after{content:'';position:absolute;left:0;right:0;bottom:-16px;height:14px;background:url(../assets/losa.svg) 0 0/14px 14px repeat-x}
 #map h2{margin:2px 0 0;font-size:28px}
-.map-actions{display:flex;flex-direction:row-reverse;align-items:center;gap:14px;flex-shrink:0;font-size:14px}
+.map-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex-shrink:0;font-size:14px}
 #close-map{width:auto}
 .map-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,320px);min-height:0;flex:1}
 .chart{display:flex;flex-direction:column;gap:10px;min-height:0;padding:14px 16px}
@@ -256,7 +265,7 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
   #ride-status{top:calc(var(--st) + var(--row) + 38px)}
   #location,#camera-status{padding:3px 6px 2px;font-size:12px}
   .camera-tools-open .street,.camera-tools-open .fps{visibility:hidden}
-  #title,#loading{align-content:end;justify-items:stretch;padding:var(--st) var(--sr) var(--sb) var(--sl)}
+  #title,#loading{justify-items:stretch;padding:var(--st) var(--sr) var(--sb) var(--sl)}.title-plaque,.loader-plaque{margin-block:auto 0}
   .title-plaque,.loader-plaque{width:100%}
   .plaque{padding:18px 20px 12px}.title-plaque{padding-top:0}
   .vignette{height:70px;margin:0 -20px 14px}.welcome{top:44px;left:14px;font-size:14px}
@@ -264,9 +273,9 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
   .links::before{left:-18px;right:-18px}
   .poster{background:var(--p-wall)}
   .poster svg{top:0;transform:none;width:max(100%,108dvh)}
-  #map header{flex-wrap:wrap;padding:12px 14px 10px}#map h2{font-size:24px}
+  #map header{flex-wrap:wrap;padding:12px 14px 10px}#map h2{font-size:24px}.map-actions{flex-shrink:1;min-width:0}
   .sheet-head{padding:16px 18px 62px}.head-strip{height:56px}.sheet-body{padding:12px 18px 18px}h2{font-size:30px}
-  .note{display:none}.title-plaque .links{gap:0 14px;font-size:13px;margin-top:12px;padding-top:18px}.title-plaque .links a{min-height:40px;margin-top:2px}
+  .note{display:none}.title-plaque .links{gap:0 14px;font-size:13px;margin-top:12px;padding-top:16px}.title-plaque .links a{min-height:44px;margin-top:0}
   .title-plaque .place{flex-direction:row;gap:8px;align-items:baseline;padding:6px 14px 5px}.title-plaque .wordmark{font-size:40px}
   .vignette{height:58px}.welcome{top:30px}.title-plaque .primer{margin-top:8px}.time-choice{margin-top:8px}.title-plaque .tagline{margin:8px 0 12px}
 }
@@ -283,7 +292,8 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
 @media (max-height:620px) and (max-width:600px){.vignette,.welcome{display:none}.title-plaque{padding-top:16px}.wordmark{font-size:38px}.place{margin-top:8px;padding:5px 14px 4px;font-size:17px}.tagline{margin:8px 0 10px}.primary{min-height:50px}}
 @media (max-width:420px){.row{gap:10px;font-size:15px}.row>span{flex:1;min-width:0}.row select{flex:none;width:142px;min-width:0;padding:8px 26px 8px 9px;background-position:right 8px center}}
 @media (max-height:500px){
-  #title,#loading{align-content:center;justify-items:start;padding:8px var(--sr) 8px max(3vw,var(--sl))}
+  #title,#loading{justify-items:start;padding:max(8px,env(safe-area-inset-top)) var(--sr) max(8px,env(safe-area-inset-bottom)) max(3vw,var(--sl))}
+  .title-plaque,.loader-plaque{margin-block:auto}
   .title-plaque,.loader-plaque{width:min(440px,100%);max-height:100%;overflow:auto}
   .links{gap:0 14px;font-size:13px}
   .plaque{padding:14px 20px 8px;box-shadow:4px 5px 0 var(--ink)}
@@ -292,13 +302,53 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
   .tagline{font-size:15px;margin:6px 0 10px}.primary{min-height:48px;font-size:17px}.time-choice{margin-top:6px;min-height:50px}.primer{margin-top:6px;font-size:12.5px}
   .links{margin-top:8px;padding-top:8px}.links::before{left:-18px;right:-18px}
   .poster{background:var(--p-sea)}
-  .touch-buttons{bottom:16px}.touch-buttons button{height:52px}
+  .touch-buttons{bottom:max(16px,env(safe-area-inset-bottom))}.touch-buttons button{height:52px}
   .sheet-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,220px);grid-template-areas:'k r' 'h r';column-gap:16px;align-items:center;padding:12px 18px 10px}
   .sheet-head .kicker{grid-area:k}.sheet-head h2{grid-area:h;margin:2px 0 0;font-size:24px}.sheet-head #resume{grid-area:r}.head-strip{display:none}
   .sheet-body{padding:8px 18px 14px}
   #map header{padding:8px 14px 6px}#map h2{font-size:20px}#map .kicker{display:none}
-  .chart{padding:8px 10px;gap:6px}.legend{font-size:11.5px}.directory{padding:8px 10px}
+  .chart{padding:8px 10px;gap:6px}.legend{font-size:11.5px}.directory{padding:8px 10px}#map-canvas{min-height:72px}
   #loading-status{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 @media (max-width:340px){.row{gap:8px;font-size:14.5px}.row select{width:136px;padding:8px 24px 8px 8px;background-position:right 7px center}}
+/* The open Camera panel never covers the stick zone or the thumb buttons. Narrow windows: the stick zone starts below
+   the panel (about 183px under the HUD row). Where the full panel would reach GET UP above the thumb buttons (any
+   window under 373px high, whatever its width) or the stick zone (short and 400-599px wide), it becomes one 66px row
+   under the HUD (no hint text), the stick zone starts below it, and the thumb buttons sit lower still. Under 400px wide
+   that row holds zoom and Center only (the view is chosen in Pause). Ordinary phone landscape keeps the full panel. */
+@media (max-aspect-ratio:4/3){.camera-tools-open #stick-zone{height:min(55%,calc(100% - var(--st) - 248px))}}
+@media (max-height:372px),(max-height:500px) and (min-width:400px) and (max-width:599px){
+  #camera-tools{display:flex;align-items:center;gap:6px;left:auto;width:calc(100vw - var(--sl) - var(--sr));max-width:520px;padding:6px 8px}
+  #camera-tools .row{flex:none;min-height:44px;padding:0;border:0;gap:0;font-size:0}
+  #camera-tools .row select{flex:none;width:136px;max-width:none;padding-right:30px;background-position:right 10px center}
+  .camera-actions{flex:1 1 auto;margin:0}#camera-center{padding:0 10px}#camera-hint{display:none}
+  .camera-tools-open #stick-zone{height:min(55%,calc(100% - var(--st) - 126px))}
+}
+@media (max-height:372px) and (max-width:399px){#camera-tools .row{display:none}}
+/* Short and narrow (a split window): Pause's kicker, heading and Resume stack instead of crushing the heading. */
+@media (max-height:500px) and (max-width:480px){.sheet-head{grid-template-columns:minmax(0,1fr);grid-template-areas:'k' 'h' 'r';row-gap:6px}}
+/* Short windows wide enough for both: Ride and Choose rider share one row (inline boxes; the space between the two
+   buttons is the 4px left over). Narrower short windows keep them stacked. */
+@media (max-height:500px) and (min-width:480px){
+  .title-plaque #ride{display:inline-flex;width:calc(100% - 166px);vertical-align:top;gap:10px;padding:10px 14px;font-size:16px}
+  .title-plaque #choose-rider{display:inline-flex;width:154px;min-height:48px;margin:0 0 0 4px;vertical-align:top;gap:8px;padding:8px 10px}
+}
+/* Short landscape under 600px wide: the directory column gives the chart room for its legend. */
+@media (max-height:500px) and (max-width:599px) and (min-aspect-ratio:4/3){.map-body{grid-template-columns:minmax(0,1fr) minmax(170px,200px)}#map-canvas{min-height:48px}.legend{gap:2px 12px}}
+/* Short windows under 480px wide (split screens down to 320×280): chart and directory share the width evenly. */
+@media (max-height:500px) and (max-width:479px) and (min-aspect-ratio:101/100){.map-body{grid-template-columns:minmax(0,1fr) minmax(150px,1fr)}#map-canvas{min-height:48px}.legend{gap:2px 10px;font-size:11px}}
+/* Short windows under 600px wide: while the chase notice shows, the coordinates and camera tags under the HUD step
+   aside for it (the notice places itself in the free room). */
+@media (max-height:500px) and (max-width:599px){body:has(#chase:not([hidden])) #location,body:has(#chase:not([hidden])) #camera-status{visibility:hidden}}
+/* Split windows and the narrowest phones. The thumb buttons tighten so the stick keeps a usable zone; the FPS chip
+   moves beside the street plaque (the HUD buttons need the top row); Pause rows put the select under its label; the map's Close button says "Close" so it stays on the Credits line. */
+@media (max-width:340px){#touch-controls{--thumbs-right:max(12px,env(safe-area-inset-right));--thumbs-width:144px}.touch-buttons{grid-template-columns:58px 78px;gap:8px}
+  .map-actions{gap:6px 8px}#close-map{padding:10px}.close-word{display:none}}
+@media (max-width:319px){
+  #hud:has(#fps:not([hidden])){grid-template-areas:'speed speed right' 'fps street street'}
+  #hud:has(#fps:not([hidden])) .fps{flex-direction:row;gap:4px;align-self:center;padding:4px 6px 3px}
+  #pause .row:not(.check){flex-wrap:wrap;gap:4px 8px;padding:6px 0}#pause .row:not(.check)>span{flex:1 1 100%}#pause .row:not(.check)>select{width:100%}
+  .help-tabs button{flex:1 1 auto;padding:6px 3px;font-size:12px}
+  .keys{grid-template-columns:minmax(0,1fr);gap:0}.keys dd{margin-bottom:8px}
+}

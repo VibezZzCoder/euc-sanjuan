@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "San Juan Spin-off: EUC Thrills",
+  "short_name": "EUC San Juan",
+  "description": "Ride an electric unicycle through the hills, plazas and ramparts of Old San Juan, Puerto Rico.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#182c40",
+  "theme_color": "#182c40",
+  "icons": [
+    { "src": "./assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -9,7 +9,7 @@
       "path": "FORK_GUIDE.md",
       "bytes": 7611,
       "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
-      "editionSha256": "acab3ad360dfab418317890dba0356016aa8461041d9237754aceae342615316"
+      "editionSha256": "6479329931a7dbc007db8bfa8c3ec18199a35994b301403cb22bb397e5315bb8"
     },
     {
       "path": "LICENSE",
@@ -21,7 +21,7 @@
       "path": "NOTICE-EUC-THRILLS.md",
       "bytes": 21524,
       "sha256": "d31f04699e76bf5e59c937b10804fae09ffb6ca7102be3b0365b608a1e38ca66",
-      "editionSha256": "4710f976816bf3132bb7b5c63a0c376787c00576f3cdb065a7cfc46546bb9d23"
+      "editionSha256": "7063b92b601308bba673838a7e76985822fe8f2bf3c1774bab21ec2f83b2b84d"
     },
     {
       "path": "assets/euc-badge.svg",
@@ -33,7 +33,7 @@
       "path": "audio/euc/PROVENANCE.md",
       "bytes": 11371,
       "sha256": "c3b04588d8c08a276ca627720ec18710ecd2d3a2792a8b55c89e0d597ac994aa",
-      "editionSha256": "f2aee9757146794c2087678be3ccdf2695123fd1eec4c9186dc8aa9cf487fc09"
+      "editionSha256": "37e5663a54658ccff495bc2ca0ca0445bfd4d376ddbf77b5cad014212d596b06"
     },
     {
       "path": "audio/euc/crash_adonisb2.wav",
@@ -184,7 +184,7 @@
       "path": "js/euc-recovery.js",
       "bytes": 9170,
       "sha256": "c7aa6fa5df672ae04c33765445806dee1b43a5d73acc05f125746c3c62d75fef",
-      "editionSha256": "7174137eb380b8ede8677d1466a22935662867d50c4ecf2a0826270ed69ffe6c"
+      "editionSha256": "6002bc187604510b6e4a0a108adc9e16b6cf9c15104cef63000e143e3fcf8ea5"
     },
     {
       "path": "js/euc-rider.js",

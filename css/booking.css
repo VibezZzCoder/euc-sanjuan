@@ -1,0 +1,102 @@
+/*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
+/* The chase notice (#chase) and the booking dialog (#booking). Tokens and components come from game.css. */
+
+/* ---- Chase notice: a small plaque under the HUD, top right (centred on narrow screens). Opaque, no blur; the camera's
+   safe frame does not measure it (it sits above the rider, away from the HUD rows and the touch buttons). */
+.chase{position:fixed;z-index:5;top:calc(var(--st) + var(--row) + 10px);right:var(--sr);width:min(290px,calc(100vw - var(--sl) - var(--sr)));margin:0;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'who heat' 'line line' 'meter meter';align-items:center;gap:3px 10px;
+  padding:7px 11px 8px;background:var(--ivory);color:var(--ink);border:2px solid var(--cobalt);box-shadow:4px 5px 0 var(--ink);pointer-events:none}
+.chase[hidden]{display:none}
+.chase-who{grid-area:who;font:700 11px/1.2 var(--caps);letter-spacing:.14em;text-transform:uppercase;color:var(--red);overflow-wrap:anywhere}
+.chase-line{grid-area:line;font:800 15px/1.25 var(--text);overflow-wrap:anywhere}
+.chase-heat{grid-area:heat;display:flex;align-items:center;gap:3px;justify-self:end}
+.chase-pip{display:block;width:10px;height:10px;border:2px solid var(--ink);background:var(--ivory);transform:rotate(45deg);margin:0 1px}
+.chase[data-heat='1'] .chase-pip:nth-child(-n+1),.chase[data-heat='2'] .chase-pip:nth-child(-n+2),.chase[data-heat='3'] .chase-pip:nth-child(-n+3){background:var(--red)}
+.chase-heat-text{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.chase-meter{grid-area:meter;display:block;height:6px;margin-top:3px;background:var(--paper);border:1px solid var(--cobalt);overflow:hidden}
+.chase-meter[hidden]{display:none}
+.chase-bar{display:block;height:100%;background:var(--cobalt);transform-origin:0 50%;transform:scaleX(0)}
+.chase[data-kind=paddle],.chase[data-kind=warning],.chase[data-kind=captured]{background:var(--red);color:var(--ivory);border-color:var(--ink)}
+.chase[data-kind=paddle] .chase-who,.chase[data-kind=warning] .chase-who,.chase[data-kind=captured] .chase-who{color:var(--ivory)}
+.chase[data-kind=escaped],.chase[data-kind=released]{background:var(--teal);color:var(--ivory)}
+.chase[data-kind=escaped] .chase-who,.chase[data-kind=released] .chase-who{color:var(--ivory)}
+body:not([data-state=riding]) .chase{display:none}
+/* the notice's place is chosen by script (js/sj-dorkins.js placeNotice) against the riding screen's panels; it never
+   moves another panel */
+@media (max-width:760px){.chase{right:auto;left:50%;transform:translateX(-50%);top:calc(var(--st) + var(--row) + 44px);width:min(280px,calc(100vw - var(--sl) - var(--sr) - 8px))}}
+@media (max-width:600px){.chase{top:calc(var(--st) + var(--row) + 74px)}}
+@media (max-height:500px){.chase{right:var(--sr);left:auto;transform:none;top:calc(var(--st) + var(--row) + 8px);width:min(250px,42vw);padding:5px 9px 6px}.chase-line{font-size:14px}}
+@media (max-height:500px) and (max-width:599px){.chase{width:min(250px,calc(100vw - var(--sl) - var(--sr)))}}
+
+/* the map legend's officer key, sized like the other keys */
+.legend .k-dorkins{width:16px;height:16px;flex:none}
+
+/* ---- Booking: the desk stays in view. The dialog is a plaque at the side (landscape, desktop) or a sheet along the
+   bottom (portrait); its backdrop is fully clear (nothing translucent over the scene). Definite height; rows are a
+   grid, no zero-basis flex item. */
+#booking{width:min(380px,calc(100vw - var(--sl) - var(--sr)));height:min(600px,calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  margin:auto auto auto var(--sl);inset-block:0}
+#booking::backdrop{background:transparent}
+#booking .booking-content{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;min-height:0;height:100%;flex:1 1 auto}
+.booking-head{padding:16px 22px 12px;background:var(--p-pale);border-bottom:2px solid var(--ink)}
+.booking-head h2{margin:4px 0 2px;font-size:30px}
+.booking-head h2:focus,.booking-head h2:focus-visible{outline:none;box-shadow:none}
+.booking-subtitle{margin:0;font:700 12px/1.3 var(--caps);letter-spacing:.1em;text-transform:uppercase;color:var(--cobalt)}
+.booking-body{overflow:auto;overscroll-behavior:contain;padding:12px 22px 8px;min-height:0}
+.booking-line{margin:0;font:800 18px/1.3 var(--text)}
+.booking-reply{margin:4px 0 0;font:600 16px/1.35 var(--text);color:var(--muted)}
+.booking-reply[hidden]{display:none}
+.receipt{position:relative;margin:12px 0 8px;padding:10px 12px 12px;background:#fffaf0;border:2px dashed var(--masonry);color:var(--ink)}
+.receipt-head{display:flex;justify-content:space-between;gap:10px;margin:0 0 6px;font:700 11px/1.3 var(--caps);letter-spacing:.12em;text-transform:uppercase;color:var(--cobalt)}
+.receipt dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;margin:0;font:600 15px/1.35 var(--text)}
+.receipt dt{color:var(--muted)}.receipt dd{margin:0;font-weight:800;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.receipt-sign{display:flex;align-items:center;gap:10px;margin:8px 0 0;font:600 13px/1.3 var(--text);color:var(--muted)}
+.scribble{display:block;flex:none;width:0;height:3px;max-width:120px;background:var(--ink);transform:skewX(-24deg) rotate(-4deg)}
+#booking[data-signing] .scribble{animation:scribble 1.2s steps(10,end) forwards}
+#booking[data-torn] .scribble{width:120px;animation:none}
+#booking[data-suspended] .scribble{animation-play-state:paused}
+@keyframes scribble{to{width:120px}}
+.receipt-stamp{position:absolute;right:12px;bottom:10px;margin:0;padding:3px 8px 2px;border:3px solid var(--red);color:var(--red);font:800 18px/1 var(--caps);
+  letter-spacing:.14em;transform:rotate(-9deg)}
+#booking[data-phase=released] .receipt-stamp{border-color:var(--teal);color:var(--teal)}
+#booking[data-torn] .receipt{border-style:solid}
+.booking-note{margin:6px 0 0;font:600 14px/1.35 var(--text);color:var(--muted)}
+.booking-actions{display:grid;grid-template-columns:1fr 1.3fr;gap:10px;padding:10px 22px 12px;border-top:1px solid var(--rule)}
+.booking-actions button{min-height:54px}
+.booking-actions .primary{font-size:17px}
+#booking .pad-hint{margin:0;padding:0 22px 10px;font-size:13px}
+body:not([data-input=gamepad]) #booking .pad-hint{display:none}
+body[data-state=booking] #hud,body[data-state=booking] #ride-status,body[data-state=booking] #camera-tools{visibility:hidden}
+
+/* portrait: a sheet along the bottom, the desk above it */
+@media (max-aspect-ratio:1/1){
+  #booking{width:auto;left:var(--sl);right:var(--sr);margin:auto 0 var(--sb);height:min(400px,47dvh);max-width:560px;margin-inline:auto}
+  .booking-head{padding:10px 16px 8px}.booking-head h2{font-size:24px}
+  .booking-body{padding:8px 16px 6px}.booking-line{font-size:16px}.booking-reply{font-size:15px}
+  .receipt{margin:8px 0 6px;padding:8px 10px 10px}.receipt dl{font-size:14px}
+  .booking-actions{padding:8px 16px 10px}.booking-actions button{min-height:48px;font-size:16px}
+  #booking .pad-hint{display:none}
+}
+/* short landscape (phones on their side): a narrower side plaque, the receipt in two columns */
+@media (max-height:500px) and (min-aspect-ratio:1/1){
+  #booking{width:min(340px,max(48vw,min(260px,calc(100vw - var(--sl) - var(--sr)))));height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));margin-block:auto}
+  .booking-head{padding:8px 14px 6px}.booking-head h2{font-size:22px}.booking-head .kicker{font-size:10.5px}
+  .booking-body{padding:6px 14px 4px}.booking-line{font-size:15px}.booking-reply{font-size:14px;margin-top:2px}
+  .receipt{margin:6px 0 4px;padding:6px 8px 8px}.receipt dl{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);font-size:13.5px}
+  .receipt-sign{margin-top:4px}.receipt-stamp{font-size:15px;bottom:6px}
+  .booking-actions{padding:6px 14px 8px;gap:8px}.booking-actions button{min-height:44px;font-size:15px;padding:8px 10px}
+  #booking .pad-hint{display:none}
+}
+@media (max-height:500px) and (min-aspect-ratio:1/1) and (max-width:707px){.receipt dl{grid-template-columns:auto minmax(0,1fr)}}
+@media (max-width:340px){.booking-actions{grid-template-columns:1fr 1.2fr;gap:8px;padding-inline:12px}.booking-actions button{min-height:48px;font-size:15px;padding:8px 10px}}
+@media (prefers-reduced-motion:reduce){#booking[data-signing] .scribble{animation:none;width:120px}}
+/* the smallest windows (320×280): a low strip along the bottom with the receipt folded away until Released, so the desk
+   and both figures keep the space above it; both buttons stay 44 px */
+@media (max-height:299px){
+  #booking{width:calc(100vw - var(--sl) - var(--sr));max-width:none;height:min(146px,calc(100dvh - 110px));inset:auto auto var(--sb) var(--sl);margin:0}
+  #booking .booking-head .kicker,#booking .booking-subtitle,#booking .pad-hint,#booking .booking-reply,#booking .booking-note{display:none}
+  #booking:not([data-phase=released]) .receipt{display:none}
+  #booking .booking-head{padding:4px 12px}#booking .booking-head h2{font-size:18px;margin:0}
+  #booking .booking-body{padding:3px 12px}#booking .booking-line{font-size:14px}
+  #booking .booking-actions{padding:4px 12px 6px;gap:8px}#booking .booking-actions button{min-height:44px;font-size:14px;padding:6px 10px}
+}

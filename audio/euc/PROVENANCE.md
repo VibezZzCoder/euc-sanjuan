@@ -1,6 +1,7 @@
 # audio/euc — provenance
 
-Reviewed sound inventory for the player's electric unicycle (`js/euc-audio.js`) and in-progress Dorkins integration.
+Reviewed sound inventory for the player's electric unicycle (`js/euc-audio.js`) and Officer Dorkins's sirens
+(`js/sj-dorkins-audio.js`).
 All **17 installed WAVs** are unchanged public-source copies: eleven crashes, one Drunkard stumble, three shared
 sounds and two sirens. The offroad tyre loop remains unshipped.
 The generator verifies exact installed filenames and source hashes, including missing/extra/unshipped WAV rejection.

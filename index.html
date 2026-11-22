@@ -8,15 +8,21 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-+0GAxYh0edQIf2ZZaUbo2EBG1syN1mosizCy9oKm6D0=' 'sha256-6yxmb2oUnQadujILuDNvkhFA+V0fkL2Xlpm5RlnYA/M='; worker-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#182c40">
-  <meta name="euc-build" content="sanjuan-source-5">
+  <meta name="euc-build" content="sanjuan-source-6">
   <meta name="description" content="San Juan Spin-off: EUC Thrills. Ride an electric unicycle through the hills, plazas and ramparts of Old San Juan, Puerto Rico, in your browser.">
   <meta name="apple-mobile-web-app-title" content="EUC San Juan">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>San Juan Spin-off: EUC Thrills</title>
   <link rel="icon" href="assets/euc-badge.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icons/icon-180.png" sizes="180x180">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/type.css">
   <link rel="stylesheet" href="css/game.css">
+  <link rel="stylesheet" href="css/riders.css">
+  <link rel="stylesheet" href="css/booking.css">
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.webgpu.js","three/webgpu":"./vendor/three/build/three.webgpu.js","three/tsl":"./vendor/three/build/three.tsl.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
+  <script type="module" src="js/sj-leave.js"></script>
 </head>
 <body data-state="loading" data-time="golden">
   <svg class="sprite" aria-hidden="true" focusable="false"><defs>
@@ -76,7 +82,7 @@
       <p class="error-head">The ride stopped</p>
       <p id="loading-status" role="status">Preparing the old city…</p><progress id="progress" max="1" value="0" aria-label="Loading Old San Juan"></progress>
       <button id="retry" class="primary" hidden>Retry loading</button>
-      <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
+      <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/" data-leave><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
       <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a></p>
       <noscript><p class="noscript">JavaScript is required to ride.</p></noscript>
     </div>
@@ -97,16 +103,18 @@
     <p class="place" lang="es"><span>El Viejo</span> San Juan</p>
     <p class="tagline">Old streets. Real hills. One wheel.</p>
     <button id="ride" class="primary">Ride with Cool Rider</button>
+    <button id="choose-rider" type="button" class="secondary rider-pick"><span class="rider-dot" data-rider="cool-rider" aria-hidden="true"></span>Choose rider</button>
     <label class="row time-choice"><span>Time of day</span> <select id="time-title"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label>
     <p class="primer"><span class="for-keyboard">WASD or arrows to ride · Space hop · Shift charge · Esc pause · M map</span><span class="for-pad">Left stick to ride · A hop · X charge · View pause · Start map</span><span class="for-touch">Left thumb on the stick to ride · HOP and CHARGE on the right</span></p>
     <p class="note">Plazas, ramparts and waterfront are open; fort interiors are closed.</p>
-    <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a> <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a></p>
+    <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/" data-leave><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a> <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a></p>
   </div></section>
   <header id="hud" hidden><div class="hud-left"><div class="brand"><img src="assets/euc-badge.svg" alt="" width="34" height="34"><span><b>EUC Thrills</b><small>San Juan Spin-off</small></span></div>
     <output id="speed"><b>0</b><span class="unit"> mph</span><span class="sep"> · </span><span class="kmh">0</span><span class="unit2"> km/h</span></output><span id="fps" class="fps" hidden aria-hidden="true"><b>--</b> FPS</span></div>
     <p id="street" class="street" data-empty><small></small><span></span></p>
     <div class="hud-right"><button id="camera-button" aria-expanded="false" aria-controls="camera-tools"><svg aria-hidden="true"><use href="#i-camera"/></svg><span>Camera</span></button><button id="map-button"><svg aria-hidden="true"><use href="#i-map"/></svg><span>Map</span></button><button id="pause-button"><svg aria-hidden="true"><use href="#i-pause"/></svg><span>Pause</span></button></div></header>
   <div id="ride-status" hidden><span id="location"></span><span id="camera-status" role="status"></span><span id="rider-status" role="status"></span></div>
+  <p id="chase" class="chase" hidden role="status"></p>
   <section id="camera-tools" hidden aria-label="Camera controls">
     <label class="row">View <select id="camera-mode"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
     <div class="camera-actions"><button id="camera-in" aria-label="Zoom in">+</button><button id="camera-out" aria-label="Zoom out">−</button><button id="camera-center">Center</button></div>
@@ -132,6 +140,7 @@
       <button id="resume" class="primary">Resume ride</button></div>
     <div class="sheet-body">
     <button id="restart" class="secondary">Return to Plaza de Armas</button>
+    <button id="change-rider" type="button" class="secondary rider-pick"><span class="rider-dot" data-rider="cool-rider" aria-hidden="true"></span>Change rider</button>
     <h3 class="tag">View</h3>
     <label class="row"><span>Camera view</span> <select id="camera-setting"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
     <label class="row"><span>Time of day</span> <select id="time-of-day"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label>
@@ -140,6 +149,7 @@
     <label class="row"><span>Frame limit</span> <select id="frame-limit"><option value="auto">Auto</option><option value="60">60</option><option value="30">30</option></select></label>
     <label class="row check"><span>Riding sound</span> <input id="sound" type="checkbox" checked></label>
     <label class="row check"><span>Show FPS counter</span> <input id="show-fps" type="checkbox"></label>
+    <label class="row check"><span>Officer Dorkins on patrol</span> <input id="dorkins" type="checkbox" checked></label>
     <h3 class="tag">Controls</h3>
     <div class="help-tabs" role="group" aria-label="Show controls for"><button type="button" data-help="keyboard" aria-pressed="true">Keyboard</button><button type="button" data-help="pad" aria-pressed="false">Controller</button><button type="button" data-help="touch" aria-pressed="false">Touch</button></div>
     <div id="controls-help" data-show="keyboard">
@@ -148,15 +158,46 @@
       <dl class="keys for-touch"><dt>Left half</dt><dd>Put a thumb down and drag the stick to lean and ride</dd><dt>HOP / CHARGE</dt><dd>Hop; hold CHARGE for a bigger hop or to tuck</dd><dt>GET UP</dt><dd>Shows after a fall</dd><dt>Above the controls</dt><dd>Drag to orbit or look; pinch to zoom</dd><dt>Camera button</dt><dd>Chase, Wide, Look-around</dd></dl>
     </div>
     <h3 class="tag">About</h3>
-    <p id="build" class="muted"></p><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
+    <p id="build" class="muted"></p><p id="install-help" class="muted">Play it like an app: in Safari, Share → Add to Home Screen; in Chrome, the menu's Add to Home screen or Install.</p><a href="https://vibezzzcoder.github.io/EUC-thrills/" data-leave><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
     <p class="credits">© OpenStreetMap contributors (ODbL) · Elevation: USGS 3DEP · Assets from EUC Thrills by VibezZzCoder — CC BY 4.0, with exceptions. <a href="credits.html" target="_blank" rel="noopener">Credits &amp; licences</a></p>
     </div>
   </div></dialog>
-  <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><div class="map-title"><p class="kicker">Map</p><h2 id="map-heading">El Viejo San Juan</h2></div><div class="map-actions"><button id="close-map" class="secondary"><svg aria-hidden="true"><use href="#i-close"/></svg>Close map</button><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a></div></header>
+  <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><div class="map-title"><p class="kicker">Map</p><h2 id="map-heading">El Viejo San Juan</h2></div><div class="map-actions"><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a><button id="close-map" class="secondary"><svg aria-hidden="true"><use href="#i-close"/></svg><span>Close<span class="close-word"> map</span></span></button></div></header>
     <div class="map-body"><div class="chart"><canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position"></canvas>
-      <ul class="legend" aria-label="Map key"><li><svg class="k-you" viewBox="-9 -12 18 23" aria-hidden="true"><path d="M0 -10 7 7 0 3 -7 7Z" fill="#fee17d" stroke="#182c40" stroke-width="2" stroke-linejoin="miter"/></svg>You (yellow arrow)</li><li><svg class="k-dest" viewBox="-7 -7 14 14" aria-hidden="true"><circle r="6.5" fill="#182c40"/><circle r="5" fill="#f8f1e3"/><circle r="3.5" fill="#a62d23"/></svg>Destination</li><li><i class="k-street"></i>Street</li><li><i class="k-building"></i>Building</li></ul></div>
+      <ul class="legend" aria-label="Map key"><li><svg class="k-you" viewBox="-9 -12 18 23" aria-hidden="true"><path d="M0 -10 7 7 0 3 -7 7Z" fill="#fee17d" stroke="#182c40" stroke-width="2" stroke-linejoin="miter"/></svg>You (yellow arrow)</li><li><svg class="k-dest" viewBox="-7 -7 14 14" aria-hidden="true"><circle r="6.5" fill="#182c40"/><circle r="5" fill="#f8f1e3"/><circle r="3.5" fill="#a62d23"/></svg>Destination</li><li><i class="k-street"></i>Street</li><li><i class="k-building"></i>Building</li><li id="legend-dorkins" hidden><svg class="k-dorkins" viewBox="-9 -9 18 18" aria-hidden="true"><circle r="9" fill="#182c40"/><path d="M0-7A7 7 0 0 1 0 7Z" fill="#d8312b"/><path d="M0 7A7 7 0 0 1 0-7Z" fill="#2a5bff"/><circle r="2.6" fill="#f8f1e3"/></svg>Officer Dorkins, after you</li></ul></div>
     <div class="directory"><label class="search"><span>Find a place</span> <input id="search" type="search" placeholder="Plaza, Morro, Princesa…"></label><div id="places"></div>
     <p id="map-status" role="status"></p><p class="muted pad-hint">Controller: D-pad to move · A to go · B to close</p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP. Destinations use checked ground placement. Fort interiors are closed.</p></div></div>
+  </div></dialog>
+  <dialog id="riders" aria-labelledby="riders-heading"><div class="riders-content">
+    <div class="riders-head"><p class="kicker">San Juan Spin-off · The crew</p><h2 id="riders-heading">Choose your rider</h2></div>
+    <div class="riders-body"><div class="stamps" role="group" aria-label="Riders">
+      <button type="button" class="stamp" data-rider="cool-rider" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">1</span></span><span class="stamp-name">Cool Rider</span></button>
+      <button type="button" class="stamp" data-rider="trollina" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">2</span></span><span class="stamp-name">Trollina</span></button>
+      <button type="button" class="stamp" data-rider="red-rider" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">3</span></span><span class="stamp-name">Red Rider</span></button>
+      <button type="button" class="stamp" data-rider="adonisb2" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">4</span></span><span class="stamp-name">Adonisb2</span></button>
+      <button type="button" class="stamp" data-rider="maribel-vargas" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">5</span></span><span class="stamp-name">Maribel Vargas</span></button>
+      <button type="button" class="stamp" data-rider="wheel-in-motion" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">6</span></span><span class="stamp-name">Wheel in Motion</span></button>
+      <button type="button" class="stamp" data-rider="drunkard" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">7</span></span><span class="stamp-name">The Drunkard</span></button>
+      <button type="button" class="stamp" data-rider="flo-with-zo" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">8</span></span><span class="stamp-name">FloWithZo</span></button>
+      <button type="button" class="stamp" data-rider="seal-on-a-wheel" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">9</span></span><span class="stamp-name">Seal on a Wheel</span></button>
+      <button type="button" class="stamp" data-rider="wyldist" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">10</span></span><span class="stamp-name">Wyldist</span></button>
+      <button type="button" class="stamp" data-rider="gnarwheel" aria-pressed="false"><span class="stamp-ink" aria-hidden="true"><span class="stamp-no">11</span></span><span class="stamp-name">Gnarwheel</span></button>
+    </div>
+    <article id="riders-card" class="postcard" tabindex="0" aria-labelledby="riders-name"><div class="postcard-message"><p id="riders-state" class="postcard-state"></p><h3 id="riders-name"></h3><p id="riders-profile"></p><p id="riders-style" class="style-note"></p></div>
+      <div class="postcard-address"><span class="postcard-stamp" aria-hidden="true"></span><p class="kicker">The wheel</p><h4 id="riders-wheel"></h4><p id="riders-wheel-blurb"></p></div></article></div>
+    <div class="riders-foot"><p id="riders-status" role="status"></p><div class="riders-actions"><button type="button" id="riders-confirm" class="primary">Keep Cool Rider</button><button type="button" id="riders-retry" class="primary" hidden>Try again</button><button type="button" id="riders-cancel" class="secondary">Back</button></div></div>
+  </div></dialog>
+  <dialog id="booking" aria-labelledby="booking-heading" aria-describedby="booking-line"><div class="booking-content">
+    <div class="booking-head"><p class="kicker" lang="es">Cuartelillo del Monociclo</p><h2 id="booking-heading" tabindex="-1">Busted.</h2><p id="booking-subtitle" class="booking-subtitle">Transfer to intake</p></div>
+    <div class="booking-body">
+      <p id="booking-line" class="booking-line">Three warnings. One form.</p><p id="booking-reply" class="booking-reply"></p>
+      <div class="receipt"><p class="receipt-head"><span>Booking record</span> <span id="booking-number">EUC-001</span></p>
+        <dl><dt>Rider</dt><dd id="booking-rider"></dd><dt>Front wheel</dt><dd>1</dd><dt>Rear wheel</dt><dd>none</dd><dt>Total wheels</dt><dd>1</dd></dl>
+        <p class="receipt-sign"><span>Signed</span><i class="scribble" aria-hidden="true"></i></p><p id="booking-stamp" class="receipt-stamp">VOID</p></div>
+      <p id="booking-note" class="booking-note" role="status">Please remain at the desk.</p>
+    </div>
+    <div class="booking-actions"><button id="booking-skip" class="secondary">Skip booking</button><button id="booking-release" class="primary" disabled>Back to riding</button></div>
+    <p class="muted pad-hint">Controller: D-pad to move · A to select</p>
   </div></dialog>
   <script type="module">
     try{const q=new URLSearchParams(location.search).get('time'),t=['midday','golden','blue'].includes(q)?q:localStorage.getItem('euc-sanjuan-time-of-day');if(['midday','golden','blue'].includes(t))document.body.dataset.time=t;}catch{}

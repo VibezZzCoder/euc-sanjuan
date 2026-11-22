@@ -28,6 +28,7 @@ import { createTraffic } from './sj-traffic.js';
 import { createPeople } from './sj-people.js';
 import { seededRandom } from './sj-life-random.js';
 import { createLifeAudio } from './sj-life-audio.js';
+import { buildWalkNetwork } from './sj-walk.js';
 
 export { seededRandom };
 
@@ -57,6 +58,11 @@ export async function createCityLife({ scene, world, atmosphere, renderer, phone
   const traffic = await createTraffic(context);
   const people = await createPeople(context);
   const parts = [traffic, people];
+  // Read-only city graphs for other host parts (the officer's pursuit graph, js/sj-dorkins-graph.js): the lane graph
+  // traffic drives and the walk network people use. With no people the walk network is still built here, while the
+  // construction records exist, unless the officer is off too (?cop=0).
+  const graphs = Object.freeze({ lanes: traffic.lanes ?? null,
+    walk: people.debug?.net ?? (params.get('cop') !== '0' ? buildWalkNetwork(world) : null) });
   const dynamicWorld = createEucDynamicWorld({ bodiesNear: bodies.dynamicBodiesNear, version: bodies.bodyVersion });
   const ms = { traffic: 0, people: 0, publish: 0, kit: 0 };
   const smooth = (key, value) => { ms[key] += (value - ms[key]) * 0.05; };
@@ -77,7 +83,7 @@ export async function createCityLife({ scene, world, atmosphere, renderer, phone
   }
 
   return {
-    enabled, caps, context, bodies, dynamicWorld, kit, traffic, people,
+    enabled, caps, context, bodies, dynamicWorld, kit, traffic, people, graphs,
     /** Once per riding frame, before the rider steps. `entity` is the rider entity; dt 0 only refreshes the snapshot. */
     update(dt, entity, camera) {
       if (entity) {
