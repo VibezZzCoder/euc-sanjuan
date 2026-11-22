@@ -5,35 +5,110 @@
   <meta charset="utf-8">
   <!-- Everything loads from this host only. The two hashes are the inline scripts (the import map below and the
        module script at the end of the body); after changing either, run: node tools/csp.mjs -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-+0GAxYh0edQIf2ZZaUbo2EBG1syN1mosizCy9oKm6D0=' 'sha256-ZkYO1yEXgDwqMYIp7mx5NhIJH+OTbXkA1X2VO0IccAM='; worker-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-+0GAxYh0edQIf2ZZaUbo2EBG1syN1mosizCy9oKm6D0=' 'sha256-6yxmb2oUnQadujILuDNvkhFA+V0fkL2Xlpm5RlnYA/M='; worker-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#102c35">
-  <meta name="euc-build" content="sanjuan-source-3">
-  <title>El Viejo San Juan: EUC Thrills</title>
+  <meta name="theme-color" content="#182c40">
+  <meta name="euc-build" content="sanjuan-source-4">
+  <meta name="description" content="San Juan Spin-off: EUC Thrills. Ride an electric unicycle through the hills, plazas and ramparts of Old San Juan, Puerto Rico, in your browser.">
+  <meta name="apple-mobile-web-app-title" content="EUC San Juan">
+  <title>San Juan Spin-off: EUC Thrills</title>
   <link rel="icon" href="assets/euc-badge.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/fonts.css">
+  <link rel="stylesheet" href="css/type.css">
   <link rel="stylesheet" href="css/game.css">
   <script type="importmap">{"imports":{"three":"./vendor/three/build/three.webgpu.js","three/webgpu":"./vendor/three/build/three.webgpu.js","three/tsl":"./vendor/three/build/three.tsl.js","three/addons/":"./vendor/three/examples/jsm/"}}</script>
 </head>
-<body data-state="loading">
+<body data-state="loading" data-time="golden">
+  <svg class="sprite" aria-hidden="true" focusable="false"><defs>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v11H3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.4" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2ZM9 4v14M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7ZM13.5 5H17v14h-3.5Z" fill="currentColor"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></symbol>
+    <symbol id="i-garita" viewBox="0 0 40 48"><path d="M20 1.5a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2ZM19.1 6h1.8v4h-1.8ZM9 21c0-7 4.6-11 11-11s11 4 11 11ZM6.5 20.5h27v3.6h-27ZM9 24h22v15H9ZM9 39h22l-3 4.5L20 48l-8-4.5Z" fill="currentColor"/><path d="M18.6 27h2.8v8.5h-2.8Z" class="slit"/></symbol>
+  </defs></svg>
   <main id="world" aria-label="Old San Juan riding view"></main>
   <section id="loading" class="overlay" aria-labelledby="loading-title">
-    <div class="panel"><p class="eyebrow">EUC THRILLS · OLD SAN JUAN</p><h1 id="loading-title">El Viejo<br><span>San Juan</span></h1>
-      <p id="loading-status" role="status">Preparing the old city…</p><progress id="progress" max="1" value="0"></progress>
-      <button id="retry" hidden>Retry loading</button><a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a>
-      <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a>
-      <noscript>JavaScript is required to ride.</noscript></div>
+    <div class="poster" aria-hidden="true">
+      <svg viewBox="0 0 1600 1000" focusable="false">
+        <!-- Postal de San Juan — (c) 2026 VibezZzCoder — MIT. Original flat-ink illustration: a garita on the city wall over the sea. -->
+        <rect class="p-sky" width="1600" height="1000"/>
+        <rect class="p-band" y="430" width="1600" height="140"/>
+        <circle class="p-sun p-sun-golden" cx="1105" cy="452" r="86"/>
+        <circle class="p-sun p-sun-midday" cx="1150" cy="150" r="58"/>
+        <circle class="p-star" cx="1010" cy="170" r="4"/><circle class="p-star" cx="760" cy="96" r="3"/><circle class="p-star" cx="1560" cy="120" r="3"/>
+        <g class="p-cloud"><rect x="250" y="176" width="210" height="34" rx="17"/><rect x="300" y="150" width="110" height="40" rx="20"/><rect x="640" y="104" width="170" height="28" rx="14"/><rect x="682" y="86" width="80" height="30" rx="15"/><rect x="1180" y="262" width="150" height="24" rx="12"/></g>
+        <path class="p-far" d="M0 566V536l70-8 66 4 74-12 92 8 84 6 90 4 54 28Z"/>
+        <rect class="p-sea" y="566" width="1600" height="434"/>
+        <g class="p-surf"><rect x="70" y="612" width="170" height="6"/><rect x="330" y="648" width="230" height="6"/><rect x="120" y="704" width="140" height="7"/><rect x="420" y="760" width="190" height="7"/><rect x="40" y="842" width="260" height="8"/><rect x="380" y="900" width="160" height="8"/><rect x="900" y="596" width="150" height="5"/><rect x="1080" y="586" width="90" height="4"/></g>
+        <g class="p-tree"><path class="p-trunk" d="M724 700h9l-2-60h-5Z"/><path class="p-crown-shade" d="M650 646q80-14 166 0-30 16-84 15-52 0-82-15Z"/><path class="p-crown" d="M648 646q8-34 52-40 18-16 44-12 24-12 48 2 34 4 40 46-90 18-184 4Z"/></g>
+        <g class="p-houses">
+          <rect class="p-h1" x="742" y="628" width="104" height="150"/><rect class="p-h2" x="846" y="594" width="108" height="184"/><rect class="p-h3" x="954" y="570" width="92" height="208"/><rect class="p-h4" x="1046" y="606" width="104" height="172"/><rect class="p-h5" x="1150" y="584" width="62" height="194"/>
+          <g class="p-cornice"><rect x="738" y="622" width="112" height="9"/><rect x="842" y="588" width="116" height="9"/><rect x="950" y="564" width="100" height="9"/><rect x="1042" y="600" width="112" height="9"/><rect x="1146" y="578" width="70" height="9"/></g>
+          <g class="p-frame"><rect x="760" y="652" width="28" height="56"/><rect x="802" y="652" width="28" height="56"/><rect x="864" y="616" width="28" height="60"/><rect x="908" y="616" width="28" height="60"/><rect x="864" y="694" width="28" height="56"/><rect x="908" y="694" width="28" height="56"/><rect x="972" y="596" width="24" height="52"/><rect x="1006" y="596" width="24" height="52"/><rect x="972" y="666" width="24" height="52"/><rect x="1006" y="666" width="24" height="52"/><rect x="1064" y="630" width="28" height="58"/><rect x="1106" y="630" width="28" height="58"/><rect x="1166" y="606" width="30" height="64"/></g>
+          <g class="p-window"><rect x="764" y="656" width="20" height="48"/><rect x="806" y="656" width="20" height="48"/><rect x="868" y="620" width="20" height="52"/><rect x="912" y="620" width="20" height="52"/><rect x="868" y="698" width="20" height="48"/><rect x="912" y="698" width="20" height="48"/><rect x="976" y="600" width="16" height="44"/><rect x="1010" y="600" width="16" height="44"/><rect x="976" y="670" width="16" height="44"/><rect x="1010" y="670" width="16" height="44"/><rect x="1068" y="634" width="20" height="50"/><rect x="1110" y="634" width="20" height="50"/><rect x="1170" y="610" width="22" height="56"/></g>
+          <g class="p-ink"><rect x="858" y="684" width="84" height="4"/><rect x="858" y="676" width="3" height="10"/><rect x="939" y="676" width="3" height="10"/><rect x="1058" y="696" width="82" height="4"/></g>
+        </g>
+        <path class="p-wall" d="M640 1000 762 772 1300 744V1000Z"/><path class="p-wall-side" d="M1300 744 1600 774V1000H1300Z"/>
+        <path class="p-wall-shade" d="M640 1000 762 772H800L690 1000Z"/>
+        <g class="p-wall-mottle"><path d="M880 840h70l10 22h-90ZM1050 900h110l-8 30h-96ZM1380 820h90l6 26h-104ZM980 960h60l4 26h-70ZM1300 940h120v24h-120Z"/></g>
+        <path class="p-cordon" d="M768 790 1300 762V775L764 803Z"/><path class="p-cordon-side" d="M1300 762 1600 792V805L1300 775Z"/>
+        <g class="p-lamp"><circle class="p-glow" cx="980" cy="707" r="30"/><rect class="p-ink-fill" x="978" y="712" width="5" height="48"/><path class="p-ink-fill" d="M968 690h25l-3 4H971Z"/><path class="p-lantern" d="M971 694h19l-2.5 20h-14Z"/></g>
+        <g class="p-garita" transform="translate(1300 764) scale(1.5) translate(-1250 -760)">
+          <path class="p-g-lit" d="M1212 760h76l-12 30-14 16-12 8-12-8-14-16Z"/>
+          <path class="p-g-lit" d="M1214 760V632h72v128Z"/><path class="p-g-shade" d="M1260 760V632h26v128ZM1250 760h38l-12 30-14 16-12 8Z"/>
+          <rect class="p-g-lip" x="1204" y="620" width="92" height="13" rx="2"/>
+          <path class="p-g-lit" d="M1214 620q0-62 36-70 36 8 36 70Z"/><path class="p-g-shade" d="M1250 550q36 8 36 70h-24q0-50-12-70Z"/>
+          <circle class="p-g-lit" cx="1250" cy="542" r="8"/><rect class="p-ink-fill" x="1248" y="520" width="4" height="16"/>
+          <rect class="p-slit" x="1245" y="668" width="9" height="56"/>
+        </g>
+        <g class="p-flag"><rect class="p-ink-fill" x="1418" y="362" width="5" height="400"/><circle class="p-ink-fill" cx="1420.5" cy="358" r="6"/>
+          <rect class="f-red" x="1423" y="368" width="135" height="90"/><rect class="f-white" x="1423" y="386" width="135" height="18"/><rect class="f-white" x="1423" y="422" width="135" height="18"/>
+          <path class="f-blue" d="M1423 368V458L1501 413Z"/><path class="f-white" d="M1449 401.5 1451.7 409.3 1459.9 409.4 1453.4 414.4 1455.8 422.3 1449 417.6 1442.2 422.3 1444.6 414.4 1438.1 409.4 1446.3 409.3Z"/></g>
+        <g transform="translate(-290 -80)"><g class="p-kite"><path class="p-line" d="M1312 318Q1180 620 900 1000"/><path class="p-line" d="M1312 318c-12 30 18 40 4 66-12 22 14 36 2 62"/>
+          <path class="k-a" d="M1312 214 1346 262 1312 262Z"/><path class="k-b" d="M1312 214V262H1278Z"/><path class="k-b" d="M1346 262 1312 318V262Z"/><path class="k-c" d="M1278 262H1312V318Z"/>
+          <path class="p-ink-fill" d="M1311 214h2v104h-2ZM1278 261h68v2h-68Z"/><path class="k-a" d="M1310 382l12-6-2 12ZM1312 444l12-6-2 12Z"/></g></g>
+      </svg>
+    </div>
+    <div class="plaque loader-plaque">
+      <h1 id="loading-title"><span class="kicker">San Juan Spin-off</span> <span class="wordmark">EUC Thrills</span></h1>
+      <p class="place" lang="es"><span>El Viejo</span> San Juan</p>
+      <p class="error-head">The ride stopped</p>
+      <p id="loading-status" role="status">Preparing the old city…</p><progress id="progress" max="1" value="0" aria-label="Loading Old San Juan"></progress>
+      <button id="retry" class="primary" hidden>Retry loading</button>
+      <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
+      <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a></p>
+      <noscript><p class="noscript">JavaScript is required to ride.</p></noscript>
+    </div>
   </section>
-  <section id="title" class="overlay" hidden aria-labelledby="title-heading"><div class="panel">
-    <p class="eyebrow">PUERTO RICO · OLD SAN JUAN</p><h1 id="title-heading">El Viejo<br><span>San Juan</span></h1>
-    <p>Old streets. Real hills. One wheel.</p><p class="muted">Explore the plazas, ramparts and waterfront with Cool Rider. Fort interiors are closed.</p>
-    <button id="ride" class="primary">Ride with Cool Rider</button><label class="time-choice">Time of day <select id="time-title"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label><p class="help">WASD / arrows to ride · Space to hop · Shift to charge<br>Camera button / C / controller Y: Chase, Wide, Look-around<br>Touch stick or standard controller supported<br>Controller menus: D-pad to focus · A to select / change settings · B to close</p>
-    <a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a> · <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a>
+  <section id="title" class="overlay" hidden aria-labelledby="title-heading"><div class="plaque title-plaque">
+    <div class="vignette" aria-hidden="true"><svg viewBox="0 0 400 96" preserveAspectRatio="xMidYMid slice" focusable="false">
+      <rect class="p-sky" width="400" height="96"/><rect class="p-band" y="52" width="400" height="16"/><circle class="p-sun p-sun-golden" cx="236" cy="66" r="22"/><circle class="p-sun p-sun-midday" cx="232" cy="38" r="11"/>
+      <rect class="p-sea" y="66" width="400" height="30"/><rect class="p-surf" x="24" y="76" width="54" height="3"/><rect class="p-surf" x="118" y="86" width="70" height="3"/>
+      <path class="p-wall" d="M204 96 226 70H400V96Z"/><path class="p-cordon" d="M226 73H400V76H223Z"/>
+      <use class="v-garita" href="#i-garita" x="330" y="24" width="40" height="48"/>
+      <rect class="p-ink-fill" x="268.6" y="26" width="1.4" height="46"/>
+      <rect class="f-red" x="270" y="28" width="27" height="18"/><rect class="f-white" x="270" y="31.6" width="27" height="3.6"/><rect class="f-white" x="270" y="38.8" width="27" height="3.6"/>
+      <path class="f-blue" d="M270 28V46L285.6 37Z"/><path class="f-white" d="M275.20 34.70 275.74 36.26 277.39 36.29 276.07 37.28 276.55 38.86 275.20 37.92 273.85 38.86 274.33 37.28 273.01 36.29 274.66 36.26Z"/>
+      <g class="p-kite" transform="translate(52 0)"><path class="p-line" d="M140 54c-3 6 4 8 1 13"/><path class="p-line" d="M140 54Q156 68 180 72"/><path class="k-a" d="M140 30 151 42H140Z"/><path class="k-b" d="M140 30V42H129Z"/><path class="k-b" d="M151 42 140 54V42Z"/><path class="k-c" d="M129 42H140V54Z"/></g>
+    </svg></div>
+    <p class="welcome" lang="es">¡Bienvenidos!</p>
+    <h1 id="title-heading"><span class="kicker">San Juan Spin-off</span> <span class="wordmark">EUC Thrills</span></h1>
+    <p class="place" lang="es"><span>El Viejo</span> San Juan</p>
+    <p class="tagline">Old streets. Real hills. One wheel.</p>
+    <button id="ride" class="primary">Ride with Cool Rider</button>
+    <label class="row time-choice"><span>Time of day</span> <select id="time-title"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label>
+    <p class="primer"><span class="for-keyboard">WASD or arrows to ride · Space hop · Shift charge · Esc pause · M map</span><span class="for-pad">Left stick to ride · A hop · X charge · View pause · Start map</span><span class="for-touch">Left thumb on the stick to ride · HOP and CHARGE on the right</span></p>
+    <p class="note">Plazas, ramparts and waterfront are open; fort interiors are closed.</p>
+    <p class="links"><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a> <a href="credits.html" target="_blank" rel="noopener">Credits, source &amp; data</a></p>
   </div></section>
-  <header id="hud" hidden><div class="brand">EUC <span>VIEJO SAN JUAN</span></div><output id="speed">0 mph · 0 km/h</output>
-    <button id="camera-button" aria-expanded="false" aria-controls="camera-tools">Camera</button><button id="map-button">Map</button><button id="pause-button">Pause</button></header>
+  <header id="hud" hidden><div class="hud-left"><div class="brand"><img src="assets/euc-badge.svg" alt="" width="34" height="34"><span><b>EUC Thrills</b><small>San Juan Spin-off</small></span></div>
+    <output id="speed"><b>0</b><span class="unit"> mph</span><span class="sep"> · </span><span class="kmh">0</span><span class="unit2"> km/h</span></output><span id="fps" class="fps" hidden aria-hidden="true"><b>--</b> FPS</span></div>
+    <p id="street" class="street" data-empty><small></small><span></span></p>
+    <div class="hud-right"><button id="camera-button" aria-expanded="false" aria-controls="camera-tools"><svg aria-hidden="true"><use href="#i-camera"/></svg><span>Camera</span></button><button id="map-button"><svg aria-hidden="true"><use href="#i-map"/></svg><span>Map</span></button><button id="pause-button"><svg aria-hidden="true"><use href="#i-pause"/></svg><span>Pause</span></button></div></header>
   <div id="ride-status" hidden><span id="location"></span><span id="camera-status" role="status"></span><span id="rider-status" role="status"></span></div>
   <section id="camera-tools" hidden aria-label="Camera controls">
-    <label>View <select id="camera-mode"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
+    <label class="row">View <select id="camera-mode"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
     <div class="camera-actions"><button id="camera-in" aria-label="Zoom in">+</button><button id="camera-out" aria-label="Zoom out">−</button><button id="camera-center">Center</button></div>
     <p id="camera-hint" class="help"></p>
   </section>
@@ -41,29 +116,55 @@
     <div id="touch-stick"><span></span></div><div class="touch-buttons">
     <button data-touch="reset">GET UP</button><button data-touch="up">HOP</button><button data-touch="boost">CHARGE</button></div></div>
   <dialog id="pause" aria-labelledby="pause-heading"><div class="dialog-content">
-    <p class="eyebrow">OLD SAN JUAN</p><h2 id="pause-heading">Take a breather</h2>
-    <button id="resume" class="primary">Resume ride</button><button id="restart">Return to Plaza de Armas</button>
-    <label>Camera view <select id="camera-setting"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
-    <label>Time of day <select id="time-of-day"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label>
-    <label>3D resolution <select id="resolution"><option value="100">100%</option><option value="75">75%</option><option value="50">50%</option></select></label>
-    <label>Frame limit <select id="frame-limit"><option value="auto">Auto</option><option value="60">60</option><option value="30">30</option></select></label>
-    <label><input id="sound" type="checkbox" checked> Riding sound</label>
-    <p class="help">WASD / arrows: lean and carve · Space: hop · Shift: charge / tuck · R: get up · M: map · Esc: pause.<br>Camera / C / controller Y: Chase, Wide, Look-around. Drag the view above/outside the riding controls to orbit or look; pinch / scroll / + and − to zoom. IJKL: look. V / Center / right-stick click: recenter.<br>Controller: left stick / triggers to ride, A hop, X charge, B get up, right stick camera, D-pad up/down zoom.<br>Menus: D-pad to focus · A to select / change settings · B to close.</p>
-    <p id="build" class="muted"></p><a href="https://vibezzzcoder.github.io/EUC-thrills/">EUC Thrills main menu</a>
-    <p class="credits">© OpenStreetMap contributors (ODbL) · Elevation: USGS 3DEP · Assets from EUC Thrills by VibezZzCoder — CC BY 4.0, with exceptions. <a href="credits.html" target="_blank" rel="noopener">Credits & licences</a></p>
+    <div class="sheet-head"><svg class="head-strip" viewBox="0 0 540 64" preserveAspectRatio="xMaxYMax slice" aria-hidden="true" focusable="false">
+      <circle class="p-sun p-sun-golden" cx="252" cy="44" r="20"/><circle class="p-sun p-sun-midday" cx="262" cy="16" r="9"/>
+      <rect class="p-sea" y="44" width="540" height="20"/><rect class="p-surf" x="24" y="50" width="64" height="3"/><rect class="p-surf" x="128" y="57" width="86" height="3"/>
+      <g class="p-kite"><path class="p-line" d="M120 28c-2 5 3 6 1 10"/><path class="k-a" d="M120 10 128 19H120Z"/><path class="k-b" d="M120 10V19H112Z"/><path class="k-b" d="M128 19 120 28V19Z"/><path class="k-c" d="M112 19H120V28Z"/></g>
+      <rect class="p-h1" x="318" y="30" width="26" height="20"/><rect class="p-h2" x="344" y="24" width="28" height="26"/><rect class="p-h3" x="372" y="28" width="24" height="22"/><rect class="p-h4" x="396" y="26" width="26" height="24"/>
+      <g class="p-cornice"><rect x="316" y="28.5" width="30" height="2"/><rect x="342" y="22.5" width="32" height="2"/><rect x="370" y="26.5" width="28" height="2"/><rect x="394" y="24.5" width="30" height="2"/></g>
+      <g class="p-window"><rect x="324" y="34" width="5" height="9"/><rect x="333" y="34" width="5" height="9"/><rect x="350" y="29" width="5" height="10"/><rect x="361" y="29" width="5" height="10"/><rect x="378" y="33" width="5" height="9"/><rect x="386" y="33" width="5" height="9"/><rect x="402" y="31" width="5" height="10"/><rect x="411" y="31" width="5" height="10"/></g>
+      <path class="p-wall" d="M296 64 312 46H540V64Z"/><path class="p-cordon" d="M312 48.5H540V51H310Z"/>
+      <rect class="p-ink-fill" x="434.8" y="6" width="1.2" height="41"/>
+      <rect class="f-red" x="436" y="10" width="21.6" height="14.4"/><rect class="f-white" x="436" y="12.88" width="21.6" height="2.88"/><rect class="f-white" x="436" y="18.64" width="21.6" height="2.88"/>
+      <path class="f-blue" d="M436 10V24.4L448.48 17.2Z"/><path class="f-white" d="M440.16 15.36 440.59 16.60 441.91 16.63 440.86 17.43 441.24 18.69 440.16 17.94 439.08 18.69 439.46 17.43 438.41 16.63 439.73 16.60Z"/>
+      <use class="v-garita" href="#i-garita" x="478" y="-2" width="40" height="48"/>
+    </svg><p class="kicker">San Juan Spin-off · Paused</p><h2 id="pause-heading">Take a breather</h2>
+      <button id="resume" class="primary">Resume ride</button></div>
+    <div class="sheet-body">
+    <button id="restart" class="secondary">Return to Plaza de Armas</button>
+    <h3 class="tag">View</h3>
+    <label class="row"><span>Camera view</span> <select id="camera-setting"><option value="chase">Chase</option><option value="wide">Wide</option><option value="look">Look-around</option></select></label>
+    <label class="row"><span>Time of day</span> <select id="time-of-day"><option value="midday">Midday</option><option value="golden">Golden hour</option><option value="blue">Blue hour</option></select></label>
+    <h3 class="tag">Display and sound</h3>
+    <label class="row"><span>3D resolution</span> <select id="resolution"><option value="100">100%</option><option value="75">75%</option><option value="50">50%</option></select></label>
+    <label class="row"><span>Frame limit</span> <select id="frame-limit"><option value="auto">Auto</option><option value="60">60</option><option value="30">30</option></select></label>
+    <label class="row check"><span>Riding sound</span> <input id="sound" type="checkbox" checked></label>
+    <label class="row check"><span>Show FPS counter</span> <input id="show-fps" type="checkbox"></label>
+    <h3 class="tag">Controls</h3>
+    <div class="help-tabs" role="group" aria-label="Show controls for"><button type="button" data-help="keyboard" aria-pressed="true">Keyboard</button><button type="button" data-help="pad" aria-pressed="false">Controller</button><button type="button" data-help="touch" aria-pressed="false">Touch</button></div>
+    <div id="controls-help" data-show="keyboard">
+      <dl class="keys for-keyboard"><dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows</dt><dd>Lean and carve</dd><dt><kbd>Space</kbd></dt><dd>Hop</dd><dt><kbd>Shift</kbd></dt><dd>Charge; tuck in the air</dd><dt><kbd>R</kbd></dt><dd>Get up</dd><dt><kbd>C</kbd></dt><dd>Camera: Chase, Wide, Look-around</dd><dt>Drag, scroll, <kbd>+</kbd> <kbd>−</kbd></dt><dd>Orbit or look; zoom</dd><dt><kbd>I</kbd><kbd>J</kbd><kbd>K</kbd><kbd>L</kbd> / <kbd>V</kbd></dt><dd>Look / recenter</dd><dt><kbd>M</kbd> / <kbd>Esc</kbd></dt><dd>Map / pause</dd></dl>
+      <dl class="keys for-pad"><dt>Left stick, triggers</dt><dd>Ride</dd><dt><kbd>A</kbd> / <kbd>X</kbd></dt><dd>Hop / charge</dd><dt><kbd>B</kbd></dt><dd>Get up</dd><dt><kbd>Y</kbd></dt><dd>Camera: Chase, Wide, Look-around</dd><dt>Right stick, click</dt><dd>Turn the camera, recenter</dd><dt>D-pad up / down</dt><dd>Zoom</dd><dt>View / Start</dt><dd>Pause / map</dd><dt>In menus</dt><dd>D-pad to move, A to select or change, B to close</dd></dl>
+      <dl class="keys for-touch"><dt>Left half</dt><dd>Put a thumb down and drag the stick to lean and ride</dd><dt>HOP / CHARGE</dt><dd>Hop; hold CHARGE for a bigger hop or to tuck</dd><dt>GET UP</dt><dd>Shows after a fall</dd><dt>Above the controls</dt><dd>Drag to orbit or look; pinch to zoom</dd><dt>Camera button</dt><dd>Chase, Wide, Look-around</dd></dl>
+    </div>
+    <h3 class="tag">About</h3>
+    <p id="build" class="muted"></p><a href="https://vibezzzcoder.github.io/EUC-thrills/"><svg aria-hidden="true"><use href="#i-back"/></svg>EUC Thrills main menu</a>
+    <p class="credits">© OpenStreetMap contributors (ODbL) · Elevation: USGS 3DEP · Assets from EUC Thrills by VibezZzCoder — CC BY 4.0, with exceptions. <a href="credits.html" target="_blank" rel="noopener">Credits &amp; licences</a></p>
+    </div>
   </div></dialog>
-  <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><h2 id="map-heading">El Viejo San Juan</h2><div class="map-actions"><button id="close-map">Close map</button><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a></div></header>
-    <p class="muted">Yellow arrow: you · destinations use checked ground placement<br>Controller: D-pad to focus · A to select · B to close</p>
-    <canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position"></canvas>
-    <label>Find a place <input id="search" type="search" placeholder="Plaza, Morro, Princesa…"></label><div id="places"></div>
-    <p id="map-status" role="status"></p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP<br>Fort interiors are closed.</p>
+  <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><div class="map-title"><p class="kicker">Map</p><h2 id="map-heading">El Viejo San Juan</h2></div><div class="map-actions"><button id="close-map" class="secondary"><svg aria-hidden="true"><use href="#i-close"/></svg>Close map</button><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a></div></header>
+    <div class="map-body"><div class="chart"><canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position"></canvas>
+      <ul class="legend" aria-label="Map key"><li><svg class="k-you" viewBox="-9 -12 18 23" aria-hidden="true"><path d="M0 -10 7 7 0 3 -7 7Z" fill="#fee17d" stroke="#182c40" stroke-width="2" stroke-linejoin="miter"/></svg>You (yellow arrow)</li><li><svg class="k-dest" viewBox="-7 -7 14 14" aria-hidden="true"><circle r="6.5" fill="#182c40"/><circle r="5" fill="#f8f1e3"/><circle r="3.5" fill="#a62d23"/></svg>Destination</li><li><i class="k-street"></i>Street</li><li><i class="k-building"></i>Building</li></ul></div>
+    <div class="directory"><label class="search"><span>Find a place</span> <input id="search" type="search" placeholder="Plaza, Morro, Princesa…"></label><div id="places"></div>
+    <p id="map-status" role="status"></p><p class="muted pad-hint">Controller: D-pad to move · A to go · B to close</p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP. Destinations use checked ground placement. Fort interiors are closed.</p></div></div>
   </div></dialog>
   <script type="module">
+    try{const q=new URLSearchParams(location.search).get('time'),t=['midday','golden','blue'].includes(q)?q:localStorage.getItem('euc-sanjuan-time-of-day');if(['midday','golden','blue'].includes(t))document.body.dataset.time=t;}catch{}
     import('./js/main.js').catch(error => {
       console.error(error); document.body.dataset.state='error';
       document.getElementById('loading').hidden=false;
       document.getElementById('loading-status').textContent='Could not start: '+error.message;
-      document.getElementById('retry').hidden=false;
+      document.getElementById('retry').hidden=false;document.getElementById('retry').focus();
     });
     document.getElementById('retry').onclick=()=>location.reload();
   </script>

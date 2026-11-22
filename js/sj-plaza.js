@@ -25,6 +25,7 @@ import {buildBahia,linearTexture,terraTexture} from './sj-bahia.js';
 import {buildUptown} from './sj-uptown.js';
 import {buildEastcivic} from './sj-eastcivic.js';
 import {buildWaterfront} from './sj-waterfront.js';
+import {buildSkatepark} from './sj-skatepark.js';
 import {buildWorldEdge} from './sj-worldedge.js';
 import {smallWaterMaterial,compileAtBoot} from './sj-sea.js';
 import {buildCoast} from './sj-coast.js';
@@ -32,7 +33,7 @@ import {AREA_LAYOUTS,areasOf} from './sj-world.js';
 import {groupPools,pavingClusters} from './sj-pool-groups.js';
 
 // area builders, keyed like AREA_LAYOUTS in sj-world.js.
-const AREA_BUILDERS={princesa:buildPrincesa,cristobal:buildCristobal,norzagaray:buildNorzagaray,perlaWest:buildPerlaWest,perlaDistrict:buildPerlaDistrict,puntilla:buildPuntilla,waterfront:buildWaterfront,bahia:buildBahia,uptown:buildUptown,landmarks:buildLandmarks,eastcivic:buildEastcivic,forttops:buildForttops,worldedge:buildWorldEdge,coast:buildCoast,ground:buildGround,streets:buildStreets,fabric:buildFabric,
+const AREA_BUILDERS={princesa:buildPrincesa,cristobal:buildCristobal,norzagaray:buildNorzagaray,perlaWest:buildPerlaWest,perlaDistrict:buildPerlaDistrict,puntilla:buildPuntilla,waterfront:buildWaterfront,skatepark:buildSkatepark,bahia:buildBahia,uptown:buildUptown,landmarks:buildLandmarks,eastcivic:buildEastcivic,forttops:buildForttops,worldedge:buildWorldEdge,coast:buildCoast,ground:buildGround,streets:buildStreets,fabric:buildFabric,
   // Wall-foot strips are drawn by sj-world.js inside the terrain mesh (groundTriangles), so this builder only reports.
   wallFoot:w=>({strips:w.strips.length,triangles:w.groundTriangles.length})};
 

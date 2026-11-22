@@ -64,7 +64,23 @@ test('the game code creates nothing the policy would block', () => {
   }
   assert.ok(scanned > 100, `scanned ${scanned} modules`);
   assert.deepEqual(hits, []);
-  const css = fs.readFileSync(new URL('../css/game.css', import.meta.url), 'utf8');
-  assert.doesNotMatch(css, /@import|url\(\s*['"]?(?:data:|blob:|[a-z][a-z0-9+.-]*:)?\/\//i, 'css/game.css loads nothing from another host');
-  assert.doesNotMatch(css, /url\(\s*['"]?data:/i, 'css/game.css has no data: URL (img-src is self only)');
+  // Every authored stylesheet (fonts.css is the pinned vendored file): same-origin URLs only, and each one exists.
+  const sheets = fs.readdirSync(new URL('../css/', import.meta.url)).filter((n) => n.endsWith('.css') && n !== 'fonts.css');
+  assert.ok(sheets.includes('game.css'));
+  for (const name of sheets) {
+    const css = fs.readFileSync(new URL('../css/' + name, import.meta.url), 'utf8');
+    assert.doesNotMatch(css, /@import|url\(\s*['"]?(?:data:|blob:|[a-z][a-z0-9+.-]*:)?\/\//i, `css/${name} loads nothing from another host`);
+    assert.doesNotMatch(css, /url\(\s*['"]?data:/i, `css/${name} has no data: URL (img-src is self only)`);
+    for (const [, ref] of css.matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+      assert.ok(fs.existsSync(new URL('../css/' + ref, import.meta.url)), `css/${name}: ${ref} exists`);
+    }
+  }
+});
+
+test('credits.html allows only same-origin styles, fonts and images, and no script', () => {
+  const credits = fs.readFileSync(new URL('../credits.html', import.meta.url), 'utf8');
+  const found = [...credits.matchAll(/<meta http-equiv="Content-Security-Policy" content="([^"]*)">/g)].map((m) => m[1]);
+  assert.equal(found.length, 1);
+  assert.equal(found[0], "default-src 'none'; style-src 'self'; font-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'");
+  assert.doesNotMatch(credits, /<script\b|<style\b|\sstyle\s*=|\son[a-z]+\s*=/);
 });

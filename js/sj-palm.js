@@ -39,7 +39,8 @@ export function tallPalm(p,k,{bake,sphere}){
 
 // Instanced tall palms (La Perla district S4: ~40 KB of baked geometry per palm otherwise): the shared form built once per
 // variant at the origin; each palm {x,y,z,yaw} turns its variant (i mod 3) about its own trunk foot, sunk 0.15 m.
-export function palmInstances(palms,name,{scene,own,mat,meshes}) {
+// `variants` (optional) limits the forms used (indices into VARIANTS): a few palms in one form cost two draws, not six.
+export function palmInstances(palms,name,{scene,own,mat,meshes},{variants:use=null}={}) {
   const o=new THREE.Object3D(),m4=new THREE.Matrix4(),nm=new THREE.Matrix3(),col=new THREE.Color(),vv=new THREE.Vector3(),nn=new THREE.Vector3();
     const materials={solid:mat({vertexColors:true,roughness:.9,metalness:0}),leaf:mat({vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide})};
     // Nuts use a 20-face icosahedron (≈25 cm, read at a distance) instead of the 80-face shared sphere.
@@ -53,7 +54,7 @@ export function palmInstances(palms,name,{scene,own,mat,meshes}) {
       return Object.fromEntries(Object.entries(acc).map(([kind,b])=>{const g=own(new THREE.BufferGeometry());
         g.setAttribute('position',new THREE.Float32BufferAttribute(b.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(b.n,3));
         g.setAttribute('color',new THREE.Float32BufferAttribute(b.c,3));g.computeBoundingSphere();return [kind,g];}));});
-    const by=VARIANTS.map(()=>[]);palms.forEach((p,i)=>by[i%VARIANTS.length].push(p));
+    const by=VARIANTS.map(()=>[]),pick=use??VARIANTS.map((v,k)=>k);palms.forEach((p,i)=>by[pick[i%pick.length]].push(p));
     by.forEach((list,k)=>{if(!list.length)return;for(const kind of ['solid','leaf']){const mesh=new THREE.InstancedMesh(variants[k][kind],materials[kind],list.length);
       list.forEach((p,i)=>{o.position.set(p.x,p.y-.15,p.z);o.rotation.set(0,p.yaw,0);o.scale.set(1,1,1);o.updateMatrix();mesh.setMatrixAt(i,o.matrix);});
       mesh.name=name+kind;mesh.castShadow=true;mesh.receiveShadow=true;mesh.computeBoundingSphere();scene.add(mesh);meshes.push(mesh);}});

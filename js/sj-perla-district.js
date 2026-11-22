@@ -266,12 +266,13 @@ export function buildPerlaDistrict(n,{scene,bake,own,box,cylinder,sphere,mat,mes
       {const [x,z]=at(.2);bake(box,x,d.y+2.62,z,1.7,.12,.4,TRIM,ry,'facade');}      // small parts cast no shadow (perf)
       {const [x,z]=at(.2);bake(box,x,d.y+.02,z,1.3,.04,.36,'#9b968c',ry,'facade');}}
 }
-  // ---- El Bowl: the layout's painted bands on the exact terrain triangles, one vertex-colour mesh with
-  // the shared overlays' depth offset. ----
-  if(n.bowl?.tris?.length){const p=[],c=[],col=new THREE.Color();for(const [a,b,d,paint] of n.bowl.tris){col.set(paint);p.push(...a,...b,...d);for(let k=0;k<3;k++)c.push(col.r,col.g,col.b);}
-    const g=own(new THREE.BufferGeometry());g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
-    g.computeVertexNormals();g.computeBoundingSphere();
-    const m=new THREE.Mesh(g,mat({vertexColors:true,roughness:.8,metalness:0,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
-    m.name='sj-plaza-perladistrict-bowl';m.receiveShadow=true;scene.add(m);meshes.push(m);}
+  // ---- El Bowl (js/sj-perla-bowl.js): exactly the vertices registered as its riding surface, one vertex-colour mesh
+  // (hand-painted blocks and wear are in the colours; no texture, no extra shader). ----
+  if(n.bowl?.batch){const B=n.bowl.batch,col=new Float32Array(B.c.length),c=new THREE.Color();
+    for(let k=0;k<B.c.length;k+=3){c.setRGB(B.c[k],B.c[k+1],B.c[k+2],THREE.SRGBColorSpace);col[k]=c.r;col[k+1]=c.g;col[k+2]=c.b;}
+    const g=own(new THREE.BufferGeometry());g.setAttribute('position',new THREE.Float32BufferAttribute(B.p,3));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(B.n,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeBoundingSphere();
+    const m=new THREE.Mesh(g,mat({vertexColors:true,roughness:.86,metalness:0}));
+    m.name='sj-plaza-perladistrict-bowl';m.castShadow=true;m.receiveShadow=true;scene.add(m);meshes.push(m);}
   return {pockets,foundations:found,courseHits,houses:n.houses.length,broadleaf:(n.broadleaf??[]).length,frontages:edges,openings,balconies,rooftop,lips,bands,backDoors:doors,retaining:walls,poles:n.poles.length,palms:n.palms.length,rocks:n.rocks.length,rail:n.rail.length};
 }

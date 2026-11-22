@@ -21,6 +21,7 @@ import { createBahiaLayout } from './sj-bahia-layout.js';
 import { createUptownLayout } from './sj-uptown-layout.js';
 import { createEastcivicLayout } from './sj-eastcivic-layout.js';
 import { createWaterfrontLayout } from './sj-waterfront-layout.js';
+import { createSkateparkLayout } from './sj-skatepark-layout.js';
 import { createCoastLayout } from './sj-coast-layout.js';
 import { createWallFootLayout } from './sj-wall-foot.js';
 import { createGroundLayout } from './sj-ground-layout.js';
@@ -36,7 +37,7 @@ import { createParkingLayout, parkingEnabled } from './sj-parking-layout.js';
 // area modules, in priority order (earlier tints win). Each key is a world field; nulling one must reproduce the
 // output without it exactly. Builders are registered in sj-plaza.js under the same key.
 export const AREA_LAYOUTS={princesa:createPrincesaLayout,cristobal:createCristobalLayout,norzagaray:createNorzagarayLayout,perlaWest:createPerlaWestLayout,
-  perlaDistrict:createPerlaDistrictLayout,puntilla:createPuntillaLayout,waterfront:createWaterfrontLayout,bahia:createBahiaLayout,uptown:createUptownLayout,landmarks:createLandmarksLayout,eastcivic:createEastcivicLayout,forttops:createForttopsLayout,worldedge:createWorldEdgeLayout,coast:createCoastLayout,ground:createGroundLayout,streets:createStreetsLayout,fabric:createFabricLayout,wallFoot:createWallFootLayout};
+  perlaDistrict:createPerlaDistrictLayout,puntilla:createPuntillaLayout,waterfront:createWaterfrontLayout,skatepark:createSkateparkLayout,bahia:createBahiaLayout,uptown:createUptownLayout,landmarks:createLandmarksLayout,eastcivic:createEastcivicLayout,forttops:createForttopsLayout,worldedge:createWorldEdgeLayout,coast:createCoastLayout,ground:createGroundLayout,streets:createStreetsLayout,fabric:createFabricLayout,wallFoot:createWallFootLayout};
 export const areasOf=world=>Object.keys(AREA_LAYOUTS).map(k=>world[k]).filter(Boolean);
 
 export async function loadCity() {

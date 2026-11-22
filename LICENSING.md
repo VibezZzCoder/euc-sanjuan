@@ -10,7 +10,8 @@
   are available with source; visible map/credits attribution is retained. The locally authored lane and walk
   networks use this data; route data retains ODbL terms, while the algorithms are MIT.
 - USGS 3DEP elevations: public domain. Resampling and inferred building dimensions are documented in provenance.
-- Inherited local fonts retain their included font notices, even though the game UI currently uses system fonts.
+- The interface uses the local Inter, Overpass and Fraunces fonts (SIL Open Font License 1.1); each keeps its included
+  licence (`fonts/`, `assets/type/`).
 
 Read [NOTICE.md](NOTICE.md), [NOTICE-EUC-THRILLS.md](NOTICE-EUC-THRILLS.md) and [FORK_GUIDE.md](FORK_GUIDE.md).
 See [Credits and data downloads](credits.html) for local copies of the derived layers and notices.

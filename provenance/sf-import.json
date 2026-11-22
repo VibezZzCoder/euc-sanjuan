@@ -26,7 +26,8 @@
     {
       "path": "assets/euc-badge.svg",
       "bytes": 591,
-      "sha256": "b5ac7db367d6bad47ecb0d391be601eee4fd6014bd94e02ae456bc3424e318c0"
+      "sha256": "b5ac7db367d6bad47ecb0d391be601eee4fd6014bd94e02ae456bc3424e318c0",
+      "editionSha256": "8e759f09604e9214a87768980d89ae258247a4701d431f1644d4bae25ebbe134"
     },
     {
       "path": "audio/euc/PROVENANCE.md",
@@ -770,7 +771,7 @@
       "path": "js/sf-terrain-sampler.js",
       "bytes": 65554,
       "sha256": "f8b804d2874b05e7aa8c09b2430ca00b4554dead2fa291934efe545a519f7e92",
-      "editionSha256": "3999c53ca01c8a7289427e36408bce3e456582fd10a6621349a53811e2619ee1"
+      "editionSha256": "177ae65ba557084ec1f546080ed72f47061b28db4764274be59d26b8971575e9"
     },
     {
       "path": "js/touch-controls.js",

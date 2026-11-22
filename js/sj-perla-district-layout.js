@@ -4,7 +4,7 @@
 // Reference imagery (Wikimedia Commons curid=80155724, curid=109811940, curid=99177715, curid=72372072, curid=72372077, curid=158401715, curid=100291752, curid=72372066, curid=80251220, curid=72372078, curid=12081006, curid=86543919, curid=86543964, curid=86543904, curid=86543903, curid=86543901, curid=109811939, curid=86543932, curid=137763018). Mapped: residential landuse 1189502372, the street/footway ways below, court 256387098, El Bowl
 // 555008330, beach 1189502378, bare rock 509299736/509301219, building footprints. Inferred:
 // running-strip widths, colours, the frontage kit, pole/palm/boulder/rail placement, court markings
-// (Wikimedia Commons curid=100291752's 2014 scheme, no logos), bleacher size. Not drawn on purpose: El Bowl's depth or use (unverified), the
+// (Wikimedia Commons curid=100291752's 2014 scheme, no logos), bleacher size, El Bowl's depth and paint (js/sj-perla-bowl.js). Not drawn on purpose: the
 // placita/park/playground/community-centre furniture (no identified photo), the public stairs (left as mapped terrain).
 import {circle,inRing,segmentDistance,terrainFoundation} from './sj-plaza-layout.js';
 import {signedArea} from './sj-paving.js';
@@ -12,7 +12,7 @@ import {convexPieces} from './sj-gate-layout.js';
 import {unit,bounds,ribbon,minus,overlapB} from './sj-city-wall.js';
 import {GROUND_AREAS} from './sj-streets-data.js';
 import {drapedWalkRecord,registerStairFlights} from './sj-stairs.js';
-import {drapeConvex} from './sj-seams-geo.js';
+import {createPerlaBowl,EL_BOWL} from './sj-perla-bowl.js';
 
 // OSM 1189502372 {"landuse": "residential"}
 export const DISTRICT=[[-91.690,-321.033],[-179.716,-326.657],[-178.860,-343.337],[-182.693,-397.485],
@@ -100,6 +100,13 @@ const temper=(h,t=.18,to=[207,198,180])=>'#'+[1,3,5].map((o,i)=>Math.round(parse
 export function hash(i,j,k=0){let h=Math.imul(i*73856093^j*19349663^k*83492791,2654435761)>>>0;h^=h>>>15;return (h>>>0)/4294967296;}
 const centroid=r=>{let a=0,x=0,z=0;for(let i=0;i<r.length;i++){const p=r[i],q=r[(i+1)%r.length],c=p[0]*q[1]-q[0]*p[1];a+=c;x+=(p[0]+q[0])*c;z+=(p[1]+q[1])*c;}
   return Math.abs(a)<1e-9?r[0]:[x/(3*a),z/(3*a)];};
+
+// Render-only vertical-prism cut of a convex ring (terrain triangles inside are removed; `tight`: untouched ones stay whole).
+function prismCut(ring){const sa=signedArea(ring),planes=[];
+  for(let i=0;i<ring.length;i++){const p=ring[i],q=ring[(i+1)%ring.length],ex=q[0]-p[0],ez=q[1]-p[1];
+    let nx=-ez,nz=ex;if(sa<0){nx=-nx;nz=-nz;}const l=Math.hypot(nx,nz);nx/=l;nz/=l;planes.push([nx,0,nz,-(nx*p[0]+nz*p[1])]);}
+  const xs=ring.map(p=>p[0]),zs=ring.map(p=>p[1]);
+  return {planes,ring,tight:true,source:'perlaDistrict:bowl',minX:Math.min(...xs),maxX:Math.max(...xs),minZ:Math.min(...zs),maxZ:Math.max(...zs)};}
 
 export function createPerlaDistrictLayout({city,height,terrain,surface,areas={}}) {
   const colliders=[],tops=[],cuts=[],tint=new Map(),surfaces=[],floorTriangles=[],buildingOverrides=new Map();
@@ -197,21 +204,14 @@ export function createPerlaDistrictLayout({city,height,terrain,surface,areas={}}
         const q=[a,b,[b[0]+n[0]*.9,b[1]+n[1]*.9],[a[0]+n[0]*.9,a[1]+n[1]*.9]],ring=signedArea(q)<0?[...q].reverse():q;
         let pieces=[ring];const bb=bounds(ring);pieces=minus(pieces,[...blockedFor(ring),...done.filter(d=>overlapB(bounds(d),bb,.5))]);
         for(const pc of pieces)if(Math.abs(signedArea(pc))>.005)surfaces.push({kind:'patched',ring:pc,owner:'perlaDistrict:bowl-apron'});done.push(...pieces);}}}
-  // El Bowl (seams 2026-11-18, audit rank 7; ): drawn as what the game can honestly support — flat painted
-  // ground. The DEM has no hollow and the depth is unsurveyed, so the physics is the plain terrain; the earlier white
-  // coping and darkening concentric blues promised a hole you could drop into. Now: a painted border line and a
-  // field of mural colour blocks scattered over the footprint (no radial ordering, no shading), like a painted court.
-  // Inferred from general knowledge of the site; no pack photo. The footprint is returned as `brick` (ownership without a
-  // shared overlay) and drawn by the district builder.
-  const bowlTris=[],brick=[{ring:BOWL,kind:'bowl',owner:'perlaDistrict:bowl'}];
-  {const c=centroid(BOWL),radial=d=>BOWL.map(p=>{const L=Math.hypot(p[0]-c[0],p[1]-c[1]);return [p[0]-(p[0]-c[0])/L*d,p[1]-(p[1]-c[1])/L*d];});
-    // Radial insets toward the centroid (the footprint is star-shaped about it).
-    const rings=[0,.22,.9,1.6,2.1].map(d=>d?radial(d):BOWL);
-    const MURAL=['#e5487a','#f2c230','#58b85a','#ef7d2e','#8f6ad0','#4fa9d2','#e9e4d6','#d4473f','#3fb7a4'];
-    for(let b=0;b+1<rings.length;b++){const A=rings[b],B=rings[b+1];
-      for(let i=0;i<A.length;i++){const j=(i+1)%A.length,q=[A[i],A[j],B[j],B[i]],ring=signedArea(q)<0?[...q].reverse():q;if(Math.abs(signedArea(ring))<1e-3)continue;
-        const col=b===0?'#f0cc3c':MURAL[Math.floor(hash(i*7+b*3,b,71)*MURAL.length)];for(const piece of convexPieces(ring))drapeConvex(piece,terrain,bowlTris,col);}}
-    const core=rings.at(-1);for(const piece of convexPieces(signedArea(core)<0?[...core].reverse():core))drapeConvex(piece,terrain,bowlTris,'#4fa9d2');}
+  // El Bowl: the real hand-built bowl, made rideable inside its mapped rim (js/sj-perla-bowl.js: shape, depth estimates,
+  // references). Its riding surface replaces the terrain inside the ring (tops + a tight render cut of the ring's convex
+  // pieces); the raised sea-side lip is solid. The ring itself stays the ownership (`brick`, sportsRings) as before, so
+  // the house aprons and the shore walk's edges around it are unchanged.
+  const brick=[{ring:BOWL,kind:'bowl',owner:'perlaDistrict:bowl'}];
+  const bowl=createPerlaBowl({ring:BOWL,height,terrain});
+  tops.push(...bowl.tops);colliders.push(...bowl.colliders);
+  for(const piece of convexPieces(BOWL))cuts.push(prismCut(piece));
   // (perf 2026-11-18: an 8 m grid of the street segments, each entered with its half width + 4.5 m; queries with m ≤ 4.5
   // give exactly the all-pairs answer, larger m falls back to the scan.)
   const segGrid=new Map(),GC=8,REACH=4.5;
@@ -447,11 +447,17 @@ export function createPerlaDistrictLayout({city,height,terrain,surface,areas={}}
       const i=Math.round((x-x0)/step),j=Math.round((z-z0)/step),k=j*nx+i;if(earlier.some(e=>e.tint?.has(k))||inHouse(x,z,.2))continue;
       tint.set(k,hash(i,j,63)<.55?BANK[Math.floor(hash(i,j,65)*BANK.length)]:SCRUB[Math.floor(hash(i,j,67)*SCRUB.length)]);}}
   const places=[{name:'Cancha Carmelo Anthony',x:court.P(court.length/2,court.width/2)[0],z:court.P(court.length/2,court.width/2)[1],source:256387098}];
-  void tops;void cuts;void floorTriangles;
+  // El Bowl: an exact arrival on the shore walk east of the bowl, facing it along its long axis (the straight run from
+  // there crosses the low end onto the floor; checked like the skatepark's, no road snap).
+  {const walk=roadById.get(382012770)?.points;if(walk){const [ax,az]=EL_BOWL.arrival;let best=null;
+    for(let i=0;i+1<walk.length;i++){const a=walk[i],b=walk[i+1],ex=b[0]-a[0],ez=b[1]-a[1],t=Math.max(0,Math.min(1,((ax-a[0])*ex+(az-a[1])*ez)/(ex*ex+ez*ez))),q=[a[0]+ex*t,a[1]+ez*t];
+      if(!best||Math.hypot(q[0]-ax,q[1]-az)<Math.hypot(best[0]-ax,best[1]-az))best=q;}
+    const [x,z]=best,[cx,cz]=bowl.centre;places.push({name:'El Bowl (La Perla)',x,z,source:555008330,ring:BOWL.map(q=>[q[0],q[1]]),arrival:{x,z,y:height(x,z),headingY:Math.atan2(cx-x,cz-z)}});}}
+  void floorTriangles;
   return {colliders,tops,cuts,tint,surfaces,floorTriangles,places,buildingOverrides,ownedBuildings:houses.map(h=>h.id),houses,streets,court,palms,poles,rocks,rail,broadleaf,deadEnds,retaining,sportsRings,
     batterLine,
     grid:{x0:terrain.x0,z0:terrain.z0,step:terrain.step},
-    bowl:{ring:BOWL,tris:bowlTris},brick,constants:{COURT_DIMS,RAIL},
+    bowl:{ring:BOWL,batch:bowl.batch,lipRing:bowl.lipRing,frame:bowl.frame,stats:bowl.stats},brick,constants:{COURT_DIMS,RAIL},
     qa:()=>({houses:houses.length,lowered:houses.filter(h=>h.base<h.src.base-.13).length,streets:streets.length,
       surfaces:surfaces.length,asphalt:surfaces.filter(s=>s.kind==='patched').length,colliders:colliders.length,palms:palms.length,
       poles:poles.length,spans:poles.filter(p=>p.prev>=0).length,droppedSpans:poles.dropped,rocks:rocks.length,clusters,broadleaf:broadleaf.length,rail:rail.length,bleacher:!!court.bleacher,tint:tint.size})};

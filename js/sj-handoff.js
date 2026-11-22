@@ -69,13 +69,17 @@ function sizeOf(v,seen,depth){
 // pairs of small objects. Entries without geometry annotations whose fields are all primitives are replaced by one shared
 // entry per distinct field set. The store's readers only copy from entries (spread / property reads), so every record view
 // is unchanged. Called by loadCity right after the sampler is built (Node and browser alike).
+// A frozen plain object of primitives (the skatepark's shared capability records) is the same value wherever it is
+// referenced: keyed by identity, so entries that reference the same one can share.
 export function shareSupportExtras(store){
   const extras=store?.extras;if(!(extras instanceof Map))return 0;
-  const shared=new Map(),primitive=x=>x===null||(typeof x!=='object'&&typeof x!=='function');let n=0;
-  for(const [id,e] of extras){const g=e?.geometry,f=e?.fields;
+  const shared=new Map(),primitive=x=>x===null||(typeof x!=='object'&&typeof x!=='function'),ids=new Map();
+  const frozen=x=>x!==null&&typeof x==='object'&&Object.isFrozen(x)&&Object.getPrototypeOf(x)===Object.prototype&&!Object.getOwnPropertySymbols(x).length&&Object.values(x).every(primitive);
+  const id=x=>{let k=ids.get(x);if(k===undefined)ids.set(x,k=ids.size);return k;};let n=0;
+  for(const [id_,e] of extras){const g=e?.geometry,f=e?.fields;
     if(!f||!g||g.plane||g.poly||g.outer||g.holes||Object.getOwnPropertySymbols(f).length)continue;
-    const entries=Object.entries(f);if(entries.length!==Reflect.ownKeys(f).length||!entries.every(([,x])=>primitive(x)))continue;
-    const key=JSON.stringify(entries.map(([k,x])=>[k,typeof x,Object.is(x,-0)?'-0':String(x)]));
-    const first=shared.get(key);if(!first)shared.set(key,e);else{extras.set(id,first);n++;}}
+    const entries=Object.entries(f);if(entries.length!==Reflect.ownKeys(f).length||!entries.every(([,x])=>primitive(x)||frozen(x)))continue;
+    const key=JSON.stringify(entries.map(([k,x])=>frozen(x)?[k,'frozen',id(x)]:[k,typeof x,Object.is(x,-0)?'-0':String(x)]));
+    const first=shared.get(key);if(!first)shared.set(key,e);else{extras.set(id_,first);n++;}}
   return n;
 }

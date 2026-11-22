@@ -33,7 +33,7 @@ test('every lamp family reports its luminous heads, matching the layouts',()=>{
   assert.equal(byKind.cup,world.norzagaray.quinto.lamps.length);
   assert.equal(byKind.pylon,world.bahia.lamps.filter(l=>l.kind==='pylon').length);
   assert.equal(byKind.lattice,world.bahia.lamps.filter(l=>l.kind!=='pylon').length);
-  assert.equal(byKind.port,world.waterfront.portLamps.length);
+  assert.equal(byKind.port,world.waterfront.portLamps.length+(world.skatepark?.skate.lamps.length??0));   // + the skatepark's mast floods
   assert.equal(byKind.faro,1);assert.equal(byKind.lighthouse,1);assert.equal(byKind.bulb,2);assert.equal(byKind.bulbCool,1);assert.equal(byKind.threshold,3);   // La Perla pockets: two street fronts, one seaward, each with a lit threshold
   // Shared kit posts: one head on a stone base, three on the curled clusters; plus heads the builders place directly
   // (La Princesa's pilaster wall brackets and the Fortaleza gate piers).

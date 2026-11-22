@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Losa border tile — (c) 2026 VibezZzCoder — MIT. Original geometric repeat for San Juan Spin-off: EUC Thrills. -->
+  <rect width="32" height="32" fill="#F8F1E3"/>
+  <path d="M0 0H8A8 8 0 0 1 0 8ZM32 0V8A8 8 0 0 1 24 0ZM32 32H24A8 8 0 0 1 32 24ZM0 32V24A8 8 0 0 1 8 32Z" fill="#254873"/>
+  <path d="M16 7 25 16 16 25 7 16Z" fill="#89BFD6"/>
+  <path d="M16 11.5 20.5 16 16 20.5 11.5 16Z" fill="#E0614F"/>
+  <circle cx="16" cy="16" r="1.6" fill="#F8F1E3"/>
+  <path d="M15 1.5h2l-1 2.6ZM15 30.5h2l-1-2.6ZM1.5 15v2l2.6-1ZM30.5 15v2l-2.6-1Z" fill="#182C40"/>
+  <path d="M0 .5H32M0 31.5H32" stroke="#182C40" stroke-opacity=".55" stroke-width="1"/>
+</svg>

@@ -639,10 +639,12 @@ export class SfTerrainSampler {
       ? compactSupport : null;
     this.topStore = new SfSupportStore([rideSupport, tops, gradeSupport], { cacheSize: topViewCacheSize },
       compactCertificate, compactCertificate ? gradeSupport : null);
-    this.topIndex = new SparseIndex(this.topStore, 8);
+    // 2 m buckets for the support store's indexes: a dense built surface (skatepark transitions sampled every 0.2–0.5 m)
+    // puts thousands of facets into one 8 m bucket, and every ground probe scanned them all. Same result sets, same order.
+    this.topIndex = new SparseIndex(this.topStore, 2);
     const store = this.topStore;
-    this.capabilityIndex = new SparseIndex(new CapabilityBounds(store), 8);
-    this.ceilingIndex = new SparseIndex(new CeilingBounds(store), 8);
+    this.capabilityIndex = new SparseIndex(new CapabilityBounds(store), 2);
+    this.ceilingIndex = new SparseIndex(new CeilingBounds(store), 2);
     // Current grade builder publishes exact bounded bore facets + real ceiling
     // bodies, but not its internal floors array. Do not approximate those ceilings
     // again by a 0.5 m API march through the full city on every obstacle query.

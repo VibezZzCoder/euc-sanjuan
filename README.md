@@ -1,7 +1,8 @@
-# El Viejo San Juan: EUC Thrills
+# San Juan Spin-off: EUC Thrills
 
-El Viejo San Juan is a new Old San Juan riding world built for [EUC Thrills](https://github.com/VibezZzCoder/EUC-thrills)
-by VibezZzCoder. You ride an electric unicycle through the walled old city of San Juan, Puerto Rico: its streets,
+*El Viejo San Juan* is a new Old San Juan riding world built for [EUC Thrills](https://github.com/VibezZzCoder/EUC-thrills)
+by VibezZzCoder: the San Juan Spin-off, a sibling of the New York and San Francisco editions that also plays on its
+own. (Source files carry the work's name as "El Viejo San Juan: EUC Thrills".) You ride an electric unicycle through the walled old city of San Juan, Puerto Rico: its streets,
 plazas, city walls, forts and waterfront, on real hills.
 
 The world combines newly authored streets, landmarks and rideable surfaces with OpenStreetMap geography and USGS
@@ -22,10 +23,18 @@ Look for parked rows, slow cars following the one-way grid and stopping or yield
 on sidewalks, in plazas and on public stairs. There are piragua carts and a kite on the El Morro lawn.
 Engines, horns, footsteps and the murmur of conversation are synthesized as you ride.
 
+Two places to play: **Skatepark del Muelle**, a fictional harbour-front park with a raised bowl, a mini ramp, a pump
+line into a banked corner, kickers, a euro gap and a street section; and **El Bowl** in La Perla, the real hand-built
+community skate bowl, approximated and rideable. Ramps use the transition behaviour of the original EUC Thrills
+skatepark; the wheel's tuning is unchanged. Both are on the map.
+
+The menus are drawn from the old city's own street furniture: ceramic street plaques, a tile border, a poster for
+the loading screen. The HUD names the street or plaza you are on, and Pause can show a frame-rate counter.
+
 ## Run it locally
 
 The game is plain HTML, CSS and JavaScript modules with no build step. It serves the bundled Three.js and data
-locally and uses system fonts for the interface.
+locally, with local Inter, Overpass and Fraunces fonts for the interface.
 
 ```bash
 python3 tools/serve.py
@@ -43,7 +52,7 @@ that device can reach.
 Controls: WASD or arrow keys ride, Space hops, Shift charges or tucks, R gets up, M opens the map and Esc pauses.
 Touch screens get a floating stick and buttons, and standard game controllers are supported. Choose Chase, Wide
 or Look-around from the Camera menu, or cycle views with C or controller Y. Choose Midday, Golden hour (the default)
-or Blue hour on the title screen or in Pause; your choice is saved. Pause also sets 3D resolution and frame limit.
+or Blue hour on the title screen or in Pause; your choice is saved. Pause also sets 3D resolution and frame limit and can show an FPS counter.
 
 Checks (Node.js 22.15 or newer, Python 3.9+):
 
@@ -116,7 +125,7 @@ to your own game, and carry over the right credits.
 - **Elevation:** USGS 3D Elevation Program (3DEP) 1 m DEM, public domain, resampled for the game. It is not a claim
   of survey accuracy, and no endorsement by USGS is implied.
 - **three.js:** MIT, vendored at a pinned commit; see `vendor/three/LICENSE` and `vendor/MANIFEST.json`.
-- **Fonts:** Inter and Overpass under the SIL Open Font License, see `fonts/`.
+- **Fonts:** Inter and Overpass (`fonts/`) and Fraunces (`assets/type/`) under the SIL Open Font License 1.1.
 
 More detail: [NOTICE.md](NOTICE.md), [LICENSING.md](LICENSING.md), [provenance/README.md](provenance/README.md).
 

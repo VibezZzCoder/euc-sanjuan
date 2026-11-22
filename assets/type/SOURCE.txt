@@ -1,0 +1,8 @@
+Fraunces ExtraBold (800), Latin subset, WOFF2 — the display face for the wordmark and the street plaques.
+Licence: SIL Open Font License 1.1 (OFL-Fraunces.txt beside this file). Copyright 2018 The Fraunces Project Authors
+(https://github.com/undercasetype/Fraunces). No Reserved Font Name is declared.
+Font file: https://cdn.jsdelivr.net/fontsource/fonts/fraunces@latest/latin-800-normal.woff2 (Fontsource), fetched 2026-11-21
+  fraunces-800-latin.woff2  18,224 bytes  sha256 daf58e7501e629454cb9749ba92db31c5fb540f29d25097aafadf09ca60ee9d5
+Licence text: https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/OFL.txt, fetched 2026-11-21
+  OFL-Fraunces.txt  sha256 bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b
+Unmodified. Covers Basic Latin and Latin-1 (ÁÉÍÓÚÜÑ áéíóúüñ ¡¿).

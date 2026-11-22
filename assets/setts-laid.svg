@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 16" width="24" height="16">
+  <!-- Blue setts, laid — (c) 2026 VibezZzCoder — MIT. San Juan Spin-off: EUC Thrills. -->
+  <rect width="24" height="16" fill="#E8E1D0"/>
+  <g fill="#254873"><rect x=".5" y=".5" width="11" height="7" rx="1"/><rect x="12.5" y=".5" width="11" height="7" rx="1"/>
+  <rect x="-5.5" y="8.5" width="11" height="7" rx="1"/><rect x="6.5" y="8.5" width="11" height="7" rx="1"/><rect x="18.5" y="8.5" width="11" height="7" rx="1"/></g>
+  <g fill="#3F5F8E"><rect x="2" y="2" width="5" height="2"/><rect x="14" y="3" width="6" height="2"/><rect x="8" y="10" width="5" height="2"/><rect x="20" y="11" width="3" height="2"/></g>
+</svg>

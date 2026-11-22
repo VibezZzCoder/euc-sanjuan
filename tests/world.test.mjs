@@ -20,9 +20,11 @@ test('shared terrain drawing diagonal matches the native sampler throughout dry 
     for(const [u,v] of [[.2,.3],[.8,.7]]){
       const x=t.x0+(i+u)*t.step,z=t.z0+(j+v)*t.step;if(!world.isDry(x,z))continue;
       const ground=world.sampler.sampleGround(x,z,{normal:{}},Infinity);
-      // Only registered support (Puerta de San Juan, El Morro and other wall walks) may stand above the shared DEM.
+      // Only registered support (Puerta de San Juan, El Morro and other wall walks) may stand above the shared DEM, and the
+      // harbour-front skatepark's raised floor (its own drawn facets; tests/skatepark.test.mjs checks drawn = ridden).
       if(Math.abs(ground.height-world.height(x,z))>=1e-9){
-        assert.ok(walk.has(ground.support?.source)&&ground.height>world.height(x,z),`Unexpected non-terrain support at ${x},${z}`);
+        const park=/^skatepark:/.test(ground.support?.source??'')&&ground.support?.capabilities?.restartsAtRest===true;
+        assert.ok((walk.has(ground.support?.source)||park)&&ground.height>world.height(x,z),`Unexpected non-terrain support at ${x},${z}`);
         authored++;continue;}
       assert.ok(Math.abs(Math.hypot(ground.normal.x,ground.normal.y,ground.normal.z)-1)<1e-9);checks++;
     }

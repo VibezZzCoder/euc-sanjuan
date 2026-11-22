@@ -18,6 +18,8 @@ import { createAtmosphere,createTimePreference,timeOverride } from './sj-atmosph
 import { createCityLife } from './sj-life.js';
 
 import {animasTurnHint} from './sj-norzagaray-layout.js';
+import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp} from './sj-ui.js';
+import {GROUND_AREAS} from './sj-streets-data.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
 let state='loading',renderer,entity,touch,pad,audio,context,master,world,scene,camera,scenery,life,lifeAudio;
 let busy=false,resizePending=true,parked=false,sizeKey='',last=0,lastView=0,muted=false,transition=0,audioPreparation,cameraControls;
@@ -26,11 +28,30 @@ const preferences=initialRenderPreferences(),resolution=createRenderResolutionPr
 const framePreference=createFrameRatePreference(),pacer=createFramePacer(framePreference.value);
 const timePreference=createTimePreference();let atmos,timeOfDay=timeOverride(params)??timePreference.value;
 const hudModel=createHudModel();
+document.body.dataset.time=timeOfDay; // the loading poster and title vignette take their inks from the hour
+// HUD text: cached nodes, written only when the string changes (no per-frame DOM churn over the 3D view).
+const showFps=createShowFpsPreference(),fpsMeter=createFpsMeter(text=>{$('fps').firstChild.firstChild.data=text;});
+let hudText={},streets=null,streetAt=-1e9,speedNodes=null,showHelp;
+function setText(id,value){if(hudText[id]!==value){hudText[id]=value;$(id).textContent=value;}}
+function speedText(){const s=$('speed'),b=s.querySelector('b'),k=s.querySelector('.kmh');
+  if(!b||!k){s.replaceChildren();const nb=document.createElement('b'),u=document.createElement('span'),sep=document.createElement('span'),nk=document.createElement('span'),u2=document.createElement('span');
+    nb.textContent='0';u.className='unit';u.textContent=' mph';sep.className='sep';sep.textContent=' · ';nk.className='kmh';nk.textContent='0';u2.className='unit2';u2.textContent=' km/h';s.append(nb,u,sep,nk,u2);return speedText();}
+  return speedNodes={mph:b.firstChild,kmh:k.firstChild,last:''};}
+// Re-fit the current name after a resize or rotation (the slot width changed); called from the resize handler.
+function refitStreet(){const el=$('street'),n=el.dataset.name;if(n){delete el.dataset.name;setStreet(n);}}
+function setStreet(name){const el=$('street');if(el.dataset.name===name&&(name||el.hasAttribute('data-empty')))return;el.dataset.name=name;
+  // Fit on change only (one layout read per step): the usual plaque abbreviation, a tighter one, then without the small
+  // prefix word; an ellipsis is the last resort.
+  el.toggleAttribute('data-empty',!name);el.removeAttribute('data-bare');if(name)el.setAttribute('lang','es');
+  for(const step of name?[0,1,2]:[0]){const [prefix,rest]=name?plaqueName(name,step?18:24,step>0):['',''];
+    el.firstChild.textContent=prefix?prefix+' ':'';el.lastChild.textContent=rest;el.toggleAttribute('data-long',rest.length>19);el.toggleAttribute('data-bare',step===2);
+    if(!name||el.hidden||el.lastChild.scrollWidth<=el.lastChild.clientWidth+1)break;}}
+function setShowFps(on){$('fps').hidden=!on;fpsMeter.clear();}
 const manager={inputEnabled:false,setTouchInput:(k,v)=>{if(manager.inputEnabled){if(v&&!touchKeys[k]&&['up','reset'].includes(k))pulses[k==='up'?'hopPressed':'resetPressed']=true;touchKeys[k]=v;}},clearTouchInput:()=>{clear(touchKeys);clear(pulses);},
   cancelTouchInput(){this.clearTouchInput();entity?.clearInput();},
   setGamepadInput:(k,v)=>{if(manager.inputEnabled)padKeys[k]=v;},clearGamepadInput:()=>clear(padKeys)};
 function clear(record){for(const k of Object.keys(record))delete record[k];}
-function gate(next){transition++;state=next;document.body.dataset.state=next;manager.inputEnabled=next==='riding';clear(keys);clear(touchKeys);clear(padKeys);clear(pulses);
+function gate(next){transition++;state=next;document.body.dataset.state=next;fpsMeter.reset();manager.inputEnabled=next==='riding';clear(keys);clear(touchKeys);clear(padKeys);clear(pulses);
   clear(lookKeys);cameraControls?.resetInput();showCameraTools(false);
   entity?.clearInput();touch?.setEnabled(next==='riding');pad?.reset();if(context)context[next==='riding'&&!muted?'resume':'suspend']().catch(()=>{});}
 function failure(error){if(state==='error')return;console.error(error);gate('error');renderer?.setAnimationLoop(null);
@@ -93,24 +114,37 @@ function findArrival(point){
   }
   return null;
 }
+// ---- Exact on-site arrivals (skatepark): an area place carrying `arrival` {x,z,y,headingY} is checked on its own registered
+// floor at that height and heading, with `clear` metres (default 16) clear ahead on the same floor; no road snap, no fallback
+// to another layer. ----
+function exactArrival(point){const a=point.arrival,step=entity?.controller.tuning.maxStepUp??.216;
+  const at=(x,z,y)=>world.sampler.findPlacementTarget({x,z,headingY:a.headingY,referenceY:y,maxStepUp:step,registeredSurfaceOnly:true});
+  const start=at(a.x,a.z,a.y);if(!start||Math.abs(start.y-a.y)>.05)return null;
+  for(let d=.5;d<=(a.clear??16);d+=.5)if(!at(start.x+Math.sin(a.headingY)*d,start.z+Math.cos(a.headingY)*d,start.y))return null;
+  return {...point,...start};}
+function arrivalFor(point){return point.arrival?exactArrival(point):findArrival(point);}
+// ---- end exact arrivals ----
 // The game starts on the plaza's paved edge beside Calle San Francisco, looking along the street: a few metres off the
 // traffic lane, so nobody waits behind a rider who is still reading the controls. Falls back to the street arrival.
 const START={x:-.62,z:12.64};
 function plazaStart(base){const start=arrival(START,base.headingY);if(!start)return base;
   for(let d=.5;d<=16;d+=.5)if(!arrival({x:start.x+Math.sin(base.headingY)*d,z:start.z+Math.cos(base.headingY)*d},base.headingY))return base;
   return {...base,...start};}
-function updateHud(){const speed=Math.abs(entity.speed);$('speed').textContent=`${(speed*2.23694).toFixed(0)} mph · ${(speed*3.6).toFixed(0)} km/h`;
-  $('location').textContent=`${entity.position.x.toFixed(1)}, ${entity.position.z.toFixed(1)} · ${entity.position.y.toFixed(1)} m`;
+function updateHud(now){const speed=Math.abs(entity.speed),mph=(speed*2.23694).toFixed(0),kmh=(speed*3.6).toFixed(0);
+  if(!speedNodes||!speedNodes.mph.isConnected)speedText();
+  if(speedNodes.last!==mph+'|'+kmh){speedNodes.last=mph+'|'+kmh;speedNodes.mph.data=mph;speedNodes.kmh.data=kmh;}
+  setText('location',`${entity.position.x.toFixed(1)}, ${entity.position.z.toFixed(1)} · ${entity.position.y.toFixed(1)} m`);
   const c=entity.controller,warning=hudModel.update({crashed:c.crashed,powerStage:c.powerWarning,tiltBack:c.tiltBack,overspeed:c.overspeed},performance.now()/1000);
-  $('rider-status').textContent=c.crashed?'R / B / GET UP to recover':warning.warningLabel||(warning.overspeed.visible?'Overspeed — slow down':
-    animasTurnHint(entity.position.x,entity.position.z,entity.heading,entity.speed));
+  setText('rider-status',c.crashed?'R / B / GET UP to recover':warning.warningLabel||(warning.overspeed.visible?'Overspeed — slow down':
+    animasTurnHint(entity.position.x,entity.position.z,entity.heading,entity.speed))||'');
+  if(streets&&!(now-streetAt<500&&now>=streetAt)){streetAt=now;setStreet(streets.at(entity.position.x,entity.position.z));} // at most twice a second
   touch.setDown(entity.controller.crashed);}
 function tick(now){if(busy)return;const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
   try{pad.update(dt);if(state!=='riding'||document.hidden)return;
     cameraControls.applyGamepadInput((lookKeys.KeyL||0)-(lookKeys.KeyJ||0),(lookKeys.KeyK||0)-(lookKeys.KeyI||0),(lookKeys.Minus||0)-(lookKeys.Equal||0),dt);
     const blended={...pulses};clear(pulses);for(const source of [keys,touchKeys,padKeys])for(const k in source)blended[k]=Math.max(blended[k]??0,source[k]);
-    atmos.advance(dt);life.update(dt,entity,camera);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));audio?.update(entity,entity.drainEvents());lifeAudio?.update(camera,dt);updateHud();
-    if(pacer.shouldRender(now))draw(now,dt);
+    atmos.advance(dt);life.update(dt,entity,camera);entity.update(dt,blended);waterWatch?.observe(entity.controller,dt,!!(blended.resetPressed||blended.reset));audio?.update(entity,entity.drainEvents());lifeAudio?.update(camera,dt);updateHud(now);
+    if(pacer.shouldRender(now)){draw(now,dt);if(showFps.value)fpsMeter.frame(now);}
   }catch(error){failure(error);}}
 async function sound(){if(muted)return;if(!context){const Context=globalThis.AudioContext||globalThis.webkitAudioContext;if(!Context)return;
   context=new Context();master=context.createGain();master.gain.value=.65;master.connect(context.destination);audio=new EucAudio(context,master);
@@ -127,39 +161,67 @@ async function resume(){if(busy||!entity||!['title','paused','map'].includes(sta
     if(parked||sizeKey!==bufferKey())resizePending=true;parked=false;draw(performance.now(),0,true);await waitForRenderCompletion(renderer);
     if(revision!==transition||document.hidden)return;
   for(const id of ['pause','map'])if($(id).open)$(id).close();$('map-canvas').width=$('map-canvas').height=1;
-  $('title').hidden=true;$('hud').hidden=false;$('ride-status').hidden=false;gate('riding');last=0;pacer.reset();renderer.domElement.focus();
+  $('title').hidden=true;$('hud').hidden=false;$('ride-status').hidden=false;refitStreet();gate('riding');last=0;pacer.reset();renderer.domElement.focus();
   }catch(e){failure(e);}finally{busy=false;action.textContent=label;$('ride').disabled=$('resume').disabled=false;$('ride').removeAttribute('aria-busy');}}
-async function pause(){if(busy||state!=='riding')return;gate('paused');$('pause').showModal();$('resume').focus();}
+async function pause(){if(busy||state!=='riding')return;gate('paused');showHelp?.(inputDevice(document.body));$('pause').showModal();document.querySelector('#pause .sheet-body').scrollTop=0;$('resume').focus();}
+// Map palette: deep bay teal with paler shallows, warm sand land, plaster-coloured buildings, pale streets,
+// gate-red destinations, the yellow rider arrow.
+const MAP={sea:'#1c6a68',shallow:'#2f8c85',land:'#f0dcb0',building:'#d9a57c',road:'#fff8ea',edge:'#b78f68',dest:'#a62d23',ring:'#f8f1e3',ink:'#182c40',you:'#fee17d',water:'#d3ece8'};
 function mapDrawing(){const canvas=$('map-canvas'),rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
   canvas.width=1;canvas.height=1;canvas.width=Math.max(1,Math.round(rect.width*dpr));canvas.height=Math.max(1,Math.round(rect.height*dpr));
   const ctx=canvas.getContext('2d'),t=world.terrain,w=(t.nx-1)*t.step,h=(t.nz-1)*t.step,s=Math.min(canvas.width/w,canvas.height/h)*.95;
-  ctx.fillStyle='#174050';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.translate((canvas.width-w*s)/2,(canvas.height-h*s)/2);ctx.scale(s,s);ctx.translate(-t.x0,-t.z0);
+  const ox=(canvas.width-w*s)/2,oz=(canvas.height-h*s)/2,px=x=>ox+(x-t.x0)*s,pz=z=>oz+(z-t.z0)*s;
+  ctx.fillStyle=MAP.sea;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.translate(ox,oz);ctx.scale(s,s);ctx.translate(-t.x0,-t.z0);
   const path=ring=>{ctx.moveTo(...ring[0]);for(const p of ring.slice(1))ctx.lineTo(...p);ctx.closePath();};
-  ctx.fillStyle='#b6baa1';for(const p of world.city.boundary){ctx.beginPath();path(p.outer);for(const hole of p.holes)path(hole);ctx.fill('evenodd');}
-  ctx.fillStyle='#7c7368';for(const b of world.city.buildings){ctx.beginPath();path(b.outer);for(const h of b.holes)path(h);ctx.fill('evenodd');}
-  ctx.strokeStyle='#e5d6b7';for(const r of world.city.roads){ctx.beginPath();ctx.moveTo(...r.points[0]);for(const p of r.points.slice(1))ctx.lineTo(...p);ctx.lineWidth=Math.max(2/s,r.width);ctx.stroke();}
+  ctx.strokeStyle=MAP.shallow;ctx.lineWidth=14*dpr/s;ctx.lineJoin='round';for(const p of world.city.boundary){ctx.beginPath();path(p.outer);ctx.stroke();}
+  ctx.fillStyle=MAP.land;for(const p of world.city.boundary){ctx.beginPath();path(p.outer);for(const hole of p.holes)path(hole);ctx.fill('evenodd');}
+  ctx.fillStyle=MAP.building;for(const b of world.city.buildings){ctx.beginPath();path(b.outer);for(const h of b.holes)path(h);ctx.fill('evenodd');}
+  ctx.lineCap='round';ctx.lineJoin='round';
+  for(const [colour,extra] of [[MAP.edge,1.6/s],[MAP.road,0]]){ctx.strokeStyle=colour;
+    for(const r of world.city.roads){ctx.beginPath();ctx.moveTo(...r.points[0]);for(const p of r.points.slice(1))ctx.lineTo(...p);ctx.lineWidth=Math.max(2/s,r.width)+extra;ctx.stroke();}}
   // Area map lines (e.g. worldedge's east closure): understated, no arrivals.
   for(const a of areasOf(world))for(const l of a.mapLines??[]){ctx.beginPath();ctx.moveTo(...l.points[0]);for(const p of l.points.slice(1))ctx.lineTo(...p);
     ctx.strokeStyle=l.colour;ctx.lineWidth=l.width/s;ctx.setLineDash((l.dash??[]).map(v=>v/s));ctx.stroke();ctx.setLineDash([]);}
-  for(const p of arrivals){ctx.beginPath();ctx.arc(p.x,p.z,4/s,0,Math.PI*2);ctx.fillStyle='#244951';ctx.fill();}
-  ctx.translate(entity.position.x,entity.position.z);ctx.rotate(-entity.heading);ctx.fillStyle='#ffdc68';ctx.strokeStyle='#172b31';ctx.lineWidth=2/s;
-  ctx.beginPath();ctx.moveTo(0,12/s);ctx.lineTo(7/s,-7/s);ctx.lineTo(0,-3/s);ctx.lineTo(-7/s,-7/s);ctx.closePath();ctx.fill();ctx.stroke();}
+  const k=dpr/s; // marks are sized in CSS pixels, like the legend
+  for(const p of arrivals){ctx.beginPath();ctx.arc(p.x,p.z,6.5*k,0,Math.PI*2);ctx.fillStyle=MAP.ink;ctx.fill();
+    ctx.beginPath();ctx.arc(p.x,p.z,5*k,0,Math.PI*2);ctx.fillStyle=MAP.ring;ctx.fill();ctx.beginPath();ctx.arc(p.x,p.z,3.5*k,0,Math.PI*2);ctx.fillStyle=MAP.dest;ctx.fill();}
+  ctx.save();ctx.translate(entity.position.x,entity.position.z);ctx.rotate(-entity.heading);ctx.fillStyle=MAP.you;ctx.strokeStyle=MAP.ink;ctx.lineWidth=2*k;
+  ctx.beginPath();ctx.moveTo(0,10*k);ctx.lineTo(7*k,-7*k);ctx.lineTo(0,-3*k);ctx.lineTo(-7*k,-7*k);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+  // Quiet cartography in screen space: the two waters, a north mark and a scale bar.
+  ctx.setTransform(1,0,0,1,0,0);const u=dpr,label=(text,x,z,size)=>{ctx.font=`600 ${size*u}px Overpass, Inter, sans-serif`;ctx.letterSpacing=`${.18*size*u}px`;
+    ctx.textAlign='center';ctx.textBaseline='middle';const half=ctx.measureText(text.toUpperCase()).width/2+6*u;x=Math.max(half,Math.min(canvas.width-half,x));ctx.strokeStyle=MAP.sea;ctx.lineWidth=4*u;ctx.lineJoin='round';ctx.strokeText(text.toUpperCase(),x,z);
+    ctx.fillStyle=MAP.water;ctx.fillText(text.toUpperCase(),x,z);ctx.letterSpacing='0px';};
+  const size=canvas.width/u<520?10:12;
+  label('Océano Atlántico',px((t.x0+w*.5)),pz(t.z0+h*.08),size);const bay=[[760,615],[640,640],[900,600],[380,650],[-260,650]].find(([x,z])=>[-150,-75,0,75,150].every(d=>world.sampler.isWater(x+d,z,0)&&world.sampler.isWater(x+d,z-18,0)&&world.sampler.isWater(x+d,z+18,0)))??[760,615];
+  label('Bahía de San Juan',px(bay[0]),pz(bay[1]),size);
+  const nx=canvas.width-22*u,nz=26*u;ctx.fillStyle=MAP.ring;ctx.strokeStyle=MAP.ink;ctx.lineWidth=1.5*u;
+  ctx.beginPath();ctx.moveTo(nx,nz-14*u);ctx.lineTo(nx+7*u,nz+8*u);ctx.lineTo(nx,nz+3*u);ctx.lineTo(nx-7*u,nz+8*u);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.font=`700 ${11*u}px Overpass, Inter, sans-serif`;ctx.fillStyle=MAP.ring;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('N',nx,nz+11*u);
+  const metres=canvas.width/u<520?200:500,len=metres*s,bx=14*u,bz=canvas.height-16*u;
+  ctx.fillStyle=MAP.ink;ctx.fillRect(bx-1.5*u,bz-6.5*u,len+3*u,9*u);ctx.fillStyle=MAP.ring;ctx.fillRect(bx,bz-5*u,len/2,6*u);ctx.fillRect(bx+len/2,bz-5*u,len/2,6*u);
+  ctx.fillStyle=MAP.ink;ctx.fillRect(bx+len/2,bz-5*u,len/2,3*u);
+  ctx.fillStyle=MAP.ring;ctx.textAlign='left';ctx.textBaseline='bottom';ctx.font=`700 ${10*u}px Overpass, Inter, sans-serif`;ctx.fillText(`${metres} m`,bx+len+6*u,bz+2*u);}
 const searchKey=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
 function listPlaces(){const search=searchKey($('search').value);$('places').replaceChildren();for(const p of arrivals){if(!searchKey(p.name).includes(search))continue;
   const button=document.createElement('button');button.textContent=p.name;button.onclick=async()=>{if(busy)return;
     life.clearAround(p.x,p.z);
     if(!entity.placeAt(p.x,p.z,p.headingY,p.y,{requireClear:true,departure:1})){ $('map-status').textContent='That arrival is blocked. Choose another place.';return;}
-    $('map-status').textContent='';await resume();};$('places').append(button);}}
+    $('map-status').textContent='';if(streets?.hold(p.name,p.x,p.z))streetAt=-1e9;await resume();};$('places').append(button);}
+  const none=!$('places').childElementCount?'No places match. Try another name.':'';if($('map-status').textContent!==none)$('map-status').textContent=none;}
 async function openMap(){if(busy||state!=='riding')return;busy=true;gate('map');try{await waitForRenderCompletion(renderer);
   if(state!=='map')return;
-  $('map').showModal();$('search').value='';listPlaces();mapDrawing();$('close-map').focus();renderer.setDrawingBufferSize(1,1,1);parked=true;
+  $('map').showModal();$('search').value='';listPlaces();for(const el of document.querySelectorAll('#map .directory,#map .map-body'))el.scrollTop=0;mapDrawing();$('close-map').focus();renderer.setDrawingBufferSize(1,1,1);parked=true;
   }catch(e){failure(e);}finally{busy=false;}}
 
 // D-pad up/down: nearest control in the next visual row (map destination grid wraps); same-row ties go to the
 // horizontally closest. Nothing further that way (single column ends) falls back to the in-order step, which wraps.
+// Rows are compared in unscrolled layout positions, so a scrolled menu body (Pause keeps its heading and Resume fixed
+// above it) still steps to the row that follows rather than the first one left in view.
+const layoutBox=el=>{const q=el.getBoundingClientRect();let y=0;for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement)y+=p.scrollTop;
+  return {left:q.left,right:q.right,top:q.top+y,bottom:q.bottom+y};};
 function verticalTarget(controls,current,direction){
-  const r=current.getBoundingClientRect(),cx=(r.left+r.right)/2;let best=null,minGap=Infinity;
-  const rows=controls.filter(el=>el!==current).map(el=>{const q=el.getBoundingClientRect();
+  const r=layoutBox(current),cx=(r.left+r.right)/2;let best=null,minGap=Infinity;
+  const rows=controls.filter(el=>el!==current).map(el=>{const q=layoutBox(el);
     return {el,gap:direction>0?q.top-r.bottom:r.top-q.bottom,dx:Math.abs((q.left+q.right)/2-cx)};}).filter(c=>c.gap>-4);
   for(const c of rows)minGap=Math.min(minGap,c.gap);
   for(const c of rows)if(c.gap<=minGap+12&&(!best||c.dx<best.dx))best=c;
@@ -184,11 +246,11 @@ function menuInput({actions}){if(busy||(!actions?.navigate&&!actions?.vertical&&
 function showCameraTools(show){$('camera-tools').hidden=!show;$('camera-button').setAttribute('aria-expanded',String(show));document.body.classList.toggle('camera-tools-open',show);}
 function cycleCamera(){if(state!=='riding')return;cameraControls.cycle();}
 function syncCamera(mode){for(const id of ['camera-mode','camera-setting'])$(id).value=mode;
-  $('camera-status').textContent=`Camera: ${mode==='look'?'Look-around':mode==='wide'?'Wide':'Chase'} · C / Y to switch`;
+  $('camera-status').textContent=`Camera: ${mode==='look'?'Look-around':mode==='wide'?'Wide':'Chase'}${document.body.classList.contains('touch-enabled')?'':' · C / Y to switch'}`;
   $('camera-hint').textContent=mode==='look'?'Look around: drag to look up/down and turn. Pinch or +/− to magnify.':'Drag to orbit. Pinch or +/− to zoom. Look-around gives a rider-height view.';}
 
 // Time of day: uniforms and one environment bake, no shader rebuild; redraw the still frame behind a menu.
-function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;timePreference.set(next);atmos.apply(next);life?.setHour(next);
+function setTime(next){if(busy){for(const id of ['time-title','time-of-day'])$(id).value=timeOfDay;return;}if(next===timeOfDay)return;timeOfDay=next;document.body.dataset.time=next;timePreference.set(next);atmos.apply(next);life?.setHour(next);
   for(const id of ['time-title','time-of-day'])$(id).value=next;if(state==='title'||state==='paused')draw(performance.now(),0,true);}
 async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms:{uInteriorGlow:{value:0}}};
   renderer=new THREE.WebGPURenderer({antialias:true,forceWebGL:params.get('webgpu')==='0'||(preferences.phone&&params.get('webgpu')!=='1'),powerPreference:'high-performance'});
@@ -216,7 +278,8 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   // Immersion watchdog: a rider left in the sea without a native recovery is placed back at a checked dry public spot.
   waterWatch=createWaterWatchdog({sampler:world.sampler,spawn,arrivals:()=>arrivals,recovery:world.coast?.recoveryPoints,maxStepUp:entity.controller.tuning.maxStepUp,
     place:(x,z,h,y)=>{life.clearAround(x,z);return entity.placeAt(x,z,h,y,{requireClear:true,departure:1.2});}});
-  arrivals=[...world.city.places,...world.corridor.places,...(world.gate?.places??[]),...(world.fort?.places??[]),...areasOf(world).flatMap(a=>a.places??[])].map(findArrival).filter(Boolean);
+  streets=createStreetIndex(world.city.roads,[...world.city.places,...world.corridor.places,...areasOf(world).flatMap(a=>a.places??[])],GROUND_AREAS);setStreet('');
+  arrivals=[...world.city.places,...world.corridor.places,...(world.gate?.places??[]),...(world.fort?.places??[]),...areasOf(world).flatMap(a=>a.places??[])].map(arrivalFor).filter(Boolean);
   touch=new TouchControls(manager);touch.setEnabled(false);
   cameraControls=new RidingCamera(syncCamera);syncCamera('chase');
   cameraControls.bind(renderer.domElement,()=>state==='riding'&&!busy&&!document.hidden);
@@ -229,7 +292,9 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   $('resolution').value=resolution.value;$('frame-limit').value=framePreference.value;
   for(const id of ['time-title','time-of-day']){$(id).value=timeOfDay;$(id).onchange=()=>setTime($(id).value);}
   $('resolution').onchange=()=>{resolution.set($('resolution').value);resizePending=true;};
-  $('frame-limit').onchange=()=>{framePreference.set($('frame-limit').value);pacer.set(framePreference.value);};
+  $('frame-limit').onchange=()=>{framePreference.set($('frame-limit').value);pacer.set(framePreference.value);fpsMeter.reset();};
+  $('show-fps').checked=showFps.value;setShowFps(showFps.value);$('show-fps').onchange=()=>{showFps.set($('show-fps').checked);setShowFps(showFps.value);};
+  showHelp=bindControlsHelp($('controls-help'),[...document.querySelectorAll('.help-tabs [data-help]')]);
   $('sound').onchange=()=>{muted=!$('sound').checked;if(context)context.suspend();};
   $('ride').onclick=resume;$('resume').onclick=resume;
   $('camera-button').onclick=event=>{if(state!=='riding')return;showCameraTools($('camera-tools').hidden);
@@ -243,6 +308,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   const mapping={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',Space:'up',ShiftLeft:'boost',ShiftRight:'boost',KeyR:'reset'};
   document.addEventListener('keydown',event=>{
     if(event.code==='Escape'){event.preventDefault();if(state==='riding')pause();else if(state==='paused'||state==='map')resume();return;}
+    if(event.code==='KeyM'&&!event.repeat&&state==='map'&&['BUTTON','A'].includes(event.target?.tagName)){event.preventDefault();resume();return;} // not while typing in search
     if(['INPUT','SELECT','TEXTAREA','BUTTON','A'].includes(event.target?.tagName))return;
     if(event.code==='KeyM'&&!event.repeat){event.preventDefault();state==='map'?resume():openMap();return;}
     if(['KeyC','KeyV','KeyI','KeyJ','KeyK','KeyL','Minus','Equal'].includes(event.code)){
@@ -260,8 +326,8 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   });
   document.addEventListener('keyup',event=>{suppressed.delete(event.code);delete lookKeys[event.code];if(mapping[event.code])delete keys[mapping[event.code]];});
   document.addEventListener('focusin',event=>{if(['INPUT','SELECT','TEXTAREA','BUTTON','A'].includes(event.target?.tagName)){clear(keys);clear(lookKeys);entity.clearInput();}});
-  window.addEventListener('blur',()=>{if(state==='riding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='riding')pause();last=0;});
-  window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();});
+  window.addEventListener('blur',()=>{if(state==='riding')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='riding')pause();last=0;fpsMeter.reset();});
+  window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();refitStreet();});
   $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · Cool Rider`;
   stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);
   // Life gathers round the spawn; every actor pool draws at least one instance while the city compiles.
