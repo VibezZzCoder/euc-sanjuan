@@ -90,8 +90,10 @@ export function createSkateparkLayout({city,height,isDry}){
   const D={h:.9,west:NQ.u1,edge:-19.5,stair0:NQ.u1,stair1:12.6,cheek1:13.2,bankEnd:-15.9};
   {const us=samples([[D.west,P.u1,.75]],[D.stair1,D.cheek1]);
     const ssD=samples([[P.s0,D.edge,.9]],ssNorth);
-    field({id:'street-deck',us,ss:ssD,h:()=>D.h,paint:()=>C.ochre,sideColour:C.wall[5],skirts:[{edge:'s1',lo:D.stair0,hi:D.stair1},{edge:'u0',lo:nqLip,hi:D.edge}]},{u0:D.west,u1:P.u1,s0:P.s0,s1:D.edge});
-    kit.block({id:'deck-seat',u0:D.west,u1:D.west+.6,s0:P.s0,s1:D.edge,height:D.h+.45,paint:C.cap,side:C.wall[2]});
+    field({id:'street-deck',us,ss:ssD,h:()=>D.h,paint:()=>C.ochre,sideColour:C.wall[5],skirts:[{edge:'s1',lo:D.stair0,hi:D.stair1},{edge:'u0',lo:nqLip,hi:D.edge,draw:false}]},{u0:D.west,u1:P.u1,s0:P.s0,s1:D.edge});
+    // One face per plane: the seat's west face stands in the deck's west face (that skirt is body only), and the seat's
+    // south face is drawn from the deck up (below it the deck's own south face shows beside the stairs).
+    kit.block({id:'deck-seat',u0:D.west,u1:D.west+.6,s0:P.s0,s1:D.edge,height:D.h+.45,paint:C.cap,side:C.wall[2],sideFrom:{2:D.h}});
     kit.block({id:'cheek',u0:D.stair1,u1:D.cheek1,s0:D.edge,s1:-17.1,height:D.h,paint:C.cap,side:C.wall[5]});
     const us2=samples([[D.cheek1,P.u1,.6]]),ss2=samples([[D.edge,D.bankEnd,.2]]);
     field({id:'street-bank',us:us2,ss:ss2,h:(u,s)=>D.h*(1-easedRamp(s-D.edge,D.bankEnd-D.edge,.5)),paint:(u,s,h,sd)=>sd>2?C.ochre:C.deck},{u0:D.cheek1,u1:P.u1,s0:D.edge,s1:D.bankEnd});
@@ -269,12 +271,13 @@ export function createSkateparkLayout({city,height,isDry}){
   // ---- Painted name and one Puerto Rican flag on the tall west wall (street side), 2 cm proud of the plaster (no shadow) ----
   // Plates on a wall face at u = faceU, normal `out` (±1 along u); reading direction `dir` (±1 along s). Wall-plane points
   // are (s, y) with y a world height.
-  const plate=(faceU,out,proud,poly,colour)=>{const P3=poly.map(([s,y])=>{const w=F.world(faceU+out*proud,s);return [Math.fround(w.x),Math.fround(y),Math.fround(w.z)];});
+  const plate=(faceU,out,proud,poly,colour,edge=()=>true)=>{const P3=poly.map(([s,y])=>{const w=F.world(faceU+out*proud,s);return [Math.fround(w.x),Math.fround(y),Math.fround(w.z)];});
     const B3=poly.map(([s,y])=>{const w=F.world(faceU,s);return [Math.fround(w.x),Math.fround(y),Math.fround(w.z)];});
     const n=[out*F.cs,0,-out*F.sn],fan=k=>[P3[0],P3[k],P3[k+1]];
     for(let k=1;k+1<P3.length;k++){let tri=fan(k);const ux=tri[1][0]-tri[0][0],uy=tri[1][1]-tri[0][1],uz=tri[1][2]-tri[0][2],vx=tri[2][0]-tri[0][0],vy=tri[2][1]-tri[0][1],vz=tri[2][2]-tri[0][2];
       const nx=uy*vz-uz*vy,nz=ux*vy-uy*vx;if(nx*n[0]+nz*n[2]<0)tri=[tri[0],tri[2],tri[1]];kit.emit('paint',...tri,colour,n,n,n);}
-    for(let k=0;k<P3.length;k++){const a=P3[k],b=P3[(k+1)%P3.length],a0=B3[k],b0=B3[(k+1)%P3.length];kit.emit('paint',a,a0,b0,colour);kit.emit('paint',a,b0,b,colour);
+    // edge(k) false: no rim on edge k → k+1, where the next plate of the same thickness begins (two rims in one plane)
+    for(let k=0;k<P3.length;k++){if(!edge(k))continue;const a=P3[k],b=P3[(k+1)%P3.length],a0=B3[k],b0=B3[(k+1)%P3.length];kit.emit('paint',a,a0,b0,colour);kit.emit('paint',a,b0,b,colour);
       kit.emit('paint',a,b0,a0,colour);kit.emit('paint',a,b,b0,colour);}};
   const STROKES={S:[[1,1,0,1],[0,1,0,.5],[0,.5,1,.5],[1,.5,1,0],[1,0,0,0]],K:[[0,0,0,1],[0,.48,1,1],[.3,.62,1,0]],A:[[0,0,.5,1],[.5,1,1,0],[.24,.4,.76,.4]],
     T:[[0,1,1,1],[.5,1,.5,0]],E:[[1,1,0,1],[0,1,0,0],[0,0,1,0],[0,.5,.75,.5]],P:[[0,0,0,1],[0,1,1,1],[1,1,1,.48],[1,.48,0,.48]],
@@ -290,9 +293,12 @@ export function createSkateparkLayout({city,height,isDry}){
     lettering('SKATEPARK DEL MUELLE',P.u0,1,-1,-7.6,F.floorY(P.u0,-12)+1.62,.5,C.letter);
     // the flag: five red and white stripes, the blue triangle at the hoist with the white star (3:2), hoist to the north
     const W=1.65,H=1.1,s0=-26.55,y0=yb+.95,tri=H*Math.sqrt(3)/2,xt=y=>tri*(1-Math.abs(y-H/2)/(H/2));
-    for(let i=0;i<5;i++){const top=H-i*H/5,bot=H-(i+1)*H/5,poly=[[xt(top),top],[W,top],[W,bot],[xt(bot),bot]];if(bot<H/2&&top>H/2)poly.push([tri,H/2]);
-      plate(face,-1,.02,poly.map(([x,y])=>[s0+x,y0+y]),i%2?C.flagWhite:C.flagRed);}
-    plate(face,-1,.02,[[s0,y0],[s0+tri,y0+H/2],[s0,y0+H]],C.flagBlue);
+    for(let i=0;i<5;i++){const top=H-i*H/5,bot=H-(i+1)*H/5,poly=[[xt(top),top],[W,top],[W,bot],[xt(bot),bot]];
+      // the stripe the tip cuts into is fanned from the tip: a fan from a corner would paint over the blue (same plane)
+      const notch=bot<H/2&&top>H/2;if(notch)poly.unshift([tri,H/2]);
+      // rims on the flag's outline only (top of the first stripe, the fly end, the bottom of the last stripe, the hoist)
+      const o=notch?1:0;plate(face,-1,.02,poly.map(([x,y])=>[s0+x,y0+y]),i%2?C.flagWhite:C.flagRed,k=>k===o+1||k===o&&i===0||k===o+2&&i===4);}
+    plate(face,-1,.02,[[s0,y0],[s0+tri,y0+H/2],[s0,y0+H]],C.flagBlue,k=>k===2);
     const star=[];for(let k=0;k<10;k++){const a=Math.PI/2+k*Math.PI/5,r=k%2?.085:.21;star.push([s0+tri/3+Math.cos(a)*r,y0+H/2+Math.sin(a)*r]);}
     plate(face,-1,.04,[[s0+tri/3,y0+H/2],...star,star[0]],C.flagWhite);}
 

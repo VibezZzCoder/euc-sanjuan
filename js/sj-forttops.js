@@ -250,9 +250,16 @@ export function buildForttops(ft,{scene,bake,own,box,cylinder,sphere,mat,meshes,
     const RED='#b3262e',WHITE='#f3f1ea',BLUE='#253f7a',SKY='#3b6fb6';
     if(f.kind==='us'){for(let r=0;r<13;r++){const v0=r/13,v1=(r+1)/13,c=r%2?WHITE:RED;if(r>=6)q(.4,1,v0,v1,c);else q(0,1,v0,v1,c);}
       q(0,.4,6/13,1,BLUE);}
-    else if(f.kind==='pr'){for(let r=0;r<5;r++){const v0=r/5,v1=(r+1)/5,c=r%2?WHITE:RED,u=v=>.866*(1-Math.abs(2*v-1));  // triangle tip at 0.866·H/W… along the hoist
-        const ua=Math.max(u(v0),u(v1))*H/W*.9;q(ua,1,v0,v1,c);}
-      for(let r=0;r<10;r++){const v0=r/10,v1=(r+1)/10,u=v=>.866*(1-Math.abs(2*v-1))*H/W*.9;plain.quad([X(0),y0+v0*H,Zw(0)],[X(Math.max(u(v0),u(v1))),y0+v0*H,Zw(Math.max(u(v0),u(v1)))],[X(Math.max(u(v0),u(v1))),y0+v1*H,Zw(Math.max(u(v0),u(v1)))],[X(0),y0+v1*H,Zw(0)],SKY,[0,0,1]);}}
+    else if(f.kind==='pr'){
+      // Five stripes cut by the hoist triangle (equilateral on the hoist, tip at 0.866·H), no two colours in one place;
+      // the white star on both faces, 2 cm off the triangle like the saltire.
+      const tip=.866*H/W,ue=v=>tip*(1-Math.abs(2*v-1)),PT=(u,v,z=0)=>[X(u),y0+v*H,Zw(u)+z],N=[0,0,1];
+      for(let r=0;r<5;r++){const v0=r/5,v1=(r+1)/5,c=r%2?WHITE:RED;
+        if(r===2){plain.quad(PT(ue(v0),v0),PT(1,v0),PT(1,.5),PT(tip,.5),c,N);plain.quad(PT(tip,.5),PT(1,.5),PT(1,v1),PT(ue(v1),v1),c,N);}
+        else plain.quad(PT(ue(v0),v0),PT(1,v0),PT(1,v1),PT(ue(v1),v1),c,N);}
+      plain.tri(PT(0,0),PT(tip,.5),PT(0,1),SKY,N);
+      for(const z of [.02,-.02]){const cu=tip/3,R=.2*H,S=k=>{const a=Math.PI/2+k*Math.PI/5,r=k%2?R*.382:R;return PT(cu+Math.cos(a)*r/W,.5+Math.sin(a)*r/H,z);};
+        for(let k=0;k<10;k+=2)plain.quad(PT(cu,.5,z),S(k+9),S(k),S(k+1),WHITE,[0,0,z>0?1:-1]);}}
     else {q(0,1,0,1,WHITE);
       // Ragged red saltire (Cross of Burgundy) on both faces, 2 cm off the field.
       for(const z of [.02,-.02])for(const [a,b2] of [[[0,0],[1,1]],[[0,1],[1,0]]]){const w2=.09;

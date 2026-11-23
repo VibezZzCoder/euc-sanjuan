@@ -30,7 +30,7 @@
           "sourceSha256": "994934d6c30ade21f859011704bdc747d9e9f17ff4bfb902c6b9da903e4c827c"
         }
       ],
-      "editionSha256": "c334b1d93086c42b6bebbda9b66de2a154d11b2d082a4932d8d5590c582edb57",
+      "editionSha256": "75f90cd421ecb7feafe3906019f48329dad4d90e7d8992209adac637a1657d93",
       "derived": "From sf-skatepark-geometry.js: the site frame rounded once to Float32, support facets made from the drawn triangles, contour-partitioned inscribed bodies (heightStripes/inscribedBodies) and wheel-sweep bar boxes. From skateparkLevel.ts: wallProfile (eased-foot transition), easedRamp and smin. New for San Juan: tensor-grid height fields with per-cell diagonals, skirts, level flagged lips, flat polygon floors and per-vertex/per-triangle paint."
     },
     {
@@ -49,7 +49,7 @@
           "sourceSha256": "48b1d30ca53838ea9f00fe952b9e5053064ab424cbc656f53a9ea15970964e65"
         }
       ],
-      "editionSha256": "743bfe3af1c236ab5fe4318e703cd6fcd711eda948f81ea2cfc99715acca2ece",
+      "editionSha256": "e424c2f02cdf80684e0824ee6d07ee97c433e9f4057cc4877f89ccef9f33b71c",
       "derived": "Shapes and dimensions after the original game's Foundry Yard (rounded-rectangle bowl driven by one wall profile with a roll-out, the kicker with a level flagged lip and 0.10 m back drop, the 7 × 7 m pyramid, the five-riser stair set, the euro gap) and the SF edition's revised parks (opposing quarters with lip decks and outer banks, a clear spine, an exact on-park arrival). The layout, site fit, paint, guards, openings, lettering and flag were written for San Juan."
     },
     {

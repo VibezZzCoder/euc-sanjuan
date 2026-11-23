@@ -22,7 +22,7 @@
 //       paint(u,s,h,slopeDeg,i,j) → '#rrggbb' per triangle (crisp colour blocks along grid lines); vertexPaint(u,s,h,gradDeg)
 //       per vertex (soft edges on curved faces); diagonal(i,j,u,s) true splits that cell on the other diagonal (follow a hip
 //       or a curved lip). topExtra: fields copied onto every support facet (e.g. replacesTerrain for an access apron).
-//   block({id, u0,u1,s0,s1, height, paint, side}) a solid from the floor (pad, ledge, tread): top = support, sides drawn,
+//   block({id, u0,u1,s0,s1, height, paint, side, sideFrom}) a solid from the floor (pad, ledge, tread): top = support, sides drawn,
 //       the body under it partitioned into inscribed prisms.
 //   rail({id, points:[[u,s,top]…], width, thickness, posts}) a thin steel bar (wheel-sweep body) on ordinary posts.
 //   prism({u0,u1,s0,s1, bottom, top | bottomLocal, topLocal, paint, collide, occludes, faces}) an oriented box (walls,
@@ -164,6 +164,7 @@ export function createSkateKit(frame,{source='skatepark',feature='skatepark'}={}
     for(const sk of skirts){const list=sk.edge==='u0'?Array.from({length:ns},(_,j)=>j):sk.edge==='u1'?Array.from({length:ns},(_,j)=>(nu-1)*ns+j)
       :sk.edge==='s0'?Array.from({length:nu},(_,i)=>i*ns):Array.from({length:nu},(_,i)=>i*ns+ns-1);
       const along=k=>sk.edge[0]==='u'?ss[k%ns]:us[Math.floor(k/ns)],out=sk.edge==='u1'||sk.edge==='s1'?1:-1;
+      if(sk.draw===false)continue;   // body only: another solid's face covers this one (two faces in one plane flicker)
       for(let k=0;k+1<list.length;k++){const ka=list[k],kb=list[k+1];if(!inRange((along(ka)+along(kb))/2,sk))continue;if(H[ka]<1e-4&&H[kb]<1e-4)continue;
         const a=P[ka],b=P[kb],a0=F.at(us[Math.floor(ka/ns)],ss[ka%ns],0),b0=F.at(us[Math.floor(kb/ns)],ss[kb%ns],0);
         // face away from the field: outward along +u/+s for the far edges
@@ -182,12 +183,16 @@ export function createSkateKit(frame,{source='skatepark',feature='skatepark'}={}
         return pts.map((p,k)=>[o,p,pts[(k+1)%pts.length]]);})();
       for(const t0 of tris){const tri=upward(...t0);if(emit(material,...tri,c))addTop(tri,rest,src);}}
   }
-  function block({id,u0,u1,s0,s1,height,paint='#b4ab98',side='#6f6a60',material='concrete'}){
+  // sideFrom {k: h}: side k (0 = s0, 1 = u1, 2 = s1, 3 = u0) is drawn from h up, where a neighbour's face covers it below.
+  function block({id,u0,u1,s0,s1,height,paint='#b4ab98',side='#6f6a60',material='concrete',sideFrom=null}){
     const src=source+':'+id,T=[[u0,s0],[u1,s0],[u1,s1],[u0,s1]].map(([u,s])=>F.at(u,s,height)),B=[[u0,s0],[u1,s0],[u1,s1],[u0,s1]].map(([u,s])=>F.at(u,s,0));
     const rest=capability(feature+':'+id,false);
     for(const ids of [[0,1,2],[0,2,3]]){const tri=upward(...ids.map(k=>T[k])),base=upward(...ids.map(k=>B[k]));emit(material,...tri,paint);addTop(tri,rest,src);
       inscribedBodies(tri,base,colliders,{surface:'pavement',support:false,source:src+':body'});}
-    sides(T,B,material,side);return {top:T,base:B};
+    const C4=[[u0,s0],[u1,s0],[u1,s1],[u0,s1]],part=Object.keys(sideFrom??{}).map(Number);
+    sides(T,B,material,side,part);
+    for(const k of part){const R=C4.map(([u,s])=>F.at(u,s,sideFrom[k]));sides(T,R,material,side,[0,1,2,3].filter(q=>q!==k));}
+    return {top:T,base:B};
   }
 
   // Thin steel bar: native yawed boxes strictly inside the drawn bar, tagged for the wheel sweep only; posts are ordinary.
