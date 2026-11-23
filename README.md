@@ -31,15 +31,17 @@ skatepark; the wheel's tuning is unchanged. Both are on the map.
 The menus are drawn from the old city's own street furniture: ceramic street plaques, a tile border, a poster for
 the loading screen. The HUD names the street or plaza you are on, and Pause can show a frame-rate counter.
 
-Ride as any of **eleven riders**. Choose from the title screen or from Pause: the crew is a sheet of stamps, and each
-rider brings their own look, wheel and crash sounds. The Drunkard rides with his hands-off weave; everyone else has
-the same speed, grip and brakes.
+Ride as any of **eleven riders**. Choose from the title screen or from Pause: the crew is a sheet of stamps with each
+rider's portrait from EUC Thrills, and each rider brings their own look, wheel and crash sounds. The Drunkard rides
+with his hands-off weave; everyone else has the same speed, grip and brakes.
 
-**Officer Dorkins** patrols on his hover wheel. He arrives from behind, a knock-down from his paddle is a warning,
-and after three warnings the next one takes you to his paperwork desk, the invented *Cuartelillo del Monociclo* on
-the forecourt of La Princesa, the old jail on the promenade. Hop or swerve when he winds up, and lose him by breaking
-his line of sight and getting away. He leaves the two skate spots alone unless he followed you in, and Pause can
-send him off duty.
+**Officer Dorkins** patrols on his hover wheel, and he does not let go. He arrives from behind, flies over cars,
+people and street furniture, follows up stairs and through the gates, and finds you again after a map trip. A
+knock-down from his paddle is a warning, and after three warnings the next one takes you to his paperwork desk, the
+invented *Cuartelillo del Monociclo* on the forecourt of La Princesa, the old jail on the promenade. Watch his
+wind-up: hop over a low sweep, or turn hard or brake out of his line. Keep riding and dodging for about two minutes
+and his battery fades and he breaks off. He leaves the two skate spots alone unless he followed you in, and Pause
+can send him off duty.
 
 On a phone, add the game to the Home Screen to play it full screen as its own app. It still needs a connection:
 there is no offline mode.
@@ -91,9 +93,10 @@ Neither upstream checkout nor GIS tooling is needed to play the game.
 
 ## Current limits
 
-- Officer Dorkins flies: he is not a solid body, he does not follow the line of public stairs, and he gives up
-  when street furniture keeps him from reaching you. His desk is scenery for the booking only. Riders differ in
-  look, wheel and sound; only The Drunkard rides differently.
+- Officer Dorkins flies: he is not a solid body, and when he cannot reach you he drops out of sight and comes back
+  in from behind the camera. Losing him by distance alone is close to impossible; outlasting him is the way out.
+  His desk is scenery for the booking only. Riders differ in look, wheel and sound; only The Drunkard rides
+  differently.
 - Motor traffic uses a connected subset of streets. No cars drive in La Perla, the tunnels or Puerta de San Juan.
   City life gathers around the rider rather than simulating every block at once; some streets are much quieter
   than the plazas and waterfront, and a few sidewalks too narrow to walk stay empty.
@@ -126,7 +129,8 @@ to your own game, and carry over the right credits.
   [San Francisco edition](https://github.com/VibezZzCoder/euc-sanfrancisco) of EUC Thrills (MIT, VibezZzCoder), which
   inherited them from the New York edition. See [provenance/riders-import.json](provenance/riders-import.json) and
   [provenance/dorkins-import.json](provenance/dorkins-import.json) for the files and what changed. The picker's
-  design, his routes through this city, his pace, the desk and the booking's words were made for San Juan. Officer
+  design, his routes through this city, his pace, the desk and the booking's words were made for San Juan. The
+  riders' portraits are the drawings from EUC Thrills v1.1.0, unchanged; three carry the rider's own logo. Officer
   Dorkins and the *Cuartelillo* are fictional and carry no real police or agency marks.
 - **City life:** vehicle lofts and street sound adapt the [New York edition](https://github.com/VibezZzCoder/euc-nyc)
   of EUC Thrills and its Mr.doob lineage. Traffic, pedestrian figures and reactions, and actor collisions adapt

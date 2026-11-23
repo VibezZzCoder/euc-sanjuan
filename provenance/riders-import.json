@@ -24,7 +24,7 @@
       "sourcePath": "js/game-menu.js",
       "sourceBytes": 20246,
       "sourceSha256": "9cd91946119d96b502d90cfc4523c2fff51dd413a2ce31d6b07742f75c56ba49",
-      "editionSha256": "c7ad9257afd040d7037b67376657b41ddc5e872218f30c4036cb308a902b92d5",
+      "editionSha256": "73c85c0e9fd342285fca2cf291118a27cb3c1a1472b96964e7c4f816aee8d722",
       "derived": "Only the two riding-style sentences of GameMenu.render (standard riders; The Drunkard's weave, sway and stumble), the Keep/choose labelling idea and the reload-with-the-committed-rider rule (onReload in the donor's main.js). The stamp sheet, the postcard, the San Juan host flow, the compile under San Juan's scene and shadow pass, and the input wiring were written for San Juan."
     }
   ]

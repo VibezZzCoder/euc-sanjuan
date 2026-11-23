@@ -147,3 +147,25 @@ export function createFlightQueries(world) {
 
   return { allowed, allowedXZ, supportAt, clearLine, clearFlight, corridorClear, stats, graph: null };
 }
+
+/** Whether a checked corridor flight (pieces of 8 m, at most 64 m) from `from` reaches within `range` metres of `to`
+ * (for example a comeback point beside a rider he could not reach). */
+export function riderReachable(queries, from, to, range = 3.5) {
+  const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.ceil(d / 8);
+  if (n > 8) return false;
+  let ax = from.x, ay = from.y, az = from.z;
+  for (let i = 1; i <= n; i++) {
+    const s = i / n, b = { x: from.x + (to.x - from.x) * s, y: from.y + (to.y - from.y) * s, z: from.z + (to.z - from.z) * s };
+    if (Math.hypot(b.x - to.x, b.z - to.z) < range) return true;
+    if (!queries.corridorClear({ x: ax, y: ay, z: az }, b)) return false;
+    ax = b.x; ay = b.y; az = b.z;
+  }
+  return true;
+}
+
+/** Whether a body standing at `p` (feet, middle, head) is hidden from `eye` by the static world (behind a wall, round
+ * the corner of a mouth): every straight line from the eye meets something. */
+export function hiddenFrom(queries, eye, p) {
+  for (const up of [0.05, 1, 2.2]) if (queries.clearLine(eye, { x: p.x, y: p.y + up, z: p.z })) return false;
+  return true;
+}

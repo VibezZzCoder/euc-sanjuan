@@ -2,8 +2,8 @@
 // Officer Dorkins: where his routes run. A compact graph built once at boot, as typed arrays, from what the city
 // already has:
 //   walk links   the walk network of the people (js/sj-walk.js): sidewalks, quiet-street edges, footways, promenades,
-//                crossings, plaza walks, the Puerta de San Juan bore and its checked joins; public stairs are left out
-//                (they are the rider's escape, not his road; he crosses one only in a clear direct flight)
+//                crossings, plaza walks, the Puerta de San Juan bore and its checked joins, and the public stairs
+//                (a stair is no escape from a flyer: his route rises over the flights at the walk's own heights)
 //   lane links   the traffic lane graph (js/sj-traffic-graph.js), sampled every ≤ 8 m: it ties together the parts of
 //                the town the walks leave apart (the walk network does not need to be connected; the streets are)
 //   joins        short links between those two, and between walk pieces, where they come within a few metres of each
@@ -16,7 +16,7 @@
 // © 2026 VibezZzCoder, MIT). A link's flight sweep is checked the first time a search needs it and the answer is kept
 // (the city's static geometry never changes), so routes get cheaper as he patrols. Walk routes carry the walk's own
 // surface heights every few metres, so a straight sweep never cuts into a crest.
-import { WALK, walkHeight } from './sj-walk.js';
+import { walkHeight } from './sj-walk.js';
 
 export const PURSUIT = Object.freeze({ cell: 32, piece: 8, laneStep: 8, joinRadius: 9, joinRise: 1.2, joinsPerNode: 2,
   maxPops: 6000, maxChecks: 900, heap: 8192, routeHeight: 1.1 });
@@ -28,7 +28,7 @@ export const PENDING = Object.freeze([]);
  * `walk` is the walk network and `lanes` the traffic lane graph (either may be null). Returns the graph:
  * { nodes, edges, x, y, z (Float32Array per node), component, nearby(...), pathfinder(clear), bytes, ms, stats }.
  */
-export function buildPursuitGraph({ walk = null, lanes = null } = {}, { exclude = [WALK.STAIR] } = {}) {
+export function buildPursuitGraph({ walk = null, lanes = null } = {}, { exclude = [] } = {}) {
   const t0 = performance.now();
   if (walk && !(walk.nx instanceof Float32Array && walk.adjStart instanceof Int32Array)) throw new TypeError('invalid walk network');
   if (lanes && !(lanes.SX instanceof Float32Array && lanes.start instanceof Int32Array)) throw new TypeError('invalid lane graph');

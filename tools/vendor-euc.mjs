@@ -21,6 +21,7 @@ import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
@@ -771,7 +772,7 @@ export function machineLook(id: string) {
 if (!SRC_ROOT || !DONOR_ROOT) {
   if (SRC_ROOT || DONOR_ROOT || !CHECK_ONLY || AUDIT_DIR) throw Error('Supply both --src and --donor for a source comparison or regeneration.');
   const raw=fs.readFileSync(path.join(OUT,'MANIFEST.json'));
-  if(sha256(raw)!=='c5001b807dfb29f435cb963d2f676f04f1081db776023043f7367986cf92de32' || sha256(fs.readFileSync(path.join(OUT,'LICENSE')))!=='38afeea0bd30fff98b23d7b384c9f4be22bd89f84783d2faeae98d736c8f41be') throw Error('Unexpected EUC edition manifest or licence');
+  if(sha256(raw)!=='798a91e53277c43c04c0b94321639298c5b3f5dde748e3132001490a88112938' || sha256(fs.readFileSync(path.join(OUT,'LICENSE')))!=='38afeea0bd30fff98b23d7b384c9f4be22bd89f84783d2faeae98d736c8f41be') throw Error('Unexpected EUC edition manifest or licence');
   const manifest=JSON.parse(raw), expected=new Set([...Object.keys(manifest.files),'MANIFEST.json','LICENSE']);
   function inspect(dir){
     for(const entry of fs.readdirSync(dir,{withFileTypes:true})){
@@ -1161,6 +1162,129 @@ globalThis.onmessage = async event => {
 };
 `);
 
+// -- Rider portraits (the original chooser's drawings) ---------------------------------------------------------------
+// The eleven `portrait` templates of RIDER_CARDS in src/ui/menus.ts become element data the picker builds with
+// createElementNS: the same elements in the same order with the same attribute values. The three supplied marks are
+// recorded as 'mark' rows (their exact placement, resolved from the source's own expressions) and their pixels are
+// loaded from the existing logo modules, because the page allows no data: image. Anything the tiny grammar below does
+// not know stops the tool.
+const PORTRAIT_SOURCE = 'ui/menus.ts';
+const PORTRAIT_SHAPES = { path: ['d', 'fill', 'opacity', 'stroke', 'stroke-width', 'stroke-linecap'],
+  g: ['fill', 'stroke', 'stroke-width', 'stroke-linecap', 'opacity'], rect: ['x', 'y', 'width', 'height', 'rx', 'fill', 'opacity'],
+  circle: ['cx', 'cy', 'r', 'fill', 'stroke', 'stroke-width', 'opacity'], ellipse: ['cx', 'cy', 'rx', 'ry', 'fill', 'opacity'],
+  image: ['href', 'x', 'y', 'width', 'height', 'preserveAspectRatio'] };
+const PORTRAIT_ROOT = '<svg viewBox="0 0 96 96" class="euc-rider-card__art" aria-hidden="true" focusable="false">';
+// The logo modules, with the constants the marks' placement expressions read.
+const PORTRAIT_LOGOS = { MV_LOGO_PNG_BASE64: ['data/mvLogoAsset.ts', 'MV'], WIM_LOGO_PNG_BASE64: ['data/wimLogoAsset.ts', 'WIM'],
+  GNARWHEEL_LOGO_PNG_BASE64: ['data/gnarwheelLogoAsset.ts', 'GNARWHEEL'] };
+function riderPortraitsSource() {
+  const source = fs.readFileSync(path.join(SRC_ROOT, 'src', PORTRAIT_SOURCE), 'utf8');
+  const tree = ts.createSourceFile('menus.ts', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TS);
+  const constants = {};
+  for (const [, [rel, prefix]] of Object.entries(PORTRAIT_LOGOS)) {
+    const text = fs.readFileSync(path.join(SRC_ROOT, 'src', rel), 'utf8');
+    for (const name of ['WIDTH', 'HEIGHT']) {
+      const m = text.match(new RegExp(`^export const ${prefix}_LOGO_${name} = (\\d+);$`, 'm'));
+      if (!m) throw new Error(`${rel}: ${prefix}_LOGO_${name} not found`);
+      constants[`${prefix}_LOGO_${name}`] = Number(m[1]);
+    }
+    if (!text.includes(`export const ${prefix}_LOGO_ASPECT = ${prefix}_LOGO_WIDTH / ${prefix}_LOGO_HEIGHT;`)) throw new Error(`${rel}: aspect changed`);
+    constants[`${prefix}_LOGO_ASPECT`] = constants[`${prefix}_LOGO_WIDTH`] / constants[`${prefix}_LOGO_HEIGHT`];
+  }
+  let cards = null;
+  const marks = {};
+  for (const statement of tree.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const d of statement.declarationList.declarations) {
+      if (!ts.isIdentifier(d.name)) continue;
+      if (d.name.text === 'RIDER_CARDS') cards = d.initializer;
+      if (/^(MV|WIM)_CARD_MARK$/.test(d.name.text)) marks[d.name.text] = vm.runInNewContext(d.initializer.getText(tree), { ...constants, Number });
+    }
+  }
+  if (!cards || !ts.isObjectLiteralExpression(cards) || Object.keys(marks).length !== 2) throw new Error('RIDER_CARDS or the card marks changed: review');
+  const scope = { ...constants, ...marks };
+  const portraits = {}, markRows = {};
+  for (const property of cards.properties) {
+    const id = ts.isStringLiteral(property.name) ? property.name.text : property.name.getText(tree);
+    const portrait = property.initializer.properties.find(p => p.name.getText(tree) === 'portrait')?.initializer;
+    if (!portrait) throw new Error(`${id}: no portrait`);
+    // The template with each substitution replaced by a numbered placeholder; the placeholders are resolved per attribute.
+    const subs = [];
+    let text;
+    if (ts.isNoSubstitutionTemplateLiteral(portrait)) text = portrait.text;
+    else if (ts.isTemplateExpression(portrait)) {
+      text = portrait.head.text;
+      for (const span of portrait.templateSpans) { text += `\u0000${subs.length}\u0000` + span.literal.text; subs.push(span.expression.getText(tree)); }
+    } else throw new Error(`${id}: portrait is not a template`);
+    text = text.replace(/<!--[^]*?-->/g, '').trim();
+    if (!text.startsWith(PORTRAIT_ROOT) || !text.endsWith('</svg>')) throw new Error(`${id}: portrait root changed`);
+    const body = text.slice(PORTRAIT_ROOT.length, -'</svg>'.length);
+    const root = [], stack = [root];
+    let at = 0;
+    const TAG = /\s*<(\/?)([a-z]+)((?:\s+[A-Za-z-]+="[^"]*")*)\s*(\/?)>/y;
+    while (at < body.length) {
+      if (/^\s*$/.test(body.slice(at))) break;
+      TAG.lastIndex = at;
+      const m = TAG.exec(body);
+      if (!m) throw new Error(`${id}: unexpected portrait text at ${body.slice(at, at + 40)}`);
+      at = TAG.lastIndex;
+      const [, closing, tag, attrText, selfClosing] = m;
+      if (!PORTRAIT_SHAPES[tag]) throw new Error(`${id}: unexpected element <${tag}>`);
+      if (closing) { if (tag !== 'g' || stack.length < 2) throw new Error(`${id}: unexpected </${tag}>`); stack.pop(); continue; }
+      const attrs = {};
+      for (const [, name, raw] of attrText.matchAll(/([A-Za-z-]+)="([^"]*)"/g)) {
+        if (!PORTRAIT_SHAPES[tag].includes(name) || Object.hasOwn(attrs, name)) throw new Error(`${id}: unexpected ${tag} attribute ${name}`);
+        attrs[name] = raw;
+      }
+      if (tag === 'image') {
+        const logo = /^data:image\/png;base64,\u0000(\d+)\u0000$/.exec(attrs.href ?? '');
+        const constant = logo && subs[Number(logo[1])];
+        if (!logo || !PORTRAIT_LOGOS[constant] || markRows[id] || !selfClosing) throw new Error(`${id}: unexpected image`);
+        const box = {};
+        for (const k of ['x', 'y', 'width', 'height']) {
+          const v = /^\u0000(\d+)\u0000$/.exec(attrs[k]);
+          box[k] = v ? vm.runInNewContext(subs[Number(v[1])], scope) : Number(attrs[k]);
+          if (!Number.isFinite(box[k]) || (!v && String(box[k]) !== attrs[k])) throw new Error(`${id}: mark ${k}`);
+        }
+        markRows[id] = { ...box, preserveAspectRatio: attrs.preserveAspectRatio ?? 'xMidYMid meet', logo: PORTRAIT_LOGOS[constant][0] };
+        stack.at(-1).push(['mark', { ...box }]);
+        continue;
+      }
+      for (const v of Object.values(attrs)) if (v.includes('\u0000') || /url\(|:/.test(v)) throw new Error(`${id}: unexpected value ${v}`);
+      const row = [tag, attrs];
+      stack.at(-1).push(row);
+      if (!selfClosing) { if (tag !== 'g') throw new Error(`${id}: <${tag}> must be self-closing`); row.push([]); stack.push(row[2]); }
+    }
+    if (stack.length !== 1) throw new Error(`${id}: unclosed group`);
+    portraits[id] = root;
+  }
+  const ids = Object.keys(portraits);
+  if (JSON.stringify(ids) !== JSON.stringify(REVIEWED_ROSTER.map(([id]) => id))) throw new Error(`Portrait roster changed: ${ids.join(', ')}`);
+  if (JSON.stringify(Object.keys(markRows)) !== JSON.stringify(['maribel-vargas', 'wheel-in-motion', 'gnarwheel'])) throw new Error('Portrait marks changed');
+  const loaders = Object.entries(markRows).map(([id, row]) => {
+    const prefix = Object.values(PORTRAIT_LOGOS).find(([rel]) => rel === row.logo)[1];
+    return `  ${JSON.stringify(id)}: () => import('../${row.logo}').then(m => ({ base64: m.${prefix}_LOGO_PNG_BASE64, width: m.${prefix}_LOGO_WIDTH, height: m.${prefix}_LOGO_HEIGHT, sha256: m.${prefix}_LOGO_SHA256 })),`;
+  });
+  return `// The eleven rider portraits of the original rider chooser (src/ui/menus.ts, RIDER_CARDS), as element data.
+// Rows are [tag, attributes, children?] in the original painting order, inside an SVG with viewBox 0 0 96 96.
+// A 'mark' row stands where the original drew the rider's own supplied mark as a PNG; MARKS has its placement and
+// MARK_IMAGES loads its pixels on demand. Identity-bearing: see NOTICE-EUC-THRILLS.md and FORK_GUIDE.md.
+export const PORTRAIT_VIEWBOX = '0 0 96 96';
+export const PORTRAITS = Object.freeze({
+${ids.map(id => `  ${JSON.stringify(id)}: ${JSON.stringify(portraits[id])},`).join('\n')}
+});
+export const MARKS = Object.freeze({
+${Object.entries(markRows).map(([id, { logo, ...row }]) => `  ${JSON.stringify(id)}: ${JSON.stringify(row)},`).join('\n')}
+});
+export const MARK_IMAGES = Object.freeze({
+${loaders.join('\n')}
+});
+`;
+}
+addSynthetic('ui/riderPortraits.ts', riderPortraitsSource(), [PORTRAIT_SOURCE, ...Object.values(PORTRAIT_LOGOS).map(([rel]) => rel)]);
+// Loaded by the rider picker with its own import(), never at start-up: a root of its own, outside ENTRIES.
+const DEFERRED_ROOTS = ['ui/riderPortraits.ts'];
+
 const SCOPE = readScope(SRC_ROOT);
 
 // --audit <dir>: reviewed generated bytes/audio plus private-path rejection. Public notices may name participants.
@@ -1247,7 +1371,7 @@ for (const rel of Object.keys(DONOR_HASHES)) donorSource(rel);
 const SPEC = /(?:^(?:import|export)\b[^;'"]*?\bfrom\s*|^import\s*|\bimport\s*\(\s*)(['"])([^'"\n]+)\1/gm;
 const outputs = new Map(); // rel -> { js, sha }
 const removedColourKeys = Object.keys(UNSHIPPED_COLOURS);
-const queue = [...ENTRIES, ...WORKER_ENTRIES];
+const queue = [...ENTRIES, ...WORKER_ENTRIES, ...DEFERRED_ROOTS];
 while (queue.length) {
   const rel = queue.shift();
   if (outputs.has(rel)) continue;
@@ -1292,7 +1416,7 @@ while (queue.length) {
   const header = `// Vendored by tools/vendor-euc.mjs from VibezZzCoder/EUC-thrills@${originCommit.slice(0, 7)} ${synthetic.has(rel) ? 'generated boundary' : `src/${rel}`}` +
     `${donorOrigins.has(rel) && !donorOnly ? ` + reviewed ${DONOR_COMMIT.slice(0, 7)} declarations (MANIFEST.json)` : ''}` +
     `${OVERRIDES[rel] ? ' (sliced for euc-newyork: see the tool)' : ''}.\n// MIT, (c) 2026 VibezZzCoder. See js/euc/LICENSE and NOTICE-EUC-THRILLS.md. Do not edit; re-run the tool.\n`;
-  const guidance = /(?:data\/riders|riderLook|machineLook|appearanceLoader|[rm].*Appearance-|pixels\/.*Atlas)/.test(rel) ? AGENT_GUIDANCE : '';
+  const guidance = /(?:ui\/riderPortraits|data\/riders|riderLook|machineLook|appearanceLoader|[rm].*Appearance-|pixels\/.*Atlas)/.test(rel) ? AGENT_GUIDANCE : '';
   const vectorNotice = rel === 'render/pixels/paintVector.ts'
     ? '// Vector arithmetic extracted unchanged from pinned Three Vector3. MIT, Copyright 2010-2026 Three.js Authors.\n// See vendor/three/LICENSE; full source hash and method inventory are in js/euc/MANIFEST.json.\n' : '';
   outputs.set(rel, { js: header + vectorNotice + guidance + js, sha: synthetic.has(rel) ? null : crypto.createHash('sha256').update(raw).digest('hex') });

@@ -28,7 +28,10 @@
 - [riders-import.json](riders-import.json): the rider-swap transaction (`js/sj-riders-selection.js`) adapts
   `RiderSelection` from EUC Thrills San Francisco (`js/game-menu.js`, MIT, VibezZzCoder), and the riding-style
   sentences of the picker come from the same file. `tests/riders.test.mjs` checks the recorded San Juan hashes. The
-  picker's markup, styles and host flow (`js/sj-riders.js`, `css/riders.css`) are San Juan work.
+  picker's markup, styles and host flow (`js/sj-riders.js`, `js/sj-riders-art.js`, `css/riders.css`) are San Juan
+  work. The rider portraits are the original EUC Thrills v1.1.0 chooser drawings (`src/ui/menus.ts`, `RIDER_CARDS`),
+  generated unchanged into `js/euc/ui/riderPortraits.js` and recorded in `../js/euc/MANIFEST.json`; identity-bearing
+  (see `../NOTICE-EUC-THRILLS.md`).
 - `geodata.json`: cached OSM/USGS URLs, full hashes, query text, datum evidence and bounded build counts/limitations.
 - `../data/plaza-detail.json`: ODbL plaza/fountain/gazebo rings and bench points, extracted from the same cached OSM
   input by `tools/build-plaza-detail.py` with a recorded input hash. It does not rebuild or modify terrain/roads.

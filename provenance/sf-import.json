@@ -9,7 +9,7 @@
       "path": "FORK_GUIDE.md",
       "bytes": 7611,
       "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
-      "editionSha256": "6479329931a7dbc007db8bfa8c3ec18199a35994b301403cb22bb397e5315bb8"
+      "editionSha256": "1454985c07618e6fba80241c8d6bb6c22858ad6b26ff0ced30fd43a040c827ce"
     },
     {
       "path": "LICENSE",
@@ -21,7 +21,7 @@
       "path": "NOTICE-EUC-THRILLS.md",
       "bytes": 21524,
       "sha256": "d31f04699e76bf5e59c937b10804fae09ffb6ca7102be3b0365b608a1e38ca66",
-      "editionSha256": "7063b92b601308bba673838a7e76985822fe8f2bf3c1774bab21ec2f83b2b84d"
+      "editionSha256": "99c1021f6f4ada77ae2e60fc359a73b278e645d02b45e72a0ac33ea77bdf33d3"
     },
     {
       "path": "assets/euc-badge.svg",
@@ -160,7 +160,7 @@
       "path": "js/euc-audio.js",
       "bytes": 44695,
       "sha256": "13ffe358f15068535c248d2065eb3d8058119c14db70f51b49c8f2e755d38ec8",
-      "editionSha256": "aa6eb89f87cf6ea771f246258b7bbd64a8769735b2f1c24e1c62bb85f700f303"
+      "editionSha256": "5648dd3fefc1454735325201fa0f2d65bd2618a3e02ff94dc60c151ca5869a34"
     },
     {
       "path": "js/euc-dynamic.js",
@@ -212,7 +212,8 @@
     {
       "path": "js/euc/MANIFEST.json",
       "bytes": 66679,
-      "sha256": "c5001b807dfb29f435cb963d2f676f04f1081db776023043f7367986cf92de32"
+      "sha256": "c5001b807dfb29f435cb963d2f676f04f1081db776023043f7367986cf92de32",
+      "editionSha256": "798a91e53277c43c04c0b94321639298c5b3f5dde748e3132001490a88112938"
     },
     {
       "path": "js/euc/app/nearSolids.js",
@@ -783,7 +784,7 @@
       "path": "tools/vendor-euc.mjs",
       "bytes": 93911,
       "sha256": "ea52f89df8c269c2faff12c0747114e79ad67b4a7c846af1adcffc407b8d5e8a",
-      "editionSha256": "afbb0014498fa821dfae978420738c10c8ea1bcf5b112eb58ea9b05587d39f53"
+      "editionSha256": "38eb6f7f4cfaca71630a6d6c907f21d8f3019061536e95fe81bbaa7f03455b29"
     },
     {
       "path": "tools/vendor-three.mjs",

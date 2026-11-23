@@ -9,7 +9,11 @@ read that file for the complete upstream notice. The MIT licence text is in `js/
 scope, adaptations and rights summaries follow the second rule; they do not amend the upstream grants.
 
 **San Juan adaptation:** this notice carries the reviewed eleven-rider source baseline and audio provenance adapted
-through the owner's NYC and SF destinations. All eleven reviewed identities are included and playable (chosen from the title or Pause). It does not assert
+through the owner's NYC and SF destinations. All eleven reviewed identities are included and playable (chosen from the title or Pause). The picker shows
+each rider's portrait: the eleven original rider-chooser drawings by VibezZzCoder from EUC Thrills v1.1.0
+(`src/ui/menus.ts`, `RIDER_CARDS`), unchanged, generated into `js/euc/ui/riderPortraits.js` and recorded in
+`js/euc/MANIFEST.json`; the Maribel Vargas, Wheel in Motion and Gnarwheel portraits carry those riders' supplied marks
+from the existing logo modules, as the original cards do. The portraits are identity-bearing. It does not assert
 a new identity or asset grant; see the README for current features and testing limitations.
 [Fork authors and coding agents: start here](FORK_GUIDE.md).
 
@@ -74,7 +78,8 @@ The real riders participate in EUC Thrills, including riders who asked to be inc
 personas, supplied logos and contributed recordings are **not a freely reusable character library**. For a rebranded
 or independent game outside EUC Thrills, remove or replace that identity-bearing material unless separate permission
 from the relevant people and rights holders covers your use. Renaming a rider or hiding a chooser entry is not
-removal if the likeness, embedded mark or recording is still distributed. Keeping the EUC Thrills name alone grants
+removal if the likeness, embedded mark or recording is still distributed; that includes the generated portrait data
+(`js/euc/ui/riderPortraits.js`) and the logo modules its marks load. Keeping the EUC Thrills name alone grants
 no additional permission and implies no endorsement. This does not revoke existing MIT/CC BY grants over reusable
 code or original material, including independently licensed audio associated with a real rider.
 
@@ -83,7 +88,7 @@ Practical source/output removal guidance is in [FORK_GUIDE.md](FORK_GUIDE.md), i
 ## Exact reviewed roster and reference material
 
 Source: EUC Thrills v1.1.0, `5f45fff19b258e140833841ba2473069af751a12`, `src/data/riders.ts` and
-`src/data/machines.ts`. This is an explicit snapshot, not permission to import future riders or assets automatically.
+`src/data/machines.ts`; the picker portraits from `src/ui/menus.ts` (`RIDER_CARDS`). This is an explicit snapshot, not permission to import future riders or assets automatically.
 Private photographs, videos, concept/reference packs and permission exchanges are not distributed or licensed here.
 Only the public identities below are credited; no additional legal/private identities are published.
 
@@ -117,14 +122,16 @@ outside the distribution. His original fictional design has no real brewery iden
 - **Maribel Vargas:** © Maribel Vargas, all rights reserved. Her supplied purple artwork is embedded in
   `src/data/mvLogoAsset.ts`. Preserve its actual ink, purple colour, negative space and aspect; no redrawing, tracing,
   glyph substitution, approximation, filling or one-axis stretching. Source use includes her kit and machine; its
-  source chooser uses a monogram. The reference pack itself is not distributed. Not CC BY 4.0.
+  source chooser uses a monogram (the source description; the pinned chooser card embeds the supplied artwork itself,
+  17 units wide at her collar, and San Juan's picker portrait shows it the same way, from the same pixels). The reference pack itself is not distributed. Not CC BY 4.0.
 - **Wheel in Motion:** © its owner, all rights reserved. The supplied blue W / white i / orange M channel mark is
   embedded in `src/data/wimLogoAsset.ts` as a source-authored crop/downscale; retain its pixels, proportions, colours
-  and negative space, without tracing, recolouring or filling. Source use includes kit, backpack and wheel plates.
-  Not CC BY 4.0.
+  and negative space, without tracing, recolouring or filling. Source use includes kit, backpack and wheel plates,
+  and his chooser card (San Juan's picker portrait shows it the same way, from the same pixels). Not CC BY 4.0.
 - **Gnarwheel:** © Gnarwheel, all rights reserved. Supplied white brush artwork in `src/data/gnarwheelLogoAsset.ts`;
   source preparation removes the square background and unused margin while preserving strokes, spacing, negative
-  space and ink colours. Source use includes chest, back and sleeves. Not CC BY 4.0.
+  space and ink colours. Source use includes chest, back and sleeves, and his chooser portrait (San Juan's picker portrait
+  shows it the same way, from the same pixels). Not CC BY 4.0.
 - **SMLS:** a third party's mark, **not Wyldist's or this project's**. Source draws letter paths, not an embedded
   image: one small red wordmark on the outside of Wyldist's left sleeve near the hem, on turquoise ground, nowhere
   else (including no chooser mark). Wyldist requested it and relayed that its owner did not object. No licence over

@@ -6,6 +6,9 @@ import { sweptContactFraction, sweptContactWindow, SWING } from './sj-dorkins-sw
 
 const validFace = p => p && [p.x, p.y, p.z].every(Number.isFinite);
 const validRider = p => p && [p.x, p.z, p.bottom].every(Number.isFinite);
+// San Juan: a low swing (frame `low`) lands only when the face is at or above the bottom of the wheel (SWING.lowBand):
+// a hop over it is a miss, counted in `dodged` when the same sweep would have met the rider's body.
+const LOW = Object.freeze({ ...SWING, band: SWING.lowBand, riderHeight: SWING.lowTop });
 
 /**
  * Record one drawn frame at a time. Caller resets at a new swing and on hidden/frozen/placement
@@ -16,7 +19,7 @@ export function createPaddleContact(queries, director) {
   if (!queries || typeof queries.clearLine !== 'function' || !director || typeof director.knockedDown !== 'function') {
     throw new TypeError('Paddle contact requires line queries and a chase director');
   }
-  let previousFace = null, previousRider = null, struck = false, serial;
+  let previousFace = null, previousRider = null, struck = false, serial, dodged = 0;
   function reset() { previousFace = previousRider = null; struck = false; serial = undefined; }
   function clearBetween(face, rider) {
     const y = rider.bottom + Math.max(0.05, Math.min(SWING.riderHeight, face.y - rider.bottom));
@@ -41,7 +44,7 @@ export function createPaddleContact(queries, director) {
     }
     return false;
   }
-  function frame({ face, rider, interval, controller, placementSerial, enabled = true }) {
+  function frame({ face, rider, interval, controller, placementSerial, enabled = true, low = false }) {
     if (!validFace(face) || !validRider(rider)) { previousFace = previousRider = null; return false; }
     const moved = previousRider && Math.hypot(rider.x - previousRider.x, rider.bottom - previousRider.bottom,
       rider.z - previousRider.z) > 5;
@@ -51,9 +54,10 @@ export function createPaddleContact(queries, director) {
     if (enabled && previousFace && previousRider && !struck && interval
       && director.state?.phase === 'chasing' && director.state.recovery <= 0 && !controller?.crashed
       && typeof controller?.hardKnock === 'function') {
-      const sweep = [previousFace.x, previousFace.y, previousFace.z, face.x, face.y, face.z, rider, SWING, previousRider];
+      const sweep = [previousFace.x, previousFace.y, previousFace.z, face.x, face.y, face.z, rider, low ? LOW : SWING, previousRider];
       const t = sweptContactFraction(...sweep, interval);
-      if (t !== null && (clearAt(t, face, rider) || clearElsewhere(sweep, interval, t, face, rider))) {
+      if (t === null && low && sweptContactFraction(...sweep.slice(0, 7), SWING, previousRider, interval) !== null) { dodged++; struck = true; }
+      else if (t !== null && (clearAt(t, face, rider) || clearElsewhere(sweep, interval, t, face, rider))) {
         if (controller.hardKnock(face.x - previousFace.x, face.z - previousFace.z)) {
           struck = true;
           accepted = director.knockedDown();
@@ -67,5 +71,5 @@ export function createPaddleContact(queries, director) {
     }
     return accepted;
   }
-  return { frame, reset, get struck() { return struck; } };
+  return { frame, reset, get struck() { return struck; }, get dodged() { return dodged; } };
 }

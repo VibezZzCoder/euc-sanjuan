@@ -1,12 +1,14 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // The rider picker: which of the eleven riders the game starts with, and changing rider from the title or from Pause.
-// A host part (see the list in js/main.js). Browsing shows text and a colour swatch only: nothing is fetched or built
-// for a rider who is only highlighted. Confirming prepares the rig and its crash voice together (js/sj-riders-selection.js)
+// A host part (see the list in js/main.js). Browsing shows text and each rider's portrait (js/sj-riders-art.js: the
+// drawings are loaded once, on the first opening); nothing of the rider's rig or sound is fetched or built for a rider
+// who is only highlighted. Confirming prepares the rig and its crash voice together (js/sj-riders-selection.js)
 // and swaps both in one turn. The candidate rig is compiled against the real scene, camera, lights and shadow pass while
 // nothing else renders, so the first riding frames after a swap build nothing.
 import { RIDERS, isPlayableRider } from './euc-roster.js';
 import { RiderSelection, faultKind, abortError } from './sj-riders-selection.js';
 import { waitForRenderCompletion } from './render-completion.js';
+import { createRiderArt } from './sj-riders-art.js';
 
 export const DEFAULT_RIDER = 'cool-rider';
 export const RIDER_KEY = 'euc-sanjuan-rider';
@@ -47,7 +49,8 @@ export async function createRiders(host) {
   };
   let origin = null, opener = null, highlighted = host.riderId, mode = 'browse', fault = null, armed = false;
   let previewShown = false, started = 0, serial = 0, opening = false, closedAt = -1e9, closedOpener = null; // serial: the request the picker's state belongs to
-  const part = { lastTiming: null, timings: [], selection: null };
+  const part = { lastTiming: null, timings: [], selection: null, art: createRiderArt() };
+  const cardStamp = ui.card.querySelector('.postcard-stamp'), cardArt = new Map(); // rider id -> the card's portrait
   const committed = () => host.riderId;
   const nameOf = id => RIDERS[id].name;
 
@@ -75,6 +78,7 @@ export async function createRiders(host) {
       ui.wheelBlurb.textContent = spec.wheelBlurb ?? '';
       ui.note.textContent = styleNote(id);
       ui.card.scrollTop = 0; // a new rider's card starts at the top; the same rider keeps its place
+      showCardArt(id);
     }
     ui.state.textContent = id === active ? 'Riding now' : 'In the crew';
     const keep = id === active;
@@ -98,6 +102,26 @@ export async function createRiders(host) {
     if (ui.status.textContent !== text) ui.status.textContent = text;
   }
 
+  // Portraits: the stamps get theirs once, the card shows the highlighted rider's (each built once, then reused).
+  function showCardArt(id) {
+    if (!part.art.loaded || !cardStamp) return;
+    if (!cardArt.has(id)) cardArt.set(id, part.art.build(id));
+    const art = cardArt.get(id);
+    if (art && cardStamp.firstChild !== art) cardStamp.replaceChildren(art);
+    if (dialog.open) part.art.repaint();
+  }
+  let stampsDrawn = false;
+  function showArt() {
+    part.art.ready().then(() => {
+      if (!part.art.loaded) return;
+      if (!stampsDrawn) {
+        stampsDrawn = true;
+        for (const stamp of stamps) { const art = part.art.build(stamp.dataset.rider); if (art) stamp.querySelector('.stamp-ink')?.prepend(art); }
+      }
+      showCardArt(ui.card.dataset.rider);
+    });
+  }
+
   function highlight(id) {
     if (!isPlayableRider(id) || mode === 'preparing' || (id === highlighted && mode !== 'error')) return;
     if (mode === 'error') { mode = 'browse'; fault = null; }
@@ -117,6 +141,7 @@ export async function createRiders(host) {
     ui.list.scrollTop = 0; ui.card.scrollTop = 0;
     highlighted = target; render();
     stamp.focus(QUIET); stamp.scrollIntoView?.({ block: 'nearest' });
+    showArt();
     return true;
   }
 
@@ -319,6 +344,9 @@ export async function createRiders(host) {
     // The player looked away (window blur, page hidden): a preparation still running is dropped; choose again to retry.
     interrupted() { if (part.selection.preparing) settleCancel(`Stopped while you were away. You are still riding as ${nameOf(committed())}.`); },
     failed() { closeQuietly(); },
+    resize() { if (dialog.open && part.art.loaded) part.art.repaint(); },
+    // The rider's crash voice belongs to the place of the fall: a map arrival, Restart, a rescue or the booking ends it.
+    placed() { host.audio?.placed?.(); },
   });
   return part;
 }

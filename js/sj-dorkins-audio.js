@@ -1,6 +1,7 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan — adapted from VibezZzCoder/euc-sanfrancisco (MIT) */
 // What the player hears of Officer Dorkins: his siren, its sting when he turns up, the hum of his hover wheel and his
-// paddle (wind-up, swing, hit), plus the paper tear at the booking desk. From the San Francisco edition
+// paddle (wind-up, swing, hit), his wheel's low-battery beeps (one when it starts to fade, three falling ones when he
+// breaks off; synthesized here, no file), plus the paper tear at the booking desk. From the San Francisco edition
 // (js/nemesis-audio.js, © 2026 VibezZzCoder, MIT; first written for the New York edition).
 //
 //   - The siren is EUC Thrills' chase siren: two CC0 loops (far wail, close wail; audio/euc/PROVENANCE.md) crossfade by
@@ -33,11 +34,16 @@ export const HUM = Object.freeze({ level: 0.012, refMetres: 4, rangeMetres: 70, 
 
 export const PADDLE_SOUND = Object.freeze({
   windupLevel: 0.2, windupFromHz: 450, windupToHz: 2200, windupQ: 1.4,
+  // the low wind-up sweeps lower, the high one higher (the same noise burst); a held paddle that moves again clicks once
+  lowScale: 0.55, highScale: 1.45, resumeHz: 1500,
   swingLevel: 0.16, swingHz: AUDIO.swingNoiseHz, swingQ: AUDIO.swingNoiseQ, swingSeconds: AUDIO.swingNoiseSeconds,
   hitLevel: 0.3, hitFromHz: AUDIO.hitThumpFromHz, hitToHz: AUDIO.hitThumpToHz, hitSeconds: AUDIO.hitThumpSeconds,
   hitNoiseHz: AUDIO.hitNoiseHz, hitNoiseSeconds: AUDIO.hitNoiseSeconds,
   tearLevel: 0.12, tearHz: 1800, tearSeconds: 0.32,
 });
+
+/** His wheel's low-battery beeps: short soft square tones through a low-pass, falling in pitch. */
+export const BATTERY_SOUND = Object.freeze({ level: 0.07, seconds: 0.11, gap: 0.17, lowHz: [1240], outHz: [1240, 990, 740], cutoffHz: 2400 });
 
 const clamp = (v, lo = 0, hi = 1) => (v < lo ? lo : v > hi ? hi : Number.isFinite(v) ? v : lo);
 const mapRange = (v, a, b) => clamp((v - a) / (b - a));
@@ -137,8 +143,14 @@ class OfficerGraph {
   }
   cue(kind, now) {
     const P = PADDLE_SOUND;
-    if (kind === 'windup') this.burst(now, P.windupFromHz, P.windupToHz, P.windupQ, 0.7, P.windupLevel, 0.6);
+    if (kind === 'windup') this.burst(now, P.windupFromHz * P.lowScale, P.windupToHz * P.lowScale, P.windupQ, 0.7, P.windupLevel, 0.6);
+    else if (kind === 'windupHigh') this.burst(now, P.windupFromHz * P.highScale, P.windupToHz * P.highScale, P.windupQ, 0.7, P.windupLevel, 0.6);
+    else if (kind === 'resume') this.burst(now, P.resumeHz, P.resumeHz * 1.3, 1.6, 0.09, P.windupLevel, 0.01);
     else if (kind === 'swing') this.burst(now, P.swingHz, P.swingHz * 0.7, P.swingQ, P.swingSeconds, P.swingLevel, 0.02);
+    else if (kind === 'batteryLow' || kind === 'battery') {
+      const B = BATTERY_SOUND, tones = kind === 'battery' ? B.outHz : B.lowHz;
+      tones.forEach((hz, i) => this.beep(now + i * B.gap, hz));
+    }
     else if (kind === 'tear') this.burst(now, P.tearHz, P.tearHz * 0.6, 0.9, P.tearSeconds, P.tearLevel, 0.03);
     else { this.thump(now, P.hitFromHz, P.hitToHz, P.hitSeconds, P.hitLevel); this.burst(now, P.hitNoiseHz, P.hitNoiseHz * 0.8, 0.9, P.hitNoiseSeconds, P.hitLevel * 0.6, 0.004); }
   }
@@ -150,6 +162,14 @@ class OfficerGraph {
     envelope.gain.setValueAtTime(0.0001, at); envelope.gain.exponentialRampToValueAtTime(level, at + peakAt); envelope.gain.exponentialRampToValueAtTime(0.0001, at + seconds);
     source.connect(band).connect(envelope).connect(this.out); this.track(source, band, envelope);
     source.start(at, ((at * 7.13) % 1) * Math.max(0, this.noise.duration - seconds - 0.05)); source.stop(at + seconds + 0.02);
+  }
+  beep(at, hz) {
+    const B = BATTERY_SOUND, c = this.context, osc = c.createOscillator(), tone = c.createBiquadFilter(), envelope = c.createGain();
+    osc.type = 'square'; osc.frequency.setValueAtTime(hz, at);
+    tone.type = 'lowpass'; tone.frequency.value = B.cutoffHz; tone.Q.value = 0.4;
+    envelope.gain.setValueAtTime(0.0001, at); envelope.gain.exponentialRampToValueAtTime(B.level, at + 0.008);
+    envelope.gain.setValueAtTime(B.level, at + B.seconds - 0.03); envelope.gain.exponentialRampToValueAtTime(0.0001, at + B.seconds);
+    osc.connect(tone).connect(envelope).connect(this.out); this.track(osc, tone, envelope); osc.start(at); osc.stop(at + B.seconds + 0.02);
   }
   thump(at, fromHz, toHz, seconds, level) {
     const c = this.context, osc = c.createOscillator(), envelope = c.createGain();
@@ -173,7 +193,7 @@ class OfficerGraph {
 export function createDorkinsAudio(context, output) {
   const buffers = {}, controller = new AbortController();
   let graph = null, disposed = false, lastAt = 0, noise = null;
-  const last = { sting: -1, windup: -1, swing: -1, hit: -1, tear: -1 };
+  const last = { sting: -1, windup: -1, windupHigh: -1, resume: -1, swing: -1, hit: -1, tear: -1, battery: -1, batteryLow: -1 };
   try {
     noise = context.createBuffer(1, Math.round(context.sampleRate * 2), context.sampleRate);
     const data = noise.getChannelData(0); let seed = 0x2545f491;
@@ -215,7 +235,7 @@ export function createDorkinsAudio(context, output) {
         if (!graph) { for (const k of Object.keys(last)) last[k] = view[k] ?? 0; return; }
         graph.update(view, now);
         if (view.sting !== last.sting) { graph.sting(now); last.sting = view.sting; }
-        for (const kind of ['windup', 'swing', 'hit', 'tear']) {
+        for (const kind of ['windup', 'windupHigh', 'resume', 'swing', 'hit', 'tear', 'batteryLow', 'battery']) {
           const count = view[kind] ?? 0;
           if (count !== last[kind]) { if (last[kind] >= 0) graph.cue(kind, now); last[kind] = count; }
         }

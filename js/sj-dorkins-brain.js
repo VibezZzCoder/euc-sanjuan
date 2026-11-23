@@ -5,6 +5,11 @@
 // pursuit tuning first written for the New York edition). San Juan's own: the graph (js/sj-dorkins-graph.js), route
 // planning spread over frames under a small time budget (a search never costs a frame), probes at 20 Hz instead of every
 // frame, and a route link that his checked flight cannot follow is marked blocked for the rest of the session.
+//
+// He is a flyer and nothing in the street holds him: when his checked flight is refused ahead by something low (a parked
+// car, a bench, a planter, a kiosk, a low wall) he rises over it and comes down behind; moving bodies (traffic, people,
+// carts) are read from the city-life index through `queries.movingAhead` and he climbs to their roof plus a margin
+// before he crosses them, slowing only if he cannot climb in time. He never flies through either.
 import { createPursuitMemory } from './sj-dorkins-memory.js';
 import { PENDING } from './sj-dorkins-graph.js';
 
@@ -14,11 +19,17 @@ export const HOVER = Object.freeze({
   followDistance: 3, arriveDeceleration: 6, turnRate: 3,
   lookAhead: 4, searchDwell: 1.5, maxStep: 0.05,
   routeInterval: 2, routeRange: 45, routeAttach: 24, routeHeight: 1.1,
-  swoopGain: 3, swoopSpeed: 22, swoopAcceleration: 20, swoopTurnRate: 8,
+  swoopGain: 3, swoopSpeed: 22, swoopAcceleration: 40, swoopTurnRate: 8, swoopVertical: 8,
+  catchUp: 8, topSpeed: 36, swoopFloor: 0.35, directRange: 110, diveRange: 45, diveHeight: 0.3, ceiling: 16,
   planMs: 1, probeSeconds: 0.05, stuckSeconds: 1,
+  liftStep: 2.4, liftMax: 9, liftHold: 0.6, roofMargin: 0.6, roofLook: 0.7,
 });
 
 const ROUTE_END_SPEED = 9, ROUTE_TURN_MIN = 4;
+// nearest free places, smallest steps first (a tight passage with a sloped floor and a low ceiling needs small ones)
+const UNWEDGE = [[0, 0.12, 0], [0, 0.25, 0], [0, 0.4, 0], [0, 0.6, 0],
+  ...[0.25, 0.5, 1].flatMap(r => [0.1, 0.3].flatMap(up => [0, 1, 2, 3, 4, 5, 6, 7].map(k => [Math.sin(k * Math.PI / 4) * r, up, Math.cos(k * Math.PI / 4) * r]))),
+  [0, -0.15, 0], [0, -0.3, 0]];
 const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
 const wrap = x => x - Math.PI * 2 * Math.floor((x + Math.PI) / (Math.PI * 2));
 const finitePoint = p => p && [p.x, p.y, p.z].every(Number.isFinite);
@@ -37,7 +48,10 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
   let placed = false, searching = false, anchors = [], anchor = -1, dwell = 0;
   let detour = 0, detourTime = 0, probeIn = 0, blocked = false;
   let route = [], routeIndex = 0, replanIn = 0, routeGoal = null, stuck = 0;
-  let swoopAim = null;
+  let blockedFrames = 0, swoopAim = null, liftTime = 0, liftY = -Infinity, roofAt = null, roofed = false, straightIn = 0, straightClear = false, noLift = false;
+  const inPoint = { x: 0, y: 0, z: 0 };
+  const stats = { lifts: 0, unwedged: 0 };
+  const clear = { y: 0, scale: 1 };
   const finder = graph ? graph.pathfinder((a, b) => queries.corridorClear(a, b)) : null;
   // planning state: 'idle' | 'search'; the start/goal attachments are chosen when a plan begins
   const plan = { phase: 'idle', goal: null, startNode: -1, goalNode: -1 };
@@ -54,7 +68,7 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
     Object.assign(state, { x: position.x, y: position.y, z: position.z, vx: 0, vy: 0, vz: 0,
       heading, speed: 0, bank: 0, pitch: 0, mode: 'idle' });
     placed = true; searching = false; anchors = []; anchor = -1; dwell = detour = detourTime = probeIn = 0; blocked = false;
-    route = []; routeIndex = 0; replanIn = 0; routeGoal = swoopAim = null; stuck = 0;
+    route = []; routeIndex = 0; replanIn = 0; routeGoal = swoopAim = null; stuck = 0; liftTime = 0; liftY = -Infinity;
     plan.phase = 'idle'; plan.goal = null;
     memory.clear();
     return true;
@@ -147,9 +161,38 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
   }
 
   const moveFrom = { x: 0, y: 0, z: 0 }, moveCandidates = [{ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0 }];
-  function move(dt, wantVx, wantVz, aimY, acceleration, turnRate, face) {
-    const desiredVy = clamp((aimY - state.y) * 2.5, -tuning.climbSpeed, tuning.climbSpeed);
-    const vy = state.vy + clamp(desiredVy - state.vy, -tuning.climbAcceleration * dt, tuning.climbAcceleration * dt);
+  // The height he must keep this frame: the held lift over a static obstacle, and the roof of a moving body ahead
+  // (with the horizontal speed scaled down when he could not climb to it in time).
+  function clearance(dt, aimY, wantVx, wantVz, vehiclesOnly = false) {
+    liftTime = Math.max(0, liftTime - dt);
+    clear.y = liftTime > 0 ? Math.max(aimY, liftY) : aimY; clear.scale = 1;
+    const m = queries.movingAhead ? queries.movingAhead(state, wantVx, wantVz, tuning.roofLook, vehiclesOnly) : null;
+    if (m) {
+      const need = m.top + tuning.roofMargin;
+      const aim = need + 0.5; // aimed a little above, so the climb reaches `need` sooner
+      if (aim > clear.y) clear.y = aim;
+      if (state.y < need - 0.05) {
+        // his climb eases toward its aim (rate 2.5/s, capped at climbSpeed): time to reach `need`
+        const v = Math.hypot(wantVx, wantVz), climb = Math.max((need - state.y) / tuning.climbSpeed, Math.log((aim - state.y) / (aim - need)) / 2.5) + 0.15;
+        const allowed = Math.max(0, m.along, (m.gap - 0.5) / climb);
+        if (v > allowed) clear.scale = allowed / v;
+      }
+    }
+    return clear;
+  }
+  // refused ahead: rise (held for a moment) if the way up is clear
+  function lift(floorY) {
+    if (!Number.isFinite(floorY) || state.y + tuning.liftStep > floorY + tuning.liftMax) return false;
+    probe.x = state.x; probe.y = state.y + tuning.liftStep; probe.z = state.z;
+    if (!queries.clearFlight(state, probe)) return false;
+    liftY = Math.max(liftTime > 0 ? liftY : -Infinity, state.y + tuning.liftStep); liftTime = tuning.liftHold; stats.lifts++;
+    return true;
+  }
+  function move(dt, wantVx, wantVz, aimY, acceleration, turnRate, face, vehiclesOnly = false, vertical = 2.5) {
+    const c = clearance(dt, aimY, wantVx, wantVz, vehiclesOnly);
+    aimY = c.y; wantVx *= c.scale; wantVz *= c.scale;
+    const desiredVy = clamp((aimY - state.y) * vertical, -tuning.climbSpeed, tuning.climbSpeed);
+    const vy = state.vy + clamp(desiredVy - state.vy, -tuning.climbAcceleration * vertical / 2.5 * dt, tuning.climbAcceleration * vertical / 2.5 * dt);
     let ax = wantVx - state.vx, az = wantVz - state.vz;
     const change = Math.hypot(ax, az), maxChange = acceleration * dt;
     if (change > maxChange) { ax *= maxChange / change; az *= maxChange / change; }
@@ -161,10 +204,28 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
     c2.x = state.x; c2.y = c0.y; c2.z = state.z;
     let next = null;
     for (let i = 0; i < 3 && !next; i++) if (queries.clearFlight(from, moveCandidates[i])) next = moveCandidates[i];
+    let unwedged = false;
+    if (!next && (blockedFrames++ >= 2 || !queries.clearFlight(from, from))) {
+      // wedged (his own place is refused: a kerb or a slope under one corner, a ceiling edge), or every way he wants
+      // to go is refused (a low ceiling in a passage): step to the nearest free place, small steps first
+      for (let k = 0; k < UNWEDGE.length && !next; k++) {
+        const [ox, oy, oz] = UNWEDGE[k];
+        c2.x = state.x + ox; c2.y = state.y + oy; c2.z = state.z + oz;
+        if (queries.clearFlight(c2, c2)) { next = c2; stats.unwedged++; unwedged = true; }
+      }
+    }
+    if (next && !unwedged) blockedFrames = 0;
     if (next) {
-      state.vx = (next.x - state.x) / dt; state.vy = (next.y - state.y) / dt; state.vz = (next.z - state.z) / dt;
+      // a correction (unwedging) moves him but carries no speed into the next frame
+      if (unwedged) state.vx = state.vy = state.vz = 0;
+      else { state.vx = (next.x - state.x) / dt; state.vy = clamp((next.y - state.y) / dt, -tuning.climbSpeed, tuning.climbSpeed); state.vz = (next.z - state.z) / dt; }
       state.x = next.x; state.y = next.y; state.z = next.z;
     } else state.vx = state.vy = state.vz = 0;
+    // held back by something solid while he wanted to go on: go up and over it
+    if (!noLift && (next === null || next === c2) && Math.hypot(wantVx, wantVz) > 0.6 && (liftTime <= 0 || state.y >= liftY - 0.3)) {
+      const floor = queries.supportAt(state.x, state.z, state.y);
+      if (floor && !floor.offCourse) lift(floor.height);
+    }
     state.speed = Math.hypot(state.vx, state.vz);
     const desiredHeading = face === null ? (state.speed > 0.2 ? Math.atan2(state.vx, state.vz) : state.heading) : face;
     const turn = clamp(wrap(desiredHeading - state.heading), -turnRate * dt, turnRate * dt);
@@ -218,6 +279,21 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
     const target = searchTarget(dt, visible, observation);
     if (!target) { state.mode = 'idle'; return state; }
     const directDistance = Math.hypot(target.x - state.x, target.z - state.z);
+    // a rider under a roof (a bore, a gate, a sally port, an arcade): he comes down to the rider's level and goes in
+    // under it instead of rising over it (asked again only when the target moves)
+    if (!roofAt || Math.hypot(target.x - roofAt.x, target.z - roofAt.z) > 2 || Math.abs(target.y - roofAt.y) > 1) {
+      roofAt = { x: target.x, y: target.y, z: target.z };
+      roofed = !queries.clearLine({ x: target.x, y: target.y + 1.2, z: target.z }, { x: target.x, y: target.y + 14, z: target.z });
+    }
+    const diving = roofed && directDistance < tuning.diveRange;
+    noLift = diving;
+    // diving: is the straight way in (to the rider's level, in checked pieces) clear? asked four times a second
+    straightIn -= dt;
+    if (!diving) straightClear = false;
+    else if (straightIn <= 0) {
+      straightIn = 0.25; inPoint.x = target.x; inPoint.y = target.y + tuning.diveHeight; inPoint.z = target.z;
+      straightClear = corridor(state, inPoint);
+    }
     probeIn -= dt;
     const probing = probeIn <= 0;
     if (probing) {
@@ -225,8 +301,16 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
       const f = Math.min(1, tuning.lookAhead / (directDistance || 1));
       probe.x = state.x + (target.x - state.x) * f; probe.y = state.y; probe.z = state.z + (target.z - state.z) * f;
       blocked = !queries.clearFlight(state, probe);
+      if (straightClear) blocked = false;
+      else if (blocked && liftTime <= 0 && !(diving && state.y > target.y + 2)) {
+        // low in the way (a car, a bench, a wall): over it, when the way over is clear, instead of round it
+        const floor = queries.supportAt(state.x, state.z, state.y);
+        probe.y = state.y + tuning.liftStep;
+        if (floor && !floor.offCourse && queries.clearFlight({ x: state.x, y: probe.y, z: state.z }, probe) && lift(floor.height)) blocked = false;
+      } else if (blocked && liftTime > 0 && state.y < liftY + 0.5) blocked = false; // already rising over it
     }
-    const closeAndClear = visible && !searching && !blocked && directDistance < tuning.routeRange * 0.8;
+    // in sight with the way ahead clear he flies straight at the rider (routes are for when he cannot)
+    const closeAndClear = (visible && !searching && !blocked && directDistance < tuning.directRange) || straightClear;
     const wantRoute = !!finder && !closeAndClear && (directDistance > tuning.routeRange || blocked || routeIndex < route.length);
     replanIn -= dt;
     if (wantRoute && plan.phase === 'idle' && (replanIn <= 0 || !routeGoal || Math.hypot(target.x - routeGoal.x, target.y - routeGoal.y, target.z - routeGoal.z) > 15)) {
@@ -244,15 +328,21 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
     const ux = distance > 1e-6 ? dx / distance : Math.sin(state.heading);
     const uz = distance > 1e-6 ? dz / distance : Math.cos(state.heading);
     const gap = Math.max(0, distance - (waypoint || searching ? 0 : tuning.followDistance));
-    const speed = waypoint ? routeSpeed() : Math.min(tuning.cruiseSpeed, Math.sqrt(2 * tuning.arriveDeceleration * gap), 2 * gap);
+    // arriving at a rider who is riding away: the rider's own speed along his way is added to the arrival profile
+    const lead = !waypoint && visible && !searching && Number.isFinite(observation?.vx) ? Math.max(0, observation.vx * ux + observation.vz * uz) : 0;
+    // behind a rider faster than his cruise he out-flies the wheel (by catchUp, up to topSpeed)
+    const cap = Math.max(tuning.cruiseSpeed, Math.min(tuning.topSpeed, lead + tuning.catchUp));
+    const speed = waypoint ? routeSpeed() : Math.min(cap, lead + Math.min(Math.sqrt(2 * tuning.arriveDeceleration * gap), 2 * gap));
     const mix = clamp((directDistance - tuning.lowFrom) / (tuning.highFrom - tuning.lowFrom), 0, 1);
     const smooth = mix * mix * (3 - 2 * mix);
     const floor = queries.supportAt(state.x, state.z, state.y);
     const aimY = floor && !floor.offCourse && Number.isFinite(floor.height)
-      ? Math.max(floor.height + 0.4, waypoint ? waypoint.y + tuning.routeHeight
-        : target.y + tuning.lowAltitude + (tuning.highAltitude - tuning.lowAltitude) * smooth) : state.y;
+      ? Math.min(Math.max(target.y, floor.height) + tuning.ceiling, Math.max(floor.height + (diving ? tuning.diveHeight : 0.4), waypoint ? waypoint.y + (diving ? tuning.diveHeight : tuning.routeHeight)
+        : target.y + (diving ? tuning.diveHeight : tuning.lowAltitude + (tuning.highAltitude - tuning.lowAltitude) * smooth))) : state.y;
     detourTime = Math.max(0, detourTime - dt);
-    if (probing && detourTime === 0) {
+    // a route is a checked corridor, and a dive goes in under the roof: no sideways detours for either
+    if (waypoint || diving) { detour = 0; detourTime = 0; }
+    else if (probing && detourTime === 0 && liftTime <= 0) {
       probe.x = state.x + ux * tuning.lookAhead; probe.y = state.y; probe.z = state.z + uz * tuning.lookAhead;
       if (!queries.clearFlight(state, probe)) {
         const left = { x: state.x + uz * tuning.lookAhead, y: state.y, z: state.z - ux * tuning.lookAhead };
@@ -266,18 +356,34 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
     // a route link the checked flight cannot follow: block it and plan again at once
     if (waypoint && (!moved || state.speed < 0.3) && speed > 1) {
       stuck += dt;
-      if (stuck >= tuning.stuckSeconds) { if (waypoint.edge >= 0) finder?.block(waypoint.edge); route = []; routeIndex = 0; replanIn = 0; stuck = 0; }
+      if (stuck >= tuning.stuckSeconds) { if (waypoint.edge >= 0 && !diving) finder?.block(waypoint.edge); route = []; routeIndex = 0; replanIn = 0; stuck = 0; }
     } else stuck = Math.max(0, stuck - dt);
-    state.mode = searching ? 'search' : detour ? 'detour' : waypoint ? 'path' : 'pursuit';
+    state.mode = searching ? 'search' : liftTime > 0 ? 'over' : detour ? 'detour' : waypoint ? 'path' : 'pursuit';
     return state;
   }
 
-  /** A wind-up uses only an explicitly visible observation. A committed swing reads no target. */
-  function swoop(dt, observation, visible, { lateral = 0, height = 1.1, commit = false } = {}) {
+  /**
+   * The paddle swoop. With `aim` ({x, y, z, heading, tau}: where he must be, facing which way, in tau seconds) he flies
+   * there at the speed that arrives on time (the host computes it from where the rider will be, and keeps it fixed once
+   * the strike line is locked). Without it, a wind-up reads only an explicitly visible observation; a committed swing
+   * reads no target.
+   */
+  function swoop(dt, observation, visible, { lateral = 0, height = 1.1, commit = false, aim = null, floorGap = tuning.swoopFloor } = {}) {
     if (!placed || !Number.isFinite(dt) || dt <= 0) return state;
-    dt = Math.min(dt, tuning.maxStep);
+    dt = Math.min(dt, tuning.maxStep); noLift = false;
     let vx = state.vx, vz = state.vz;
-    if (!commit) {
+    const floor = queries.supportAt(state.x, state.z, state.y);
+    const lowest = floor && !floor.offCourse ? floor.height + floorGap : -Infinity;
+    if (aim && finitePoint(aim) && Number.isFinite(aim.heading) && Number.isFinite(aim.tau)) {
+      if (aim.tau > 0) {
+        const tau = Math.max(aim.tau, dt);
+        vx = (aim.x - state.x) / tau; vz = (aim.z - state.z) / tau;
+        const speed = Math.hypot(vx, vz);
+        if (speed > tuning.topSpeed) { vx *= tuning.topSpeed / speed; vz *= tuning.topSpeed / speed; }
+      }
+      if (visible && !commit && finitePoint(observation)) memory.observe(observation, true);
+      swoopAim = { heading: aim.heading, y: Math.max(aim.y, lowest) };
+    } else if (!commit) {
       if (!visible || !finitePoint(observation) || ![observation.heading, observation.vx, observation.vz, lateral, height].every(Number.isFinite)) return state;
       memory.observe(observation, true);
       const h = observation.heading;
@@ -285,12 +391,13 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
       const z = observation.z - Math.sin(h) * lateral + observation.vz * 0.1;
       vx = observation.vx + (x - state.x) * tuning.swoopGain;
       vz = observation.vz + (z - state.z) * tuning.swoopGain;
-      const speed = Math.hypot(vx, vz);
-      if (speed > tuning.swoopSpeed) { vx *= tuning.swoopSpeed / speed; vz *= tuning.swoopSpeed / speed; }
-      swoopAim = { heading: h, y: observation.y + height };
+      const speed = Math.hypot(vx, vz), limit = Math.max(tuning.swoopSpeed, Math.min(tuning.topSpeed, Math.hypot(observation.vx, observation.vz) + tuning.catchUp));
+      if (speed > limit) { vx *= limit / speed; vz *= limit / speed; }
+      // never down into his own floor (a kerb or a slope under one corner would wedge him)
+      swoopAim = { heading: h, y: Math.max(observation.y + height, lowest) };
     }
     move(dt, vx, vz, swoopAim ? swoopAim.y : state.y, tuning.swoopAcceleration,
-      tuning.swoopTurnRate, swoopAim ? swoopAim.heading : state.heading);
+      tuning.swoopTurnRate, swoopAim ? swoopAim.heading : state.heading, false, tuning.swoopVertical); // never through a person or a vehicle
     state.mode = 'swoop';
     return state;
   }
@@ -298,7 +405,7 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
   /** Fly toward an explicit departure point; the host decides when to hide him. */
   function leave(dt, destination) {
     if (!placed || !Number.isFinite(dt) || dt <= 0 || !finitePoint(destination)) return state;
-    dt = Math.min(dt, tuning.maxStep); swoopAim = null; plan.phase = 'idle';
+    dt = Math.min(dt, tuning.maxStep); swoopAim = null; plan.phase = 'idle'; noLift = false;
     const dx = destination.x - state.x, dz = destination.z - state.z, d = Math.hypot(dx, dz);
     const speed = Math.min(tuning.cruiseSpeed, 2 * d, Math.sqrt(2 * tuning.arriveDeceleration * d));
     move(dt, d ? dx / d * speed : 0, d ? dz / d * speed : 0, destination.y, tuning.acceleration, tuning.turnRate, null);
@@ -307,6 +414,12 @@ export function createFlightBrain(queries, graph = null, tuning = HOVER) {
   }
 
   function seedObservation(observation, visible) { return placed && memory.observe(observation, visible === true); }
-  return { state, place, update, swoop, leave, seedObservation, lastSeen: () => memory.lastSeen(), finder,
+  /** He hears the rider's wheel (the host decides when): a fresh position to go to, as good as a sighting. */
+  function hear(observation) {
+    if (!placed || !memory.observe(observation, true)) return false;
+    searching = false; anchors = []; anchor = -1; dwell = 0; return true;
+  }
+  return { state, place, update, swoop, leave, seedObservation, hear, stats, get lifting() { return liftTime > 0; },
+    get why() { return { blocked, detour, liftTime: +liftTime.toFixed(2), roofed, straightClear, searching, anchor, routeIndex }; }, lastSeen: () => memory.lastSeen(), finder,
     get route() { return route; }, get planning() { return plan.phase; } };
 }

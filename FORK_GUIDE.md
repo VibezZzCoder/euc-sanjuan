@@ -33,7 +33,8 @@ Check the source and notices at the revision you actually use. This guide is not
 
 Eight of the reviewed riders are real people: **Red Rider, Adonisb2, Maribel Vargas, Wheel in Motion,
 FloWithZo, Seal on a Wheel, Wyldist and Gnarwheel.** The project licences do not confer rights to their names,
-likenesses or personas. Maribel, Wheel in Motion and Gnarwheel supplied logos. The Adonisb2, Maribel, Wyldist
+likenesses or personas, and the picker's portraits depict them. Maribel, Wheel in Motion and Gnarwheel supplied
+logos, which their portraits reproduce. The Adonisb2, Maribel, Wyldist
 and Gnarwheel recordings have their own rights; Wyldist's clip contains a filming companion's exclamations,
 and Gnarwheel's mixed file includes independently synthesized sound as well as his recordings. Wyldist's SMLS
 sleeve mark belongs to a third party. Keeping the game name, leaving the files dormant or changing a display
@@ -52,7 +53,9 @@ including the ones loaded later:
 1. Trace `js/euc/data/riders.js` and `js/euc/data/machines.js` through `js/euc-roster.js`, rider and machine appearance
    modules, look/atlas/hair helpers, workers and the `js/euc/render/pixels/` painter copies. Check
    `js/euc/render/appearanceImports.js`, `appearancePixelImports.js`, and `js/euc/MANIFEST.json`. Review
-   your own previews, NPC imports, saved selections and fallbacks as well.
+   your own previews, NPC imports, saved selections and fallbacks as well. The picker's portraits are generated
+   into `js/euc/ui/riderPortraits.js` from the original chooser (`src/ui/menus.ts`) and loaded when the picker
+   first opens: remove or replace uncleared ones in the generator (`tools/vendor-euc.mjs`), then rebuild.
 2. Remove or replace `js/euc/data/mvLogoAsset.js`, `js/euc/data/wimLogoAsset.js`, `js/euc/data/gnarwheelLogoAsset.js`, the SMLS
    letter paths in both `js/euc/render/wyldistAtlas.js` and `js/euc/render/pixels/wyldistAtlas.js`, and
    identifying lettering, colours/kit combinations and likenesses. Logos and letter paths aren't necessarily
