@@ -10,6 +10,8 @@
   The original SF import hash remains provenance, not a claim of current byte equality.
   `js/euc-recovery.js` is a San Juan adaptation too: `findPlacementTarget` tests the standing volume before the
   footprint grid (same answers, proven on 72,000 placements and 400 get-up searches; the get-up search is ~2.5× faster).
+  `assets/euc-badge.svg` keeps its row because the path is the same; the drawing was replaced entirely by San
+  Juan's own garita badge.
   If `FORK_GUIDE.md` changes, refresh its `editionSha256`; the source hash still identifies the original SF file.
 - [actors-import.json](actors-import.json): vehicle lofts and street-sound synthesis and scheduling from EUC
   Thrills New York; traffic behaviour, skinned pedestrian figures and reactions, and the shared actor body index
@@ -32,6 +34,10 @@
   work. The rider portraits are the original EUC Thrills v1.1.0 chooser drawings (`src/ui/menus.ts`, `RIDER_CARDS`),
   generated unchanged into `js/euc/ui/riderPortraits.js` and recorded in `../js/euc/MANIFEST.json`; identity-bearing
   (see `../NOTICE-EUC-THRILLS.md`).
+- [skate-import.json](skate-import.json): the skatepark geometry kit (`js/sj-skate-kit.js`) adapts the San
+  Francisco edition's skatepark kit (with its New York inheritance) and the original EUC Thrills Foundry Yard
+  profiles and feature dimensions, MIT, VibezZzCoder. The two parks' sites, layouts, approaches, paint and lettering
+  are San Juan work; El Bowl approximates a real community bowl.
 - `geodata.json`: cached OSM/USGS URLs, full hashes, query text, datum evidence and bounded build counts/limitations.
 - `../data/plaza-detail.json`: ODbL plaza/fountain/gazebo rings and bench points, extracted from the same cached OSM
   input by `tools/build-plaza-detail.py` with a recorded input hash. It does not rebuild or modify terrain/roads.

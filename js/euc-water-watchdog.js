@@ -18,10 +18,17 @@
 // anchors at least `inland` m from any sea (searched in 16 directions), placed stationary and heading straight away from
 // the nearest sea. A second watchdog rescue within `escalateWithin` s (the incident did not end) escalates: anchors at least
 // `deep` m from the sea, then the nearest named arrival at least `inland` m from the sea, then the host spawn.
+//
+// Where (crash on dry land): the rider's own level first. A rider down on dry ground is not in the sea, so the sea-distance
+// rules above do not apply: the nearest recent anchor within `levelRadius` m whose floor is within `level` m of the fallen
+// rider's, then a ring round the fallen rider at that floor; only when none of those stands does the sea list follow.
+// Dry rescues never escalate (escalation is for a rider ridden back into the sea), so a narrow promenade under a wall
+// does not send a rider who keeps pressing get-up up onto the wall walk or to a shore point on another level.
 import { findPlacementTarget, placementDepartureClear } from './euc-recovery.js';
 
 export const WATCHDOG = { timeout: 2, wade: 0.05, wadeTimeout: 3, grace: 1.5, bounces: 3, bounceWindow: 8, crashTimeout: 6, retry: 0.5,
-  anchorEvery: 0.25, anchorSpacing: 1.5, anchors: 24, keep: 16, jump: 25, inland: 6, deep: 12, escalateWithin: 10 };
+  anchorEvery: 0.25, anchorSpacing: 1.5, anchors: 24, keep: 16, jump: 25, inland: 6, deep: 12, escalateWithin: 10,
+  level: 1.5, levelRadius: 30, ring: [3, 5] };
 
 export function createWaterWatchdog({ sampler, spawn, place, arrivals = null, recovery = null, maxStepUp = 0.216, timeout = WATCHDOG.timeout }) {
   const anchors = [], inlandAnchors = [], deepAnchors = [];
@@ -68,8 +75,27 @@ export function createWaterWatchdog({ sampler, spawn, place, arrivals = null, re
     for (let i = anchors.length - 1; i >= 0; i--) { const a = anchors[i]; out.push({ ...a, headingY: away(a, a.headingY + Math.PI), min: 0 }); }
     return out;
   }
+  // Own-level candidates for a crash on dry land: nearest recent anchors on the fallen rider's floor, then a ring round it.
+  function levelCandidates(from) {
+    const out = [], y = from.y;
+    for (const a of anchors) { const d = Math.hypot(a.x - from.x, a.z - from.z);
+      if (d <= WATCHDOG.levelRadius && Math.abs(a.y - y) <= WATCHDOG.level) out.push({ x: a.x, z: a.z, y: a.y, headingY: a.headingY, d }); }
+    out.sort((p, q) => p.d - q.d);
+    const h = Number.isFinite(from.headingY) ? from.headingY : 0;
+    for (const r of WATCHDOG.ring) for (let i = 0; i < 8; i++) { const a = h + i * Math.PI / 4;
+      out.push({ x: from.x + Math.sin(a) * r, z: from.z + Math.cos(a) * r, y, headingY: h }); }
+    return out;
+  }
   function rescue(from) {
-    const escalate = clock - lastRescue < WATCHDOG.escalateWithin;
+    // The fallen rider's floor (a body still settling may be a little above it).
+    if (from.dry) { const g = sampler.sampleGround(from.x, from.z, probe, from.y + 0.05).height;
+      if (Number.isFinite(g) && g <= from.y + 0.05 && from.y - g < 3) from.y = g; }
+    if (from.dry) for (const c of levelCandidates(from)) {
+      const target = findPlacementTarget(sampler, { x: c.x, z: c.z, headingY: c.headingY, referenceY: c.y, maxStepUp });
+      if (!target || Math.abs(target.y - from.y) > WATCHDOG.level || !placementDepartureClear(sampler, target, { departure: 1.2, maxStepUp })) continue;
+      if (place(target.x, target.z, target.headingY, target.y)) return { ...target, escalated: false };
+    }
+    const escalate = !from.dry && clock - lastRescue < WATCHDOG.escalateWithin;
     for (const c of candidates(escalate, from)) {
       const ref = Number.isFinite(c.y) ? c.y : sampler.sampleGround(c.x, c.z, probe, Infinity).height;
       const target = findPlacementTarget(sampler, { x: c.x, z: c.z, headingY: c.headingY, referenceY: ref, maxStepUp });
@@ -118,7 +144,7 @@ export function createWaterWatchdog({ sampler, spawn, place, arrivals = null, re
       if (controller.crashed) {
         down += step; retryIn -= step;
         if ((down >= WATCHDOG.crashTimeout || (pressed && down > 1)) && retryIn <= 0) {
-          const placed = rescue({ x, z });
+          const placed = rescue({ x, y, z, headingY: controller.headingY, dry: true });
           if (placed) return done(placed);
           retryIn = WATCHDOG.retry;
         }

@@ -1,8 +1,8 @@
 # Working with El Viejo San Juan: EUC Thrills
 
-This is [**El Viejo San Juan: EUC Thrills**](https://github.com/VibezZzCoder/euc-sanjuan), a new Old San Juan
-world by **VibezZzCoder** built with the EUC Thrills riding engine and selected integration code from its NYC and
-SF editions. Read [FORK_GUIDE.md](FORK_GUIDE.md), [NOTICE.md](NOTICE.md) and [LICENSING.md](LICENSING.md)
+This is [**El Viejo San Juan: EUC Thrills**](https://github.com/VibezZzCoder/euc-sanjuan), an original Old San Juan
+world by **VibezZzCoder**, built with the same author's EUC Thrills riding engine and selected integration code from
+its NYC and SF editions. Read [FORK_GUIDE.md](FORK_GUIDE.md), [NOTICE.md](NOTICE.md) and [LICENSING.md](LICENSING.md)
 before reusing files.
 
 ## Know what you are changing
@@ -17,7 +17,7 @@ before reusing files.
 | `data/`, `js/sj-ground-osm.js`, `js/sj-streets-data.js`, `js/sj-worldedge-data.js`, `provenance/` | OSM-derived geography is ODbL 1.0; USGS 3DEP elevation is public domain. Some layers mix geography with authored details; consult `provenance/geodata.json`. |
 | `js/euc/`, `audio/euc/` | Generated riding engine from EUC Thrills by VibezZzCoder (MIT code); original licensed assets are CC BY 4.0, with exceptions. Keep `js/euc/LICENSE`, `NOTICE-EUC-THRILLS.md` and the applicable `audio/euc/PROVENANCE.md`. Edit `tools/vendor-euc.mjs` or the pinned source, not generated modules by hand. |
 | `js/main.js`, `js/euc-*.js`, `js/sf-*.js`, input and render helpers | City host and integration, including NYC/SF adaptations with MIT work by Mr.doob and Kamil (@unable0_). Keep all three copyright lines and the complete MIT text in `LICENSE`. |
-| `vendor/three/`, `vendor/MANIFEST.json`, retained `fonts/` | Pinned three.js (MIT); keep `vendor/three/LICENSE`. Retained Inter and Overpass fonts carry their SIL OFL notices. |
+| `vendor/three/`, `vendor/MANIFEST.json`, retained `fonts/`, `assets/type/` | Pinned three.js (MIT); keep `vendor/three/LICENSE`. Retained Inter, Overpass and Fraunces fonts carry their SIL OFL notices. |
 
 ## Run and verify
 

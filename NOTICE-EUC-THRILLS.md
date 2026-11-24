@@ -1,7 +1,7 @@
-# EUC Thrills notice (carried with this fork)
+# EUC Thrills notice (carried with this edition)
 
-This fork (*euc-sanjuan*, **El Viejo San Juan: EUC Thrills**) contains code and original assets from
-*EUC Thrills*. Its notice requires the origin and
+This edition (*euc-sanjuan*, **El Viejo San Juan: EUC Thrills**) contains code and original assets from
+*EUC Thrills*, the electric-unicycle game by the same author, VibezZzCoder. Its notice requires the origin and
 copyright below to travel with every copy. The origin, licensing, fictional-rider and attribution passages
 between the rules are excerpts copied **verbatim** (grouping headings adapted) from
 `NOTICE.md` at [VibezZzCoder/EUC-thrills@5f45fff](https://github.com/VibezZzCoder/EUC-thrills/blob/5f45fff19b258e140833841ba2473069af751a12/NOTICE.md);
@@ -59,13 +59,18 @@ If you use this project's original assets under CC BY 4.0, attribute as:
 
 ## Destination scope and historical donor permission position
 
-**El Viejo San Juan: EUC Thrills** is an Old San Juan riding game, with a newly generated Old San Juan world
-and selected engine code from the SF/NYC adaptations. The game links to the EUC Thrills main menu.
+**El Viejo San Juan: EUC Thrills** is an Old San Juan riding game. Its city is an original world built for
+this game by VibezZzCoder; the riding engine, riders and Officer Dorkins come from EUC Thrills, with selected
+integration code from its New York and San Francisco editions. The game links to the EUC Thrills main menu.
 
 For the SF donor, VibezZzCoder considered the participants' existing EUC Thrills permissions applicable and
 authorized the reviewed full-roster content on that basis. **This records the owner's position, not independent
 verification of an expanded grant from any participant or other rights holder.** The source notice describes
 permission for EUC Thrills and limits reuse elsewhere; shared branding alone does not expand it.
+
+San Juan is another destination of EUC Thrills by the same author and carries the same reviewed riders, supplied
+marks and contributed recordings on that same basis, for use within EUC Thrills. No additional licence to reuse
+them elsewhere is granted here.
 
 ## Forking is welcome — make it your own
 
@@ -193,7 +198,8 @@ the actual eager/deferred graph and local adaptations. Do not hand-edit `js/euc/
 `tools/vendor-euc.mjs` and requires the exact public source snapshots. This is a focused code adaptation rather than
 a broad engine/source migration. The reviewed roster, appearance/mark closure and audio remain from the base
 snapshot, including **18 reviewed source audio entries / 17 installed WAVs**. The offroad tyre is unshipped. The
-generated graph contains **101 modules / 41 eager / 60 deferred**. The NPC look and paddle are restored for the
+generated graph contained **101 modules / 41 eager / 60 deferred** in that San Francisco donor; San Juan's graph is
+**102 modules / 41 eager / 61 deferred** (one deferred module more: the rider portraits). The NPC look and paddle are restored for the
 SF Dorkins integration; the paddle is constructed for the cop only and his metadata remains outside the playable roster.
 The audio provenance identifies source treatment, not SF gameplay acceptance.
 Selected CPU-only pixel workers and bounded

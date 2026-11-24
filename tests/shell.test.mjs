@@ -29,6 +29,18 @@ test('web manifest: own app identity, relative to the game folder, any and maska
   for(const svg of ['assets/icons/icon.svg','assets/icons/icon-maskable.svg'])assert.match(text(svg),/<rect width="512" height="512" fill="#254873"\/>/,svg+' is opaque edge to edge');
 });
 
+test('page head: a shared link shows the game (Open Graph card with one hosted image; metadata only)',()=>{
+  const home='https://vibezzzcoder.github.io/euc-sanjuan/';
+  const og=Object.fromEntries([...head.matchAll(/<meta property="og:([a-z:_]+)" content="([^"]*)">/g)].map(m=>[m[1],m[2]]));
+  assert.equal(og.title,'San Juan Spin-off: EUC Thrills');assert.equal(og.type,'website');assert.equal(og.url,home);
+  assert.equal(og.image,home+'screenshots/social.jpg');assert.equal(og['image:type'],'image/jpeg');
+  assert.deepEqual([og['image:width'],og['image:height']],['1200','630']);
+  assert.ok(og.description.length>=60&&og.description.length<=200);assert.ok(og['image:alt'].length>10);
+  assert.match(head,/<meta name="twitter:card" content="summary_large_image">/);
+  // The preview is metadata only: the page itself still loads nothing from another host.
+  assert.doesNotMatch(head,/<(?:script|link rel="stylesheet"|img)[^>]+https?:/);
+});
+
 test('page head: manifest, 180px Apple icon and capable flag, keeping the theme, viewport, SVG favicon and Apple title',()=>{
   assert.match(head,/<link rel="manifest" href="manifest\.webmanifest">/);
   assert.match(head,/<link rel="apple-touch-icon" href="assets\/icons\/icon-180\.png" sizes="180x180">/);
@@ -37,7 +49,7 @@ test('page head: manifest, 180px Apple icon and capable flag, keeping the theme,
   assert.match(head,/<meta name="apple-mobile-web-app-title" content="EUC San Juan">/);
   assert.match(head,/<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">/);
   assert.match(head,/<link rel="icon" href="assets\/euc-badge\.svg" type="image\/svg\+xml">/);
-  assert.doesNotMatch(head,/status-bar-style|og:image|twitter:/,'no status-bar style, no share image');
+  assert.doesNotMatch(head,/status-bar-style/,'no status-bar style');
   // The leave module loads after the import map (an import map must come before any module) and on its own.
   assert.ok(head.indexOf('<script type="module" src="js/sj-leave.js"></script>')>head.indexOf('type="importmap"'));
   const sources=fs.readdirSync(new URL('../js/',import.meta.url)).filter(n=>n.endsWith('.js')).map(n=>text('js/'+n)).join('\n');

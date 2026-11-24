@@ -3,7 +3,7 @@
 // © 2026 VibezZzCoder — MIT. Derived riding code: EUC Thrills @5f45fff (js/euc/LICENSE).
 // Downstream forks: read NOTICE-EUC-THRILLS.md before repurposing participant looks, marks or recordings.
 //
-// Ownership (EUC_THRILLS_CODE_ARCHITECTURE_GUIDE.md §4, §7, §11):
+// Ownership:
 //   - The city keeps its one variable-dt loop. This module owns a fixed-step accumulator inside it and runs the EUC
 //     simulation at SIMULATION.hz (120), at most MAX_CATCH_UP steps per frame; it never starts a loop of its own.
 //   - The controller is the authority for where the rider is. The entity's position/heading/speed are written from

@@ -428,6 +428,19 @@ test('piragua carts and the El Morro kite: placed off the walks, nobody walks th
   assert.ok(out.some((b) => b.kind === 'cart'), 'the cart is a body the rider meets');
 });
 
+test('?accents=0: the people without the carts and the kite (no closed walk links, nobody missing a route)', async () => {
+  const life = makeLife('midday', { x: -30, z: -25 });
+  life.context.params = new URLSearchParams('accents=0');
+  const people = await createPeople(life.context);
+  people.refocus(); people.update(0, null);
+  for (let f = 0; f < 240; f++) { people.update(1 / 60, null); life.bodies.begin(); people.publish(life.bodies); life.bodies.commit(); }
+  const st = people.stats();
+  assert.equal(st.carts, 0); assert.equal(st.kite, false);
+  assert.ok(st.active > 50, `people still walk (${st.active})`);
+  assert.equal(people.debug.net.blocked.reduce((a, b) => a + b, 0), 0);
+  people.dispose();
+});
+
 test('same seed, same city', async () => {
   const a = await start('golden', { x: 500, z: -80 }), b = await start('golden', { x: 500, z: -80 });
   for (let f = 0; f < 600; f++) { a.frame(1 / 60); b.frame(1 / 60); }

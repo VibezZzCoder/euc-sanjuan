@@ -70,6 +70,11 @@
   .postcard-message #riders-profile{margin-bottom:12px}.postcard-message .style-note{margin-top:auto}
   .postcard-address .kicker{margin-top:auto;padding-top:14px;border-top:1.5px solid var(--rule)}
 }
+/* Side by side below 870px the sheet is narrower than 400px: a slightly smaller name and narrower side padding keep the
+   one-word names (FloWithZo, Gnarwheel) whole on their stamps. */
+@media (min-width:701px) and (max-width:869px) and (min-aspect-ratio:1001/1000) and (min-height:501px){
+  .stamp{padding-left:4px;padding-right:4px;font-size:12px}
+}
 
 /* A portrait: the original 96 × 96 drawing in a square box; a rider's own mark is a canvas over its rectangle in the
    drawing (the same numbers as the drawing data; tests/riders.test.mjs keeps them equal). */

@@ -1,5 +1,6 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // Seeded random numbers for city life: the same name gives the same sequence, so the city is the same every run.
+// Two well-known public-domain routines: an FNV-1a hash of the name seeds a Mulberry32 generator.
 
 function seedOf(name) {
   let h = 2166136261;

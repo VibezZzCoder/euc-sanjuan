@@ -1,6 +1,7 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // The booking without a browser: the director's clock, the placement contract, the page's #booking / #chase / Pause row
 // contract and its phone rules, and ?cop=0 building nothing. CPU only.
+// The timer and transfer cases follow the booking tests of the San Francisco edition of EUC Thrills (MIT, VibezZzCoder).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

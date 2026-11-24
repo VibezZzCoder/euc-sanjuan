@@ -1,5 +1,5 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
-// Private-ground point tests built outside the layout scopes (perf ) — © 2026 VibezZzCoder, MIT.
+// Private-ground point tests built outside the layout scopes — © 2026 VibezZzCoder, MIT.
 // An area's `offLimitsAt` is held for the whole session by the terrain sampler. Written inline in a layout, the closure
 // shares the layout function's context and keeps every construction index of that function alive (6.8 MiB for uptown's
 // solid grid, 6.7 MiB for forttops). Closures created here capture only their arguments. Each factory returns exactly

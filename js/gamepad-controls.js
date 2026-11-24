@@ -152,7 +152,7 @@ class GamepadControls {
     const cycleRider = Number(Boolean(edge(5))) - Number(Boolean(edge(4)));
     const cycleCamera = edge(3), recenter = edge(11);
     const mapActions = { activate: edge(0), recenter: edge(2), fit: edge(3),
-      // D-pad left/right step through controls in order; up/down move to the visually nearest row (owner, 2026-11-15).
+      // D-pad left/right step through controls in order; up/down move to the visually nearest row.
       navigate: Number(Boolean(edge(15))) - Number(Boolean(edge(14))),
       vertical: Number(Boolean(edge(13))) - Number(Boolean(edge(12))) };
     const wasActive = this.wasActive;

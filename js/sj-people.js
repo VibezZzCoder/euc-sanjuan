@@ -27,7 +27,7 @@ const CFG = Object.freeze({
   near: { desktop: 30, phone: 22 },
   hourShare: { midday: 1, golden: 1, blue: 0.62 },
   plazaMetres: 1200,  // lattice metres of a typical square: a tier's count spreads over that much plaza
-  streetMetres: 340,  // walk metres per tier count on streets (round 3: halved, now that people are where the rider rides)
+  streetMetres: 340,  // walk metres per tier count on streets (people stand where the rider rides, so streets need fewer)
 });
 const STATE = { OFF: 0, WALK: 1, STAND: 2, SIT: 3, WAIT: 4, FREE: 5 };
 const ACT = { NONE: 0, PHOTO: POSE.PHOTO, TALK: POSE.TALK };
@@ -74,6 +74,7 @@ export async function createPeople(context) {
   const accents = context.params?.get?.('accents') === '0'
     ? { seats: [], carts: [], kite: null, update() {}, publish() {}, warm() {}, dispose() {} }
     : createAccents({ world, net, scene });
+  net.blocked ??= new Uint8Array(net.links); // the carts close the walk links round them; without accents nothing is closed
   {
     const extra = accents.seats, n = extra.length / 7, order = [];
     for (let q = 0; q < n; q++) if (extra[q * 7 + 5] === SEAT_KIND.CUSTOMER) order.push(q);

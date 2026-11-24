@@ -9,7 +9,7 @@
       "path": "FORK_GUIDE.md",
       "bytes": 7611,
       "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
-      "editionSha256": "1454985c07618e6fba80241c8d6bb6c22858ad6b26ff0ced30fd43a040c827ce"
+      "editionSha256": "c3ddd961eda9b843124db3be8f74e0188d6fe7e04477976b89b4f6a76b65f1ab"
     },
     {
       "path": "LICENSE",
@@ -21,7 +21,7 @@
       "path": "NOTICE-EUC-THRILLS.md",
       "bytes": 21524,
       "sha256": "d31f04699e76bf5e59c937b10804fae09ffb6ca7102be3b0365b608a1e38ca66",
-      "editionSha256": "99c1021f6f4ada77ae2e60fc359a73b278e645d02b45e72a0ac33ea77bdf33d3"
+      "editionSha256": "e6fee8e44755bd86fd23ebe60f202cb23fbd80d93b98d02f855c0b0ae84c53c2"
     },
     {
       "path": "assets/euc-badge.svg",
@@ -33,7 +33,7 @@
       "path": "audio/euc/PROVENANCE.md",
       "bytes": 11371,
       "sha256": "c3b04588d8c08a276ca627720ec18710ecd2d3a2792a8b55c89e0d597ac994aa",
-      "editionSha256": "37e5663a54658ccff495bc2ca0ca0445bfd4d376ddbf77b5cad014212d596b06"
+      "editionSha256": "fbf816c06768c7712692f7d912edf01e958e8cba46ce8fb1a786904588bc0429"
     },
     {
       "path": "audio/euc/crash_adonisb2.wav",
@@ -190,7 +190,7 @@
       "path": "js/euc-rider.js",
       "bytes": 20345,
       "sha256": "70fb0d53a9955f5b6d0bae1b9930941a316f1b041e06b8f55538abf9018f6513",
-      "editionSha256": "0bb27c9698168213d96ee28a1149306fbc7441f3db1bc6550a471ddb98dc99ee"
+      "editionSha256": "7a1a8a60e79de5d873473805521551a054b001b82d7f4a54940c32cc02afff5b"
     },
     {
       "path": "js/euc-roster.js",
@@ -730,7 +730,7 @@
       "path": "js/gamepad-controls.js",
       "bytes": 10066,
       "sha256": "ce1026df990aec6f8df83796953da5f04b93f8acde5d16ab1d9880634ebab3ad",
-      "editionSha256": "5e0d78474aeeb55d12ca1f66dedd2f0f5daf54928ed42d81931f7b736b2dd5f8"
+      "editionSha256": "43e4707de9bba5506a6b5fe6014121e4e2816d10df812e177ab8eda6c593ac47"
     },
     {
       "path": "js/render-completion.js",

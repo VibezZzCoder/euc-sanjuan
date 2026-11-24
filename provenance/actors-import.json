@@ -51,6 +51,15 @@
       "derived": "Car following (Intelligent Driver Model braking and free acceleration), the stop-sign sequence (full stop, order of arrival, timeout only with a clear junction), grade slowing with the uphill crawl, and the steering, signal and body-pitch pose; the lane graph, junction claims, manners towards people and the rider, and the population are new."
     },
     {
+      "path": "js/sj-traffic.js",
+      "donor": "sanfrancisco",
+      "sourcePath": "js/sf-dynamic-bodies.js",
+      "sourceBytes": 18141,
+      "sourceSha256": "e30a2efa437a068512eed900752f559df8428db4099eb054454d1b06e4083389",
+      "editionSha256": "74c8bae21b118312fb75f6e9c03356f6d55bbfca5d5bce5a1f4a614100f53e70",
+      "derived": "The posed vehicle body used for collisions with a car on a grade: the pitch and roll transform, the box anchor and the slice extents."
+    },
+    {
       "path": "js/sj-people-figure.js",
       "donor": "sanfrancisco",
       "sourcePath": "js/pedestrians.js",
@@ -65,7 +74,7 @@
       "sourcePath": "js/sf-dynamic-bodies.js",
       "sourceBytes": 18141,
       "sourceSha256": "e30a2efa437a068512eed900752f559df8428db4099eb054454d1b06e4083389",
-      "editionSha256": "052d4f70f3cfdad8a095fe5e6614fb7e196c42245fb3d86ac54e3bc23447c8b4",
+      "editionSha256": "d0265453b1bc7c11ba6f7ca37e1d79d2fe0653425012908d80f081f0cdba086a",
       "derived": "The pedestrian reactions to the rider (anticipating sidestep, admitted-impact shove with pause and return, cooldown) and the meeting scheduler, rewritten around San Juan's walk network; population, routes, places, seats, crossings and groups are new."
     },
     {

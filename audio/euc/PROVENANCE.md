@@ -5,7 +5,8 @@ Reviewed sound inventory for the player's electric unicycle (`js/euc-audio.js`) 
 All **17 installed WAVs** are unchanged public-source copies: eleven crashes, one Drunkard stumble, three shared
 sounds and two sirens. The offroad tyre loop remains unshipped.
 The generator verifies exact installed filenames and source hashes, including missing/extra/unshipped WAV rejection.
-NYC's earlier all-eleven backend/audio evidence belongs to the donor; it is not SF listening or runtime acceptance.
+Checks made in the New York and San Francisco editions belong to those editions; they are not San Juan listening or
+runtime acceptance.
 
 Attribution for original licensed contributions (not a blanket licence for this folder):
 
@@ -13,9 +14,9 @@ Assets from EUC Thrills by VibezZzCoder — CC BY 4.0 — https://github.com/Vib
 
 - Upstream: `VibezZzCoder/EUC-thrills` @ `5f45fff19b258e140833841ba2473069af751a12` (v1.1.0).
 - Source folder: `assets/live/audio/`.
-- Donor import history: 2026-10-23 (sirens 2026-10-24); ten full-roster additions installed 2026-10-31.
-  SF seed copied from NYC; initial-release pruning on 2026-11-01 removed both sirens; they were restored for the
-  in-progress Dorkins work on 2026-11-07 without changing their source bytes.
+- History in the earlier editions: first imported for the New York edition on 2026-10-23 (sirens 2026-10-24), ten
+  full-roster additions on 2026-10-31; carried to the San Francisco edition, and from there to San Juan, without
+  changing any source bytes. In San Juan both sirens are installed and used by Officer Dorkins.
 - Origin and copyright notice: `NOTICE-EUC-THRILLS.md` in this repository, from upstream `NOTICE.md`.
 
 ## Installed original/shared inventory
@@ -50,10 +51,10 @@ Source/output hashes and exact inventory checks remain required.
 
 ## Sirens and unshipped source inventory
 
-Source paths are relative to the same pinned upstream root. The two sirens are installed for the in-progress NPC port;
+Source paths are relative to the same pinned upstream root. The two sirens are installed and used by Officer Dorkins;
 the offroad loop remains absent.
 
-| File | Upstream path | SHA-256 | Origin / licence | Initial SF status |
+| File | Upstream path | SHA-256 | Origin / licence | Status here |
 |---|---|---|---|---|
 | `siren_far_loop.wav` | `assets/live/audio/siren_far_loop.wav` | `09d77eacb93910f55565119a35b96b338c642f9862ba2723e2e077ac5e3100e7` | [TitanKaempfer, Freesound #746302](https://freesound.org/people/TitanKaempfer/sounds/746302/), loop-processed by EUC Thrills; CC0 / public domain. | Installed for Dorkins. |
 | `siren_close_loop.wav` | `assets/live/audio/siren_close_loop.wav` | `0f34dc0bf177406aaaaded4fb1ac7e980bf497dd4a29423218458606fd7feed6` | [vlammenos, Freesound #52906](https://freesound.org/people/vlammenos/sounds/52906/), loop-processed by EUC Thrills; CC0 / public domain. | Installed for Dorkins. |
@@ -82,6 +83,7 @@ the offroad loop remains absent.
   forks should replace permission-limited recordings unless separately permitted, without misclassifying the owner's
   independently licensed Red/WIM/FloWithZo renders or CC0 layers as contributed rider voices.
 - Everything else the rider hears (motor, hop, landing, kerb impact, recovery chirp and rolling tyre noise) is
-  synthesized at runtime by `js/euc-audio.js`. That code was written for this fork; no upstream audio code was copied.
+  synthesized at runtime by `js/euc-audio.js`, adapted for San Juan from the San Francisco edition of EUC Thrills
+  (see `provenance/sf-import.json`). City ambience and Officer Dorkins's cues have their own source credits.
 - `wind_howl_loop.wav` is the game's only wind: the rider's speed wind (`js/euc-audio.js`) and, once it is decoded,
   the city's ambient wind (`js/audio-events.js` `createWindVoice().useHowl`).

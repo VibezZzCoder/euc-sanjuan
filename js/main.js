@@ -115,7 +115,7 @@ function resize(){const w=Math.max(1,innerWidth),h=Math.max(1,innerHeight);camer
 function updateCamera(dt,snap=false){cameraControls.update(camera,entity,world,dt,snap);}
 function draw(now,dt=0,snap=false){if(resizePending)resize();entity.prepareView(now);updateCamera(lastView?Math.min(.1,(now-lastView)/1000):dt,snap);each('view',camera);lastView=now;
   atmos.aim(entity.position,camera);renderer.render(scene,camera);}
-// Start-of-ride warm-up (perf, 2026-11-19; ). Behind the loading screen, with
+// Start-of-ride warm-up. Behind the loading screen, with
 // physics paused: one fenced real frame (normal sun shadow pass, the scene's cull/LOD updaters, chase camera) along each
 // of the four headings out of the spawn, so turning into those streets does not compile/upload on the first ride frames;
 // then real rAF-paced frames at the spawn until the per-frame render time settles. Bounded by frames and wall time.

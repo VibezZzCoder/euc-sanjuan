@@ -33,7 +33,7 @@ export const FABRIC={corner:.6,bay:3.3,civicBay:4.3,storey:3.35,probe:[.8,2.4],r
   cell:128,cellOffset:[64,0]};
 // Plaza kiosks / cathedral: drawn whole by sj-plaza.js and sj-cathedral.js.
 const PLAZA_WHOLE=new Set([410592051,410620625,CATHEDRAL_ID]);
-// Raw OSM tags (research/san-juan-data, read-only): building=church/cathedral/school/university/government/hospital/office/
+// Raw OSM tags (the cached extract recorded in provenance/geodata.json): building=church/cathedral/school/university/government/hospital/office/
 // warehouse/industrial, amenity=place_of_worship/school/theatre/library/courthouse/parking/ferry_terminal/community_centre/
 // kindergarten, office=government, historic=*, plus named institutions (Cuartel, Departamento, Edificio Lcdo., Ateneo,
 // Casa Olímpica, Cámara de Comercio, La Fortaleza, Casa Blanca, Antiguo Teatro). Later landmark packages take these over

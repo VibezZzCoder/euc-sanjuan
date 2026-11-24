@@ -1,5 +1,6 @@
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // The page's Content-Security-Policy: same-origin only, in step with the inline scripts, and placed before them.
+// Several cases are ported from the New York edition of EUC Thrills (MIT, VibezZzCoder).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

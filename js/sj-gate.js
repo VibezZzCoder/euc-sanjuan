@@ -315,7 +315,7 @@ export function buildGate(gate,{scene,bake,own,box,cylinder,sphere,mat,meshes,te
     for(let i=0;i<tp.count;i++){const t=(tp.getY(i)-p.y)/p.height,c=pts[Math.round(Math.min(1,Math.max(0,t))*8)],f=1-.3*t; // taper
       tp.setXYZ(i,c.x+(tp.getX(i)-c.x)*f,tp.getY(i),c.z+(tp.getZ(i)-c.z)*f);}
     trunk.computeVertexNormals();bake(trunk,0,0,0,1,1,1,'#8b8069',0,'solid');trunk.dispose();
-    // Crown (owner: the single ball read as a coconut skewered by the trunk). Wikimedia Commons curid=137843368: a brown fibrous boot of old frond
+    // Crown (a single ball read as a coconut skewered by the trunk). Wikimedia Commons curid=137843368: a brown fibrous boot of old frond
     // bases, slightly wider than the trunk, continues it along the leaning top tangent; Wikimedia Commons curid=71816504 (species structure only):
     // separate ~25 cm nuts hang in a bunch round the trunk top under the frond bases. Each nut clears the hexagonal trunk
     // and sinks 2 cm into the boot face at its own height; the boot's 0.18 m base covers the trunk end (no trunk tip through anything).

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /*! El Viejo San Juan: EUC Thrills — (c) 2026 VibezZzCoder — MIT — https://github.com/VibezZzCoder/euc-sanjuan */
 // tools/csp.mjs — keep index.html's Content-Security-Policy in step with its inline scripts.
+// Ported from the same tool in the New York edition of EUC Thrills (MIT, VibezZzCoder).
 //
 // usage: node tools/csp.mjs            rewrite the policy in index.html
 //        node tools/csp.mjs --check    offline: the policy in index.html is exactly the one built here

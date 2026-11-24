@@ -18,7 +18,7 @@ import {GROUND_AREAS} from './sj-streets-data.js';
 import {ringsAt} from './sj-private.js';
 
 // Survey §6 explicit building ownership (city.buildings ids); fabric/streets skip these.
-// + the Polvorín de Santa Elena 60252372 on the esplanade's south-west lawn (in the survey ledger, not its list: added here).
+// + the Polvorín de Santa Elena 60252372 on the esplanade's south-west lawn.
 export const OWNED=[929959,929960,59745023,1344473441,256388549,3435178,269744558,256658271,270161725,269739380,269739381,
   269739382,269739383,269739384,269739385,6800675,3610153,256659484,256659483,3595797,256658272,256658273,60252372];
 export const BALLAJA=929959,ASILO=929960,ESCUELA=59745023,SANJOSE=256388549,CASALS=256658271,CONTRAFUERTES=270161725,

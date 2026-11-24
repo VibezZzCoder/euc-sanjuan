@@ -1,8 +1,8 @@
 # Forking El Viejo San Juan: EUC Thrills
 
 **Forking is welcome.** Take a ride in a different direction, build something new on these streets, or use the
-city for a game that has nothing to do with electric unicycles. The Old San Juan world was built for EUC Thrills by
-**VibezZzCoder**: https://github.com/VibezZzCoder/euc-sanjuan. Credit the work you took and tell players what you
+city for a game that has nothing to do with electric unicycles. The Old San Juan world is an original work, built
+for EUC Thrills by **VibezZzCoder**: https://github.com/VibezZzCoder/euc-sanjuan. Credit the work you took and tell players what you
 changed. You don't have to call your game EUC Thrills to use the open-licensed parts.
 
 The source includes eleven reviewed rider identities, all playable, and Officer Dorkins as a non-playable character.
@@ -15,7 +15,8 @@ Check the source and notices at the revision you actually use. This guide is not
   copyright lines: Mr.doob, Kamil (@unable0_), and VibezZzCoder. Keep [NOTICE.md](NOTICE.md) and the applicable upstream notices. Add your own credit below the original credit, not in its place.
   If you keep EUC Thrills engine code, retain [its MIT licence](js/euc/LICENSE) and the
   [carried notice](NOTICE-EUC-THRILLS.md). If you keep three.js, retain its [MIT notice](vendor/three/LICENSE)
-  and pin; Inter and Overpass, if retained, carry their respective SIL OFL licences in `fonts/`.
+  and pin; Inter and Overpass (`fonts/`) and Fraunces (`assets/type/`), if retained, carry their respective SIL
+  OFL licences beside the font files.
   If you keep city life, carry the [file-by-file donor credit](provenance/actors-import.json): New York for
   vehicle lofts and synthesized sound, San Francisco for traffic, pedestrian figures and reactions, and
   moving-body helpers. Credit VibezZzCoder and the Mr.doob and Kamil work inherited by those editions.

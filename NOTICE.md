@@ -2,6 +2,10 @@
 
 Old San Juan riding world by VibezZzCoder, 2026. https://github.com/VibezZzCoder/euc-sanjuan
 
+The city is an original work: its terrain build, streets, buildings, forts, walls, plazas, sea, light, camera and
+menus were written for this game from OpenStreetMap geography and USGS elevation. It is not derived from another city
+project's map, terrain or buildings. What it reuses is listed here.
+
 - Riding code/assets: **EUC Thrills by VibezZzCoder**, MIT code; original assets CC BY 4.0 with exceptions.
   https://github.com/VibezZzCoder/EUC-thrills — see `NOTICE-EUC-THRILLS.md` and `js/euc/LICENSE`.
   Existing contributed recordings, identity marks and other exceptions retain their own terms.
@@ -19,6 +23,11 @@ Old San Juan riding world by VibezZzCoder, 2026. https://github.com/VibezZzCoder
   `RiderSelection` from the EUC Thrills San Francisco edition, MIT, by VibezZzCoder; see
   [the file-by-file record](provenance/riders-import.json). The picker's stamp-and-postcard design was made for San
   Juan. Rider looks, marks and recordings are the reviewed EUC Thrills set described in `NOTICE-EUC-THRILLS.md`.
+- Officer Dorkins and the booking: pursuit, paddle contact, siren and cue sound, and the booking director and desk
+  scene adapt the EUC Thrills San Francisco edition (several parts first written for its New York edition), MIT, by
+  VibezZzCoder; see [the file-by-file record](provenance/dorkins-import.json). His routes through this city, his pace,
+  the invented Cuartelillo del Monociclo and the booking's words were made for San Juan. He and the Cuartelillo are
+  fictional and carry no real police or agency marks.
 - Skatepark del Muelle (a fictional public skatepark on the harbour-front lot; the real lot is a private car park):
   its geometry kit adapts the EUC Thrills San Francisco edition's skatepark kit (exact support from the drawn
   triangles, inscribed bodies, wheel-sweep rail bars; including its New York inheritance) and the original EUC Thrills

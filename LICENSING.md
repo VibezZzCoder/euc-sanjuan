@@ -1,8 +1,12 @@
 # Licensing overview
 
 - Code: MIT. Preserve `LICENSE`, `js/euc/LICENSE`, the notices in vendored Three.js and all source copyrights.
-  This includes the New York and San Francisco EUC Thrills adaptations for vehicle models, traffic, pedestrians
-  and synthesized city sound. Credit VibezZzCoder, Mr.doob and Kamil; see [the source record](provenance/actors-import.json).
+  The city itself (terrain build, streets, buildings, forts, walls, plazas, sea, light, camera and menus) was written
+  for San Juan by VibezZzCoder. Code adapted from the New York and San Francisco editions of EUC Thrills covers the
+  engine integration ([record](provenance/sf-import.json)), vehicle models, traffic, pedestrians and synthesized city
+  sound ([record](provenance/actors-import.json)), the rider swap ([record](provenance/riders-import.json)), Officer
+  Dorkins and the booking ([record](provenance/dorkins-import.json)) and the skatepark kit
+  ([record](provenance/skate-import.json)). Credit VibezZzCoder, and Mr.doob and Kamil where their work is inherited.
 - Original EUC Thrills assets: CC BY 4.0 within the scope of `NOTICE-EUC-THRILLS.md`. Identity-bearing material,
   logos, contributed recordings and generated vocal layers have the listed exceptions; no blanket grant applies.
 - Audio: individual treatment and rights remain in `audio/euc/PROVENANCE.md`.
