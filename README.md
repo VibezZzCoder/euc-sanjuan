@@ -45,7 +45,7 @@ city project.** This repository began as an empty folder and has its own history
   <a href="screenshots/paseo-del-morro.webp"><img src="screenshots/paseo-del-morro.webp" width="420" alt="Paseo del Morro at the Puerta de San Juan: the promenade under the city wall, a garita over the water and old-city houses above." /></a>
 </p>
 <p align="center">
-  <a href="screenshots/el-morro.webp"><img src="screenshots/el-morro.webp" width="420" alt="The path across the great lawn to El Morro, flags on the ramparts and people walking." /></a>
+  <a href="screenshots/el-morro.webp"><img src="screenshots/el-morro.webp" width="420" alt="The path across the great lawn to El Morro at golden hour: kites of many colours over the grass, people flying them, flags on the ramparts." /></a>
   <a href="screenshots/el-bowl-la-perla.webp"><img src="screenshots/el-bowl-la-perla.webp" width="420" alt="Dropping into El Bowl in La Perla at 22 mph, the painted bowl beside the houses and the sea at sunset." /></a>
 </p>
 <p align="center">
@@ -86,7 +86,9 @@ changing rider takes a moment while their look and sounds are prepared.
 | Map | `M` | Start |
 | Pause | `Esc` | View / Back |
 
-Menus work with a controller too: D-pad to move, A to choose, B to go back.
+Menus work with a controller too: D-pad to move, A to choose, B to go back. On the map, the left stick moves a pointer
+over the destination marks and A goes to the one it names; with a mouse, click a mark; by touch, tap a mark and then
+its name.
 
 **Touch:** a floating stick under your left thumb steers and sets the speed; **HOP**, **CHARGE** and **GET UP** sit
 on the right. Drag anywhere else to look around and pinch to zoom.
@@ -98,14 +100,15 @@ Kerbs are real: hop them. The hills are the real hills, so leave room to brake o
 - **The whole old city**, about 1.4 km² of land: some 1,300 buildings on 680 mapped street segments, from La Puntilla
   and the harbour front up to the Atlantic wall, with the real grades. Public stairs are rideable both ways, including
   the Capitol steps.
-- **Landmarks you can ride to** on a searchable map: Plaza de Armas, the Cathedral, Capilla del Cristo, Puerta de San
+- **Landmarks you can ride to** on a searchable map whose red marks you can click, tap or point at with a controller: Plaza de Armas, the Cathedral, Capilla del Cristo, Puerta de San
   Juan, Paseo del Morro, El Morro and its lighthouse, Castillo San Cristóbal, Plaza Colón, Paseo de la Princesa and the
   Raíces fountain, La Perla, the cemetery wall, the Capitol and more.
 - **Three hours of light:** tropical midday, golden hour (the default) and blue hour, when the lamps, windows and
   floodlit forts come on and the El Morro light turns. Blue hour is the darkest hour on purpose.
 - **The sea:** Atlantic swell on the north shore, surf, turquoise shallows over the reef shelf, sun glitter.
 - **City life:** parked rows, slow traffic that stops at corners and yields, people on sidewalks, benches and stairs,
-  piragua carts, a kite over the El Morro lawn, and synthesized street sound.
+  piragua carts, a sky full of kites over the El Morro lawn (flyers, families on blankets and a kite seller below),
+  and synthesized street sound.
 - **Two skate spots:** *Skatepark del Muelle*, an invented harbour-front park (raised bowl, mini ramp, pump line,
   kickers, a euro gap, a street section), and *El Bowl* in La Perla, the real hand-built community bowl, approximated
   and rideable.
@@ -136,10 +139,10 @@ Address switches (they apply whenever the address carries them and are not saved
 | `?time=midday`, `?time=golden`, `?time=blue` | start at that hour |
 | `?rider=<id>` | start as that rider, for example `?rider=trollina` |
 | `?cop=0` | no Officer Dorkins at all |
-| `?life=0` | no moving cars, people, street sound, piragua carts or kite |
+| `?life=0` | no moving cars, people, street sound, piragua carts or kites |
 | `?parked=0` | no parked cars (and nothing to hit where they stood) |
-| `?cars=N`, `?people=N` | cap moving cars or people; 0 turns that population off, and `?people=0` also removes the carts and kite |
-| `?accents=0` | no piragua carts or kite, everything else as usual |
+| `?cars=N`, `?people=N` | cap moving cars or people; 0 turns that population off, and `?people=0` also removes the carts and kites |
+| `?accents=0` | no piragua carts, kites or picnics on the El Morro lawn, everything else as usual |
 
 ## Known limits
 

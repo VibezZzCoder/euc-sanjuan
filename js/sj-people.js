@@ -12,7 +12,7 @@ import * as THREE from 'three/webgpu';
 import { PersonCrowd, PersonRig, POSE } from './sj-people-figure.js';
 import { dressPerson } from './sj-people-look.js';
 import { buildWalkNetwork, walkHeight, walkHeightAt, WALK, PLACES, TIER_PEOPLE, HOURS } from './sj-walk.js';
-import { createAccents, SEAT_KIND } from './sj-people-accents.js';
+import { createAccents, SEAT_KIND, KITE_GROUP } from './sj-people-accents.js';
 
 const CFG = Object.freeze({
   radius: 90,         // people live within this distance of the focus
@@ -64,16 +64,16 @@ export async function createPeople(context) {
   // no people (?people=0, or life off): nothing is built at all, carts and kite included
   if (cap === 0) {
     return { update() {}, publish() {}, refocus() {}, clearAround() {}, setHour() {}, warm() {}, audible: () => 0, dispose() {},
-      stats: () => ({ active: 0, target: 0, cap: 0, near: 0, far: 0, network: null, carts: 0, kite: false }) };
+      stats: () => ({ active: 0, target: 0, cap: 0, near: 0, far: 0, network: null, carts: 0, kites: 0 }) };
   }
   const net = buildWalkNetwork(world);
   const L = net.links;
-  // the accents (piragua carts, the El Morro kite) add their people to the seat table: customer pairs after the bench
-  // pairs (pairs stay aligned), then the vendors and the kite group, who keep their places while the focus is near
-  // (?accents=0: the people without the carts and the kite)
+  // the accents (piragua carts, the El Morro kite field) add their people to the seat table: customer pairs after the
+  // bench pairs (pairs stay aligned), then the vendors and the people of the lawn, who keep their places while the
+  // focus is near (?accents=0: the people without the carts, the kites and the lawn's families)
   const accents = context.params?.get?.('accents') === '0'
-    ? { seats: [], carts: [], kite: null, update() {}, publish() {}, warm() {}, dispose() {} }
-    : createAccents({ world, net, scene });
+    ? { seats: [], carts: [], kites: [], update() {}, publish() {}, setHour() {}, warm() {}, dispose() {} }
+    : createAccents({ world, net, scene, hour: context.hour?.name });
   net.blocked ??= new Uint8Array(net.links); // the carts close the walk links round them; without accents nothing is closed
   {
     const extra = accents.seats, n = extra.length / 7, order = [];
@@ -92,9 +92,13 @@ export async function createPeople(context) {
   }
   delete net.attach; // build-time only
   const PERMANENT = (q) => net.seatKind[q] >= SEAT_KIND.VENDOR;
+  // the people of the El Morro lawn (kite flyers, their company, the families on blankets) stand in the open where the
+  // eye reaches far: they are in place as far as people are drawn, not only within the walkers' radius
+  const LAWN = (q) => net.seatKind[q] >= SEAT_KIND.FLYER;
   const STANDING = (q) => net.seatKind[q] !== SEAT_KIND.BENCH && net.seatKind[q] !== SEAT_KIND.GRASS;
   const drawFar = CFG.draw[phone ? 'phone' : 'desktop'], nearLod = CFG.near[phone ? 'phone' : 'desktop'];
   const birthFar = CFG.birthFar[phone ? 'phone' : 'desktop'], retireFar = CFG.retireFar[phone ? 'phone' : 'desktop'];
+  const lawnFar = drawFar + 10;
   // a person may plausibly step out or go in here: a sidewalk or kerb lane, which run beside the façades (and their
   // corners); never open paving, a lattice crossing in a square or a footway in the open
   const doorway = (k) => { const kind = net.kind[k]; return kind === WALK.SIDEWALK || kind === WALK.LANE; };
@@ -453,7 +457,10 @@ export async function createPeople(context) {
       targetClock = clock + 1;
       // what the place supports: round the focus, or along the rider's own walks (a lively street the disc undercounts)
       const e = Math.max(expected(focus.x, focus.z, CFG.radius), reachWeight * CFG.reachShare);
-      target = Math.min(Math.floor(cap * CFG.hourShare[HOURS[hour]]), Math.round(e));
+      // the people who keep a place (vendors, the lawn's kite flyers and families) are there besides the walkers
+      let kept = 0;
+      for (let q = 0; q < net.seatCount; q++) if (PERMANENT(q) && seatOcc[q] >= 0) kept++;
+      target = Math.min(Math.floor(cap * CFG.hourShare[HOURS[hour]]), Math.round(e)) + kept;
     }
     let budget = initial ? N : 3, tries = initial ? N * 3 : 6;
     if (initial && net.seatCount) {
@@ -471,7 +478,7 @@ export async function createPeople(context) {
     for (let q = 0; q < net.seatCount; q++) {
       if (!PERMANENT(q) || seatOcc[q] >= 0) continue;
       const sx = net.seats[q * 5], sz = net.seats[q * 5 + 1], sy = net.seats[q * 5 + 4];
-      if (hyp(sx - focus.x, sz - focus.z) > CFG.radius * 0.9) continue;
+      if (hyp(sx - focus.x, sz - focus.z) > (LAWN(q) ? lawnFar : CFG.radius * 0.9)) continue;
       if (rider.valid && hyp(sx - rider.x, sz - rider.z) < 3) continue;
       if (!initial && inView(sx, sy, sz, 1.5) && hyp3(sx - camX, sy - camY, sz - camZ) < drawFar + 3) continue;
       spawnSitter(q);
@@ -1315,7 +1322,10 @@ export async function createPeople(context) {
         const sp = hyp(rider.vx, rider.vz);
         const behind = rider.valid && Math.abs(rider.speed) > 2 && sp > 0.5 && cooldown[i] <= 0 && active >= target - 2
           && ((px[i] - rider.x) * rider.vx + (pz[i] - rider.z) * rider.vz) / sp < -40;
-        if (!seen && (d > CFG.recycle || (active > target + 2 && d > 60) || (behind && state[i] !== STATE.SIT))) { release(i); counters.recycled++; }
+        // (someone who keeps a place leaves only when the place is out of range, never to make room)
+        const keeps = state[i] === STATE.SIT && seatOf[i] >= 0 && PERMANENT(seatOf[i]);
+        if (keeps) { if (!seen && d > (LAWN(seatOf[i]) ? lawnFar + 22 : CFG.recycle)) { release(i); counters.recycled++; } }
+        else if (!seen && (d > CFG.recycle || (active > target + 2 && d > 60) || (behind && state[i] !== STATE.SIT))) { release(i); counters.recycled++; }
         else if (seen && d > CFG.recycle + 60) { release(i); counters.recycled++; } // (a safety bound)
       }
       if (runout.on && rider.valid && hyp(rider.x - runout.x, rider.z - runout.z) > 30) runout.on = false;
@@ -1390,19 +1400,16 @@ export async function createPeople(context) {
     for (let q = 0; q < net.seatCount; q++) if (net.seatGroup[q] === group && net.seatKind[q] === SEAT_KIND.CUSTOMER && seatOcc[q] >= 0 && state[seatOcc[q]] === STATE.SIT) return true;
     return false;
   }
-  const hand = { x: 0, y: 0, z: 0 };
-  let flyerSeat = -1;
-  for (let q = 0; q < net.seatCount; q++) if (net.seatKind[q] === SEAT_KIND.FLYER) flyerSeat = q;
-  function updateAccents() {
-    let h = null;
-    // the line from the flyer's raised right palm (as drawn this frame); with the flyer not drawn (far away), no line
-    let flyerDrawn = false;
-    if (flyerSeat >= 0 && seatOcc[flyerSeat] >= 0) {
-      const f = seatOcc[flyerSeat];
-      if (drawnFrame[f] === frame && rigs[f].placed) { rigs[f].palm(1, hand); h = hand; flyerDrawn = true; }
-    }
-    accents.update(context.atmosphere?.elapsed ?? clock, focus?.x ?? 0, focus?.z ?? 0, h, flyerDrawn);
-  }
+  // each kite's line runs from its flyer's raised right palm (as drawn this frame); a flyer who is not drawn holds none
+  const flyerSeat = new Int32Array(accents.kites.length).fill(-1);
+  for (let q = 0; q < net.seatCount; q++) if (net.seatKind[q] === SEAT_KIND.FLYER) flyerSeat[net.seatGroup[q] - KITE_GROUP] = q;
+  const handOf = (kite, out) => {
+    const q = flyerSeat[kite], f = q >= 0 ? seatOcc[q] : -1;
+    if (f < 0 || drawnFrame[f] !== frame || !rigs[f].placed) return false;
+    rigs[f].palm(1, out);
+    return true;
+  };
+  function updateAccents() { accents.update(context.atmosphere?.elapsed ?? clock, focus?.x ?? 0, focus?.z ?? 0, handOf); }
 
   return {
     update,
@@ -1422,12 +1429,12 @@ export async function createPeople(context) {
         if (hyp(px[i] - x, pz[i] - z) < radius) release(leaderOf(i));
       }
     },
-    setHour(name) { const h = HOURS.indexOf(name); if (h >= 0) { hour = h; targetClock = -1; } },
+    setHour(name) { const h = HOURS.indexOf(name); if (h >= 0) { hour = h; targetClock = -1; accents.setHour(name); } },
     warm(on) { crowd.warming = !!on; accents.warm(on); updateAccents(); },
     stats: () => ({
       active, target, cap: N, near: drawnNear, far: drawnFar, hour: HOURS[hour],
       sitting: count(STATE.SIT), standing: count(STATE.STAND), waiting: count(STATE.WAIT), ...counters,
-      network: net.stats, carts: accents.carts.length, kite: !!accents.kite,
+      network: net.stats, carts: accents.carts.length, kites: accents.kites.length,
     }),
     /** People near a listener: fills reusable records {x, y, z, speed, talking, seed, bumped}; returns the count. */
     audible(out, x, z, radius) {

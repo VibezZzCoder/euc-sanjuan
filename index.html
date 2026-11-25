@@ -8,7 +8,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-+0GAxYh0edQIf2ZZaUbo2EBG1syN1mosizCy9oKm6D0=' 'sha256-6yxmb2oUnQadujILuDNvkhFA+V0fkL2Xlpm5RlnYA/M='; worker-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#182c40">
-  <meta name="euc-build" content="sanjuan-source-9">
+  <meta name="euc-build" content="sanjuan-source-10">
   <meta name="description" content="San Juan Spin-off: EUC Thrills. Ride an electric unicycle through the hills, plazas and ramparts of Old San Juan, Puerto Rico, in your browser.">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="EUC Thrills">
@@ -174,10 +174,11 @@
     </div>
   </div></dialog>
   <dialog id="map" aria-labelledby="map-heading"><div class="map-content"><header><div class="map-title"><p class="kicker">Map</p><h2 id="map-heading">El Viejo San Juan</h2></div><div class="map-actions"><a href="credits.html" target="_blank" rel="noopener">Credits &amp; data</a><button id="close-map" class="secondary"><svg aria-hidden="true"><use href="#i-close"/></svg><span>Close<span class="close-word"> map</span></span></button></div></header>
-    <div class="map-body"><div class="chart"><canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position"></canvas>
+    <div class="map-body"><div class="chart"><canvas id="map-canvas" aria-label="Map of Old San Juan, with streets, buildings and current rider position. The red destination marks can be chosen here or from the list of places."></canvas>
+      <i id="map-pick-ring" aria-hidden="true" hidden></i><p id="map-pick-tag" aria-hidden="true" hidden><b id="map-pick-name"></b><small id="map-pick-hint" hidden></small></p><i id="map-cursor" aria-hidden="true" hidden></i>
       <ul class="legend" aria-label="Map key"><li><svg class="k-you" viewBox="-9 -12 18 23" aria-hidden="true"><path d="M0 -10 7 7 0 3 -7 7Z" fill="#fee17d" stroke="#182c40" stroke-width="2" stroke-linejoin="miter"/></svg>You (yellow arrow)</li><li><svg class="k-dest" viewBox="-7 -7 14 14" aria-hidden="true"><circle r="6.5" fill="#182c40"/><circle r="5" fill="#f8f1e3"/><circle r="3.5" fill="#a62d23"/></svg>Destination</li><li><i class="k-street"></i>Street</li><li><i class="k-building"></i>Building</li><li id="legend-dorkins" hidden><svg class="k-dorkins" viewBox="-9 -9 18 18" aria-hidden="true"><circle r="9" fill="#182c40"/><path d="M0-7A7 7 0 0 1 0 7Z" fill="#d8312b"/><path d="M0 7A7 7 0 0 1 0-7Z" fill="#2a5bff"/><circle r="2.6" fill="#f8f1e3"/></svg>Officer Dorkins, after you</li></ul></div>
     <div class="directory"><label class="search"><span>Find a place</span> <input id="search" type="search" placeholder="Plaza, Morro, Princesa…"></label><div id="places"></div>
-    <p id="map-status" role="status"></p><p class="muted pad-hint">Controller: D-pad to move · A to go · B to close</p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP. Destinations use checked ground placement. Fort interiors are closed.</p></div></div>
+    <p id="map-status" role="status"></p><p class="muted pad-hint">Controller: left stick points at the map · D-pad moves through the list · A to go · B to close</p><p class="credits">© OpenStreetMap contributors · ODbL · USGS 3DEP. Destinations use checked ground placement. Fort interiors are closed.</p></div></div>
   </div></dialog>
   <dialog id="riders" aria-labelledby="riders-heading"><div class="riders-content">
     <div class="riders-head"><p class="kicker">San Juan Spin-off · The crew</p><h2 id="riders-heading">Choose your rider</h2></div>

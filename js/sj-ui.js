@@ -171,6 +171,24 @@ export function createStreetIndex(roads,places=[],areas=[],{cell=40,reach=4,mark
 
 /** Which controls the player is using: a controller after fresh pad input, touch where the touch controls are
  *  available, otherwise keyboard. */
+// ---- The map's destination marks answer a pointer ----
+// marks: [{x,y}] in CSS pixels. The nearest mark within `radius` of (x,y), or -1.
+export function nearestMark(marks,x,y,radius){let best=-1,limit=radius*radius;
+  for(let i=0;i<marks.length;i++){const dx=marks[i].x-x,dy=marks[i].y-y,d=dx*dx+dy*dy;if(d<=limit){limit=d;best=i;}}
+  return best;}
+// A press on the map: the mark it means and whether it travels there.
+// - `direct` (a mouse: the name was already shown on hover): a press on a mark travels.
+// - otherwise (a finger): the first press shows the name; a press whose nearest mark is the one showing its name
+//   travels. Marks can sit closer together than a fingertip (5 px on a phone held upright), so a second press that
+//   lands nearer a neighbour names that neighbour instead of travelling anywhere: the wrong place is never chosen
+//   silently, and the name tag itself is the sure thing to press.
+export function markPress(marks,x,y,{picked=-1,radius=14,direct=false}={}){
+  const near=nearestMark(marks,x,y,radius);return {index:near,go:near>=0&&(direct||near===picked)};}
+// Where a name tag of w×h goes for a mark at (x,y) inside a box of W×H: centred above the mark, below it when there
+// is no room above, always inside the box.
+export function tagPlace(x,y,w,h,W,H,{gap=16,edge=4}={}){
+  const left=Math.max(edge,Math.min(W-w-edge,x-w/2)),above=y-gap-h;
+  return {left,top:above>=edge?above:Math.min(H-h-edge,y+gap),below:above<edge};}
 export function inputDevice(body){return body.dataset.input==='gamepad'?'pad':body.classList.contains('touch-enabled')?'touch':'keyboard';}
 
 /** Pause's controls help: opens on the device in use; the other two are one press away. */

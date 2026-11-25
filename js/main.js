@@ -18,7 +18,7 @@ import { createAtmosphere,createTimePreference,timeOverride } from './sj-atmosph
 import { createCityLife } from './sj-life.js';
 
 import {animasTurnHint} from './sj-norzagaray-layout.js';
-import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp,keepPageHome,bindHeldFingerTaps} from './sj-ui.js';
+import {createShowFpsPreference,createFpsMeter,createStreetIndex,plaqueName,inputDevice,bindControlsHelp,keepPageHome,bindHeldFingerTaps,nearestMark,markPress,tagPlace} from './sj-ui.js';
 import {GROUND_AREAS} from './sj-streets-data.js';
 import {RIDERS} from './euc-roster.js';
 import {createRiders,startingRider} from './sj-riders.js';
@@ -257,16 +257,76 @@ function mapDrawing(){const canvas=$('map-canvas'),rect=canvas.getBoundingClient
   const metres=canvas.width/u<520?200:500,len=metres*s,bx=14*u,bz=canvas.height-16*u;
   ctx.fillStyle=MAP.ink;ctx.fillRect(bx-1.5*u,bz-6.5*u,len+3*u,9*u);ctx.fillStyle=MAP.ring;ctx.fillRect(bx,bz-5*u,len/2,6*u);ctx.fillRect(bx+len/2,bz-5*u,len/2,6*u);
   ctx.fillStyle=MAP.ink;ctx.fillRect(bx+len/2,bz-5*u,len/2,3*u);
-  ctx.fillStyle=MAP.ring;ctx.textAlign='left';ctx.textBaseline='bottom';ctx.font=`700 ${10*u}px Overpass, Inter, sans-serif`;ctx.fillText(`${metres} m`,bx+len+6*u,bz+2*u);}
+  ctx.fillStyle=MAP.ring;ctx.textAlign='left';ctx.textBaseline='bottom';ctx.font=`700 ${10*u}px Overpass, Inter, sans-serif`;ctx.fillText(`${metres} m`,bx+len+6*u,bz+2*u);
+  // the marks in CSS pixels of the canvas's content box (the bitmap is fitted into it), for the pointer
+  const fx=canvas.clientWidth/canvas.width,fz=canvas.clientHeight/canvas.height;
+  mapMarks=arrivals.map(p=>({x:px(p.x)*fx,y:pz(p.z)*fz}));mapYou={x:px(entity.position.x)*fx,y:pz(entity.position.z)*fz};
+  if(mapCursor){mapCursor.x=Math.min(canvas.clientWidth,mapCursor.x);mapCursor.y=Math.min(canvas.clientHeight,mapCursor.y);}
+  placeMapMarks();}
+// ---- The destination marks can be chosen on the map itself: mouse (hover names it, a click goes), a finger (a tap
+// names it, a tap on the named mark or on its name tag goes) and a controller (the left stick moves a pointer, A goes). The list on the
+// right stays the keyboard's way; the mark of the row in focus is ringed so list and map explain each other. ----
+let mapMarks=[],mapYou=null,mapPick=-1,mapPickBy='',mapCursor=null,mapDown=null;
+const MAP_REACH={mouse:14,touch:26,pad:30},MAP_PICK_HINT={tap:'Tap again to go',pad:'A to go'};
+function placeMapMarks(){const canvas=$('map-canvas'),ring=$('map-pick-ring'),tag=$('map-pick-tag'),cursor=$('map-cursor');
+  const left=canvas.offsetLeft+canvas.clientLeft,top=canvas.offsetTop+canvas.clientTop,W=canvas.clientWidth,H=canvas.clientHeight,m=mapMarks[mapPick];
+  ring.hidden=tag.hidden=!m;cursor.hidden=!mapCursor;canvas.classList.toggle('aimed',!!m&&mapPickBy==='hover');tag.classList.toggle('press',!!m&&mapPickBy==='tap');
+  if(m){ring.style.setProperty('left',`${left+m.x}px`);ring.style.setProperty('top',`${top+m.y}px`);
+    $('map-pick-name').textContent=arrivals[mapPick].name;const hint=MAP_PICK_HINT[mapPickBy]??'';
+    if($('map-pick-hint').textContent!==hint)$('map-pick-hint').textContent=hint;$('map-pick-hint').hidden=!hint;
+    tag.style.setProperty('max-width',`${Math.max(120,W-8)}px`);
+    const at=tagPlace(m.x,m.y,tag.offsetWidth,tag.offsetHeight,W,H);tag.style.setProperty('left',`${left+at.left}px`);tag.style.setProperty('top',`${top+at.top}px`);}
+  if(mapCursor){cursor.style.setProperty('left',`${left+mapCursor.x}px`);cursor.style.setProperty('top',`${top+mapCursor.y}px`);}}
+function pickMark(index,by=''){if(index<0)by='';if(index===mapPick&&by===mapPickBy)return;mapPick=index;mapPickBy=by;
+  let row=null;for(const b of $('places').children){const on=index>=0&&Number(b.dataset.index)===index;b.classList.toggle('picked',on);if(on)row=b;}
+  // the row comes into view where the list scrolls on its own (never the whole dialog: the map would leave the screen)
+  if(row&&by!=='list'){const d=row.closest('.directory');if(d.scrollHeight>d.clientHeight+1){const a=row.getBoundingClientRect(),b=d.getBoundingClientRect();
+    if(a.top<b.top+4)d.scrollTop-=b.top+4-a.top;else if(a.bottom>b.bottom-4)d.scrollTop+=a.bottom-b.bottom+4;}}
+  placeMapMarks();}
+async function travel(p){if(busy||state!=='map')return;
+  life.clearAround(p.x,p.z);
+  if(!entity.placeAt(p.x,p.z,p.headingY,p.y,{requireClear:true,departure:1})){ $('map-status').textContent='That arrival is blocked. Choose another place.';return;}
+  $('map-status').textContent='';each('placed','map');if(streets?.hold(p.name,p.x,p.z))streetAt=-1e9;await resume();}
+function bindMapMarks(){const canvas=$('map-canvas');
+  const at=event=>{const r=canvas.getBoundingClientRect();return [event.clientX-r.left-canvas.clientLeft,event.clientY-r.top-canvas.clientTop];};
+  const dropCursor=()=>{if(mapCursor){mapCursor=null;placeMapMarks();}};
+  canvas.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||state!=='map')return;dropCursor();
+    pickMark(nearestMark(mapMarks,...at(event),MAP_REACH.mouse),'hover');});
+  canvas.addEventListener('pointerleave',event=>{if(event.pointerType!=='touch'&&mapPickBy==='hover')pickMark(-1);});
+  // a press is a pointer that goes down and up in one place (a drag that scrolls the dialog is cancelled by the browser)
+  canvas.addEventListener('pointerdown',event=>{mapDown=event.isPrimary&&event.button===0?{id:event.pointerId,x:event.clientX,y:event.clientY}:null;});
+  canvas.addEventListener('pointercancel',()=>{mapDown=null;});
+  canvas.addEventListener('pointerup',event=>{const down=mapDown;mapDown=null;
+    if(!down||down.id!==event.pointerId||Math.hypot(event.clientX-down.x,event.clientY-down.y)>12||state!=='map'||busy)return;
+    dropCursor();const finger=event.pointerType==='touch';
+    const press=markPress(mapMarks,...at(event),{picked:mapPick,radius:finger?MAP_REACH.touch:MAP_REACH.mouse,direct:!finger});
+    if(press.go)travel(arrivals[press.index]);else pickMark(press.index,finger?'tap':'hover');});
+  // a finger's name tag is a button: it goes to the place it names
+  $('map-pick-tag').addEventListener('click',()=>{if(mapPickBy==='tap'&&mapPick>=0)travel(arrivals[mapPick]);});}
+// The controller's left stick moves a pointer over the map; the nearest mark within reach is named and A goes there.
+// The D-pad returns to the list.
+function mapStick(input,dt){if(state!=='map'||!$('map').open)return false;const {movement,actions}=input,canvas=$('map-canvas');
+  if(actions?.navigate||actions?.vertical){if(mapCursor){mapCursor=null;if(mapPickBy==='pad')pickMark(-1);else placeMapMarks();}return false;}
+  const mx=movement?.x??0,my=movement?.y??0;
+  if((mx||my)&&dt>0&&!busy){const W=canvas.clientWidth,H=canvas.clientHeight;
+    if(!mapCursor){mapCursor={...(mapMarks[mapPick]??mapYou??{x:W/2,y:H/2})};canvas.scrollIntoView({block:'nearest'});}
+    const speed=Math.max(220,Math.min(520,Math.min(W,H)*.75));
+    mapCursor.x=Math.max(0,Math.min(W,mapCursor.x+mx*speed*dt));mapCursor.y=Math.max(0,Math.min(H,mapCursor.y+my*speed*dt));
+    const near=nearestMark(mapMarks,mapCursor.x,mapCursor.y,MAP_REACH.pad);
+    if(near===mapPick&&(near<0||mapPickBy==='pad'))placeMapMarks();else pickMark(near,'pad');
+    return true;}
+  if(mapCursor&&actions?.activate){if(mapPick>=0&&!busy)travel(arrivals[mapPick]);return true;}
+  return false;}
 const searchKey=value=>value.normalize('NFD').replace(/\p{M}/gu,'').toLocaleLowerCase().trim();
 function listPlaces(){const search=searchKey($('search').value);$('places').replaceChildren();for(const p of arrivals){if(!searchKey(p.name).includes(search))continue;
-  const button=document.createElement('button');button.textContent=p.name;button.onclick=async()=>{if(busy)return;
-    life.clearAround(p.x,p.z);
-    if(!entity.placeAt(p.x,p.z,p.headingY,p.y,{requireClear:true,departure:1})){ $('map-status').textContent='That arrival is blocked. Choose another place.';return;}
-    $('map-status').textContent='';each('placed','map');if(streets?.hold(p.name,p.x,p.z))streetAt=-1e9;await resume();};$('places').append(button);}
+  const button=document.createElement('button'),index=arrivals.indexOf(p);button.textContent=p.name;button.dataset.index=index;button.onclick=()=>travel(p);
+    // the row under the mouse or in focus rings its mark on the map
+    button.onmouseenter=button.onfocus=()=>{if(!mapCursor)pickMark(index,'list');};button.onmouseleave=button.onblur=()=>{if(mapPickBy==='list'&&mapPick===index)pickMark(-1);};
+    if(index===mapPick)button.classList.add('picked');$('places').append(button);}
   const none=!$('places').childElementCount?'No places match. Try another name.':'';if($('map-status').textContent!==none)$('map-status').textContent=none;}
 async function openMap(){if(busy||state!=='riding')return;busy=true;gate('map');try{await waitForRenderCompletion(renderer);
   if(state!=='map')return;
+  mapPick=-1;mapPickBy='';mapCursor=null;mapDown=null;
   $('map').showModal();$('search').value='';listPlaces();for(const el of document.querySelectorAll('#map .directory,#map .map-body'))el.scrollTop=0;mapDrawing();$('close-map').focus(QUIET);renderer.setDrawingBufferSize(1,1,1);parked=true;
   }catch(e){failure(e);}finally{busy=false;}}
 
@@ -284,7 +344,7 @@ function verticalTarget(controls,current,direction){
   for(const c of rows)if(c.gap<=minGap+12&&(!best||c.dx<best.dx))best=c;
   return best?.el??null;
 }
-function menuInput(input,dt){if(parts.some(part=>part.menu?.(input,dt)))return;const {actions}=input;if(busy||(!actions?.navigate&&!actions?.vertical&&!actions?.activate))return;
+function menuInput(input,dt){if(parts.some(part=>part.menu?.(input,dt)))return;if(mapStick(input,dt))return;const {actions}=input;if(busy||(!actions?.navigate&&!actions?.vertical&&!actions?.activate))return;
   const root=MENUS[state]?.()??null;
   if(!root||!actions)return;
   const controls=[...root.querySelectorAll('button,a[href],input,select')].filter(el=>!el.disabled&&el.getClientRects().length);
@@ -359,7 +419,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   for(const id of ['camera-mode','camera-setting'])$(id).onchange=()=>cameraControls.setMode($(id).value);
   for(const [id,action] of [['camera-in',()=>cameraControls.zoom(-2)],['camera-out',()=>cameraControls.zoom(2)],['camera-center',()=>cameraControls.resetOrbit()]])$(id).onclick=event=>{
     if(state!=='riding')return;action();if(event.detail)renderer.domElement.focus({preventScroll:true});};
-  $('pause-button').onclick=pause;$('map-button').onclick=openMap;$('close-map').onclick=resume;$('search').oninput=listPlaces;
+  $('pause-button').onclick=pause;$('map-button').onclick=openMap;$('close-map').onclick=resume;$('search').oninput=listPlaces;bindMapMarks();
   $('restart').onclick=()=>{life.clearAround(spawn.x,spawn.z);if(entity.placeAt(spawn.x,spawn.z,spawn.headingY,spawn.y,{requireClear:true,departure:1})){each('placed','restart');resume();}};
   for(const id of ['pause','map'])$(id).addEventListener('cancel',event=>{event.preventDefault();resume();});
   const mapping={KeyW:'forward',ArrowUp:'forward',KeyS:'backward',ArrowDown:'backward',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right',Space:'up',ShiftLeft:'boost',ShiftRight:'boost',KeyR:'reset'};

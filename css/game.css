@@ -231,7 +231,18 @@ kbd{display:inline-block;min-width:24px;margin:0 2px 2px 0;padding:3px 5px 2px;b
 .map-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;flex-shrink:0;font-size:14px}
 #close-map{width:auto}
 .map-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,320px);min-height:0;flex:1}
-.chart{display:flex;flex-direction:column;gap:10px;min-height:0;padding:14px 16px}
+.chart{position:relative;display:flex;flex-direction:column;gap:10px;min-height:0;padding:14px 16px}
+/* The destination marks answer the pointer (js/main.js): a ring on the chosen mark, its name on a small plaque, and the
+   controller's pointer. All three are drawn over the canvas; only a finger's name tag takes a press (it goes to the place it names). */
+#map-canvas{touch-action:manipulation}#map-canvas.aimed{cursor:pointer}
+#map-pick-ring,#map-pick-tag,#map-cursor{position:absolute;left:0;top:0;margin:0;pointer-events:none}
+#map-pick-ring{width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:3px solid var(--ink);box-shadow:inset 0 0 0 2.5px var(--ivory),0 0 0 2.5px var(--ivory);animation:map-pick 1.1s ease-in-out infinite alternate}
+@keyframes map-pick{to{transform:scale(1.18)}}
+#map-pick-tag{display:flex;flex-direction:column;gap:1px;width:max-content;padding:6px 10px 5px;background:var(--ivory);color:var(--ink);border:2px solid var(--ink);box-shadow:3px 4px 0 var(--ink);font:700 14px/1.25 var(--text);text-align:center}
+#map-pick-tag.press{pointer-events:auto;cursor:pointer;min-height:44px;justify-content:center}#map-pick-tag.press:active{transform:translate(2px,2px);box-shadow:1px 2px 0 var(--ink)}
+#map-pick-tag b{font-weight:700}#map-pick-tag small{font:700 11px/1.3 var(--caps);letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+#map-cursor{width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid var(--ivory);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--ink);background:radial-gradient(circle,var(--ink) 0 3px,var(--ivory) 3px 5px,transparent 5px)}
+#places button.picked{background:var(--ivory);box-shadow:inset 5px 0 0 var(--red)}
 #map-canvas{display:block;flex:1;width:100%;min-height:160px;background:#1c6a68;border:2px solid var(--ink)}
 .legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0;padding:0;list-style:none;font:600 12.5px/1.3 var(--text)}
 .legend li{display:flex;align-items:center;gap:6px}.legend i{display:inline-block;flex:none}

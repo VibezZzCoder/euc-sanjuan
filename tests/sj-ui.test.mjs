@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {SHOW_FPS_KEY,createShowFpsPreference,createFpsMeter,createStreetIndex,splitStreetName,plaqueName} from '../js/sj-ui.js';
+import {SHOW_FPS_KEY,createShowFpsPreference,createFpsMeter,createStreetIndex,splitStreetName,plaqueName,nearestMark,markPress,tagPlace} from '../js/sj-ui.js';
 import {GROUND_AREAS} from '../js/sj-streets-data.js';
 
 test('FPS preference: off by default, saved, tolerant of bad or blocked storage',()=>{
@@ -166,4 +166,37 @@ test('a second finger\'s tap on a button is activated on release, once; an only 
   under=pauseButton;
   // after a reset (blur, rotation) a lone tap is single again
   taps.reset();on.pointerdown(ev(11,pauseButton,350,30));on.pointerup(ev(11,pauseButton,350,30));assert.equal(pauseButton.clicks,4);
+});
+
+test('map marks: the nearest mark within reach answers; a mouse press travels, a finger names first and travels on the named mark',()=>{
+  const marks=[{x:100,y:100},{x:105,y:102},{x:300,y:40}];
+  assert.equal(nearestMark(marks,101,100,14),0);assert.equal(nearestMark(marks,104,102,14),1);
+  assert.equal(nearestMark(marks,200,200,14),-1,'open sea');assert.equal(nearestMark(marks,114,100,14),1);assert.equal(nearestMark([],0,0,50),-1);
+  assert.equal(nearestMark(marks,300,54,14),2,'the edge of the reach counts');assert.equal(nearestMark(marks,300,54.5,14),-1);
+  // a mouse: the name was shown on hover, a click on a mark goes
+  assert.deepEqual(markPress(marks,300,42,{direct:true}),{index:2,go:true});
+  assert.deepEqual(markPress(marks,200,200,{direct:true,picked:2}),{index:-1,go:false});
+  // a finger: first press names, a press on the named mark goes
+  assert.deepEqual(markPress(marks,296,48,{radius:26}),{index:2,go:false});
+  assert.deepEqual(markPress(marks,304,36,{radius:26,picked:2}),{index:2,go:true});
+  assert.deepEqual(markPress(marks,304,36,{radius:26,picked:0}),{index:2,go:false},'another mark is named, not travelled to');
+  // two marks 5 px apart: a second press that lands nearer the neighbour names the neighbour; it never travels to it unasked
+  assert.deepEqual(markPress(marks,100,100,{radius:26}),{index:0,go:false});
+  assert.deepEqual(markPress(marks,104,101,{radius:26,picked:0}),{index:1,go:false});
+  assert.deepEqual(markPress(marks,99,99,{radius:26,picked:0}),{index:0,go:true});
+  assert.deepEqual(markPress(marks,400,400,{radius:26,picked:0}),{index:-1,go:false},'a press on open sea clears');
+});
+
+test('map name tag: above its mark, below when there is no room, always inside the chart',()=>{
+  assert.deepEqual(tagPlace(200,200,120,40,400,300),{left:140,top:144,below:false});
+  assert.deepEqual(tagPlace(200,20,120,40,400,300),{left:140,top:36,below:true});
+  assert.equal(tagPlace(10,200,120,40,400,300).left,4);assert.equal(tagPlace(395,200,120,40,400,300).left,276);
+  const low=tagPlace(200,290,120,40,400,300);assert.equal(low.below,false);assert.ok(low.top>=4&&low.top+40<=300);
+  const tight=tagPlace(50,10,120,60,400,80);assert.ok(tight.top+60<=80-4+1e-9,'a short chart keeps the tag inside');
+});
+
+test('map page: the marks have their ring, name tag and pointer, and the controller hint names the stick',()=>{
+  const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8'),main=fs.readFileSync(new URL('../js/main.js',import.meta.url),'utf8');
+  for(const id of ['map-pick-ring','map-pick-tag','map-pick-name','map-pick-hint','map-cursor'])assert.equal(html.split(`id="${id}"`).length,2,id);
+  assert.match(html,/left stick points at the map/);assert.match(main,/bindMapMarks\(\)/);assert.match(main,/mapStick\(input,dt\)/);
 });

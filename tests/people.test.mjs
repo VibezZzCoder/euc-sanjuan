@@ -407,10 +407,10 @@ test('with the real traffic at a busy corner: nobody inside a car, nobody waits 
   }
 });
 
-test('piragua carts and the El Morro kite: placed off the walks, nobody walks through a cart, the cart stops the rider', async () => {
+test('piragua carts: placed off the walks, nobody walks through a cart, the cart stops the rider', async () => {
   const st = main.people.stats(), A = main.people.debug.accents, d = main.people.debug;
   assert.equal(st.carts, 2, 'a cart at the Plaza de Armas gazebo and one on the Paseo de la Princesa');
-  assert.ok(st.kite, 'a kite over the El Morro lawn');
+  assert.equal(st.kites, 22, 'the kite field over the El Morro lawn');
   const inCart = (x, z, pad) => A.carts.some((c) => {
     const dx = x - c.x, dz = z - c.z, s = Math.sin(c.heading), co = Math.cos(c.heading);
     return Math.abs(dx * co - dz * s) < 0.62 + pad && Math.abs(dx * s + dz * co) < 0.42 + pad;
@@ -428,14 +428,66 @@ test('piragua carts and the El Morro kite: placed off the walks, nobody walks th
   assert.ok(out.some((b) => b.kind === 'cart'), 'the cart is a body the rider meets');
 });
 
-test('?accents=0: the people without the carts and the kite (no closed walk links, nobody missing a route)', async () => {
+test('the El Morro kite field: twenty-two kites of three kinds on their own lines, flyers and families on the grass off the paths, the seller\'s rack by the path', async () => {
+  const lawn = world.city.places.find((p) => /El Morro/.test(p.name));
+  const m = await start('golden', { x: lawn.x, z: lawn.z });
+  const A = m.people.debug.accents, d = m.people.debug, probe = { normal: {} };
+  assert.equal(A.kites.length, 22);
+  assert.deepEqual([...new Set(A.kites.map((k) => k.kind.name))].sort(), ['delta', 'diamond', 'hexagon']);
+  assert.ok(new Set(A.kites.map((k) => k.palette.join())).size >= 5, 'kites in several colourways');
+  assert.equal(A.picnics.length, 8, 'families on blankets');
+  assert.ok(A.rack, 'the kite seller\'s rack');
+  // every flyer on dry open grass, clear of the paths and of each other
+  for (const [i, k] of A.kites.entries()) {
+    const g = world.sampler.cityGround(k.x, k.z, probe, world.height(k.x, k.z) + 0.35);
+    assert.equal(g.surface, 'grass', `kite ${i} flyer on ${g.surface}`);
+    assert.ok(!world.sampler.offLimitsAt(k.x, k.z, g.height));
+    for (const o of A.kites) if (o !== k) assert.ok(Math.hypot(o.x - k.x, o.z - k.z) >= 24, `kites ${i} too close`);
+  }
+  for (let k = 0; k < d.net.links; k++) {
+    const ax = d.net.nx[d.net.a[k]], az = d.net.nz[d.net.a[k]];
+    for (const o of [...A.kites, ...A.picnics]) {
+      const t = Math.max(0, Math.min(d.net.len[k], (o.x - ax) * d.net.dirX[k] + (o.z - az) * d.net.dirZ[k]));
+      assert.ok(Math.hypot(o.x - ax - d.net.dirX[k] * t, o.z - az - d.net.dirZ[k] * t) > d.net.width[k] + 2, 'a lawn group stands off the walks');
+    }
+  }
+  // the kites fly: above their flyers on taut lines, nowhere near the ground, moving, and never two in one place
+  const mesh = m.context.scene.getObjectByName('Kites'), lines = m.context.scene.getObjectByName('KiteLines');
+  assert.ok(mesh && lines);
+  const pos = mesh.geometry.attributes.position.array, seen = [];
+  for (let f = 0; f < 60 * 30; f++) {
+    m.frame(1 / 60);
+    if (f % 150) continue;
+    for (const [i, k] of A.kites.entries()) {
+      const x = pos[k.first * 3], y = pos[k.first * 3 + 1], z = pos[k.first * 3 + 2], line = Math.hypot(x - k.x, y - k.y - 1.75, z - k.z);
+      assert.ok(Number.isFinite(x + y + z) && y - k.y > (k.low ? 4 : 10), `kite ${i} at ${(y - k.y).toFixed(1)} m`);
+      assert.ok(Math.abs(line - k.length) < 2.5 * k.scale, `kite ${i} on its line (${line.toFixed(1)} of ${k.length.toFixed(1)} m)`);
+      const ground = world.isDry(x, z) ? world.height(x, z) : 0;
+      assert.ok(y - ground > 4, `kite ${i} ${(y - ground).toFixed(1)} m over what is below it`);
+      (seen[i] ??= []).push([x, y, z]);
+    }
+  }
+  for (const [i, path] of seen.entries()) assert.ok(Math.hypot(...path[0].map((v, j) => v - path.at(-1)[j])) > 0.2 || path.some((q) => Math.hypot(...q.map((v, j) => v - path[0][j])) > 0.5), `kite ${i} moves`);
+  for (let v = 0; v < pos.length; v++) assert.ok(Number.isFinite(pos[v]));
+  // the people of the lawn are in their places round the arrival, each flyer holding a line
+  let flyers = 0, sitters = 0;
+  for (let q = 0; q < d.net.seatCount; q++) if (d.seatOf.includes(q)) { if (d.net.seatKind[q] === 3) flyers++; if (d.net.seatKind[q] === 5) sitters++; }
+  assert.ok(flyers >= 4 && sitters >= 4, `${flyers} flyers and ${sitters} people sitting on the grass near the arrival`);
+  assert.ok(m.people.stats().active > flyers + sitters, 'walkers still come along the paths');
+  // the rack is a body the rider meets
+  const out = []; m.bodies.dynamicBodiesNear(A.rack.x, A.rack.z, 2, out);
+  assert.ok(out.some((b) => b.kind === 'cart'), 'the rack stops the rider');
+  m.people.dispose();
+});
+
+test('?accents=0: the people without the carts and the kites (no closed walk links, nobody missing a route)', async () => {
   const life = makeLife('midday', { x: -30, z: -25 });
   life.context.params = new URLSearchParams('accents=0');
   const people = await createPeople(life.context);
   people.refocus(); people.update(0, null);
   for (let f = 0; f < 240; f++) { people.update(1 / 60, null); life.bodies.begin(); people.publish(life.bodies); life.bodies.commit(); }
   const st = people.stats();
-  assert.equal(st.carts, 0); assert.equal(st.kite, false);
+  assert.equal(st.carts, 0); assert.equal(st.kites, 0);
   assert.ok(st.active > 50, `people still walk (${st.active})`);
   assert.equal(people.debug.net.blocked.reduce((a, b) => a + b, 0), 0);
   people.dispose();
