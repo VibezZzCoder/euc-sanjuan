@@ -9,7 +9,7 @@
       "path": "FORK_GUIDE.md",
       "bytes": 7611,
       "sha256": "5d7ab3fac0beac8896d6c3f227e3d2adefab50062c84ed41adc536604fa9eb62",
-      "editionSha256": "c3ddd961eda9b843124db3be8f74e0188d6fe7e04477976b89b4f6a76b65f1ab"
+      "editionSha256": "a7576befe44c6dd213cd664817778969d784f48d74078f9fec413d1f908c2b59"
     },
     {
       "path": "LICENSE",
@@ -21,7 +21,7 @@
       "path": "NOTICE-EUC-THRILLS.md",
       "bytes": 21524,
       "sha256": "d31f04699e76bf5e59c937b10804fae09ffb6ca7102be3b0365b608a1e38ca66",
-      "editionSha256": "e6fee8e44755bd86fd23ebe60f202cb23fbd80d93b98d02f855c0b0ae84c53c2"
+      "editionSha256": "acda1ee4310ba96b6b782a066d00ad6b8d6a2cde466b1dc1059c3b273845bad9"
     },
     {
       "path": "assets/euc-badge.svg",
@@ -213,7 +213,7 @@
       "path": "js/euc/MANIFEST.json",
       "bytes": 66679,
       "sha256": "c5001b807dfb29f435cb963d2f676f04f1081db776023043f7367986cf92de32",
-      "editionSha256": "798a91e53277c43c04c0b94321639298c5b3f5dde748e3132001490a88112938"
+      "editionSha256": "70b593fd72550de20fc27b63944bc9be66002976260efd8346a26e05804c8986"
     },
     {
       "path": "js/euc/app/nearSolids.js",
@@ -328,7 +328,8 @@
     {
       "path": "js/euc/render/floWithZoLook.js",
       "bytes": 24645,
-      "sha256": "1103013dbb5be87942aaa2a1b8354b10f18a5000aebf8d9e9bf82be69df229de"
+      "sha256": "1103013dbb5be87942aaa2a1b8354b10f18a5000aebf8d9e9bf82be69df229de",
+      "editionSha256": "112ac2143511aa685c2548ed77a98a64bebe56aae7330d9b11ed2051e0585092"
     },
     {
       "path": "js/euc/render/gnarwheelAtlas.js",
@@ -493,12 +494,14 @@
     {
       "path": "js/euc/render/rider.js",
       "bytes": 43608,
-      "sha256": "941183437f2cc2358c0161dbe4c67a71d079af6ea0ef060b8fa0f06f8790a14a"
+      "sha256": "941183437f2cc2358c0161dbe4c67a71d079af6ea0ef060b8fa0f06f8790a14a",
+      "editionSha256": "22b8a84336b74eb168f64069e21c4a563241edb1f3a95c9c8e98088ab2679cfe"
     },
     {
       "path": "js/euc/render/riderAppearance-adonisb2.js",
       "bytes": 26300,
-      "sha256": "174db90c0be2be8e05e93362d89fbb4f93c4e3a9aeca2132f1f5f57127d33f15"
+      "sha256": "174db90c0be2be8e05e93362d89fbb4f93c4e3a9aeca2132f1f5f57127d33f15",
+      "editionSha256": "6747bd1bb32c270d8d207b796502b181144b01a4f72c0b54596dbb8da2eaec3f"
     },
     {
       "path": "js/euc/render/riderAppearance-cool-rider.js",
@@ -513,7 +516,8 @@
     {
       "path": "js/euc/render/riderAppearance-flo-with-zo.js",
       "bytes": 977,
-      "sha256": "ded751cd048e6eb5a4eec7ec99ace9c8c3e2679e0764032b3ee615d36ed826f7"
+      "sha256": "ded751cd048e6eb5a4eec7ec99ace9c8c3e2679e0764032b3ee615d36ed826f7",
+      "editionSha256": "430ab1d7ef14bdf0c54d9e030548a6e8ccd66932d07fa3fe6b280058c688867d"
     },
     {
       "path": "js/euc/render/riderAppearance-gnarwheel.js",
@@ -528,7 +532,8 @@
     {
       "path": "js/euc/render/riderAppearance-red-rider.js",
       "bytes": 24185,
-      "sha256": "08094b172022757d596a2dae2585d444f03dd5989af673f09fc0999244f8f068"
+      "sha256": "08094b172022757d596a2dae2585d444f03dd5989af673f09fc0999244f8f068",
+      "editionSha256": "97f74709b398987d6bdce54614819ae5d9a426f32f0edbcb4040483f1f08d0f9"
     },
     {
       "path": "js/euc/render/riderAppearance-seal-on-a-wheel.js",
@@ -538,7 +543,8 @@
     {
       "path": "js/euc/render/riderAppearance-trollina.js",
       "bytes": 16538,
-      "sha256": "40b8578f76c85d3db9621b746b6fe8b97a0857492bc85eaa40fe411f49a2b499"
+      "sha256": "40b8578f76c85d3db9621b746b6fe8b97a0857492bc85eaa40fe411f49a2b499",
+      "editionSha256": "40593d685f80d1f24a94dd05aa9a48fb553260eadeac8826bfe21b5a71253f9e"
     },
     {
       "path": "js/euc/render/riderAppearance-wheel-in-motion.js",
@@ -553,7 +559,8 @@
     {
       "path": "js/euc/render/riderClothDrape.js",
       "bytes": 4433,
-      "sha256": "36227c081000af7f8d5e9bf4a0fd7e2fd3584dfd8d9706e17d63a0e18e930d8d"
+      "sha256": "36227c081000af7f8d5e9bf4a0fd7e2fd3584dfd8d9706e17d63a0e18e930d8d",
+      "editionSha256": "3d85bc92e80531b13698e6fe394a7681eaec491dd6951410bb9e13656a0fcffa"
     },
     {
       "path": "js/euc/render/riderJointSurface.js",
@@ -563,12 +570,14 @@
     {
       "path": "js/euc/render/riderLook.js",
       "bytes": 20936,
-      "sha256": "e2751be4955514aaa7cb98c2fb9f0e247d79cd407f0dcc65c6200fefc8270b98"
+      "sha256": "e2751be4955514aaa7cb98c2fb9f0e247d79cd407f0dcc65c6200fefc8270b98",
+      "editionSha256": "572c23efbceb3489cea19303ac98633bfe332fa7482e7a51374b4674b1447c47"
     },
     {
       "path": "js/euc/render/ridingRig.js",
       "bytes": 21937,
-      "sha256": "7078cd491a150cb6c9ab4c7b452afb4218a6597f991c07d8cf2a937125c40cc9"
+      "sha256": "7078cd491a150cb6c9ab4c7b452afb4218a6597f991c07d8cf2a937125c40cc9",
+      "editionSha256": "2212ecb6ea75a7e53f6aa9bfdea95cf2f16ce2f6be80fc335d374919818a9ce0"
     },
     {
       "path": "js/euc/render/rigConsolidation.js",
@@ -784,7 +793,7 @@
       "path": "tools/vendor-euc.mjs",
       "bytes": 93911,
       "sha256": "ea52f89df8c269c2faff12c0747114e79ad67b4a7c846af1adcffc407b8d5e8a",
-      "editionSha256": "38eb6f7f4cfaca71630a6d6c907f21d8f3019061536e95fe81bbaa7f03455b29"
+      "editionSha256": "7501e769dec61706d63b85d76ea1082a2ca51688fad832d5d6560f6f2acb00a2"
     },
     {
       "path": "tools/vendor-three.mjs",

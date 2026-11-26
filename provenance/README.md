@@ -1,5 +1,7 @@
 # San Juan provenance
 
+The 3D looks for Red Rider, Trollina, FloWithZo, Adonisb2 and Officer Dorkins come from EUC Thrills v1.6.1 (`35ce848`). The third pin, file selections and hashes are in `../js/euc/MANIFEST.json`.
+
 - `sf-import.json`: exact selected files from committed SF source `397f207d49d02e705d5a82e311cfedd193912817`, with
   full hashes before San Juan adaptation. No SF world data was imported.
   `js/gamepad-controls.js` is now a San Juan adaptation: optional generic menu-owner/input/close callbacks reuse

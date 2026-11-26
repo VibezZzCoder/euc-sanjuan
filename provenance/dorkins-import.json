@@ -24,7 +24,7 @@
           "sourceSha256": "8e6a4a32fecfff4d6ae938714e94367936355bc011a0843f6fde7a6301baae22"
         }
       ],
-      "editionSha256": "19f5ea23f5e32fe983602524ba7a21bd17aefae7226f72fdf8d4d5ebe7fceea1",
+      "editionSha256": "23a81392baf542219251e1d466e6f9fc88284a99a8401f52c4574a175482cb8a",
       "derived": "The hover-wheel rig (generated cop look and standard machine, hover ring, field, pods, exhaust, emissive light bar), the ground contact shadow, out-of-view spawn behind the rider, the checked departure, the per-frame chase loop and the officer as booking presenter. Not taken: the searchlight (no light is added), the MRT shadow node, SF's road graph. San Juan's own: open-sky, recent-arrival and desk exclusions for spawns, the skate-spot gate, the Pause switch, the chase notice, the map marker, ?cop=0."
     },
     {

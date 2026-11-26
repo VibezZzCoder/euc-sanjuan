@@ -36,13 +36,13 @@ python3 tools/package.py                 # rebuilds dist/
 python3 tools/smoke.py
 ```
 
-`node tools/vendor-euc.mjs --check` verifies the installed EUC modules, licence and audio without an upstream checkout. To compare them with a fresh generation, use two clean EUC Thrills Git checkouts: base `5f45fff19b258e140833841ba2473069af751a12` and code donor `d37efc07cddc0d76ff7aa585901710d357b8e5a1`. Run `npm ci` in the base checkout to supply TypeScript, then run this from San Juan (substitute the two directory paths):
+`node tools/vendor-euc.mjs --check` verifies the installed EUC modules, licence and audio without an upstream checkout. To compare them with a fresh generation, use three clean EUC Thrills Git checkouts: v1.1.0 base `5f45fff19b258e140833841ba2473069af751a12` v1.4.0 code donor `d37efc07cddc0d76ff7aa585901710d357b8e5a1` (six selected files), and v1.6.1 art source `35ce848ec4c1fa40e3eb63e61eb312c48ba6416b`. The 3D looks for Red Rider, Trollina, FloWithZo, Adonisb2 and Officer Dorkins come from EUC Thrills v1.6.1 (`35ce848`). Run `npm ci` in the base checkout to supply TypeScript, then run this from San Juan (substitute the three directory paths):
 
 ```bash
-node tools/vendor-euc.mjs --check --src /path/to/base --donor /path/to/donor --no-preloads
+node tools/vendor-euc.mjs --check --src /path/to/base --donor /path/to/donor --art /path/to/art --no-preloads
 ```
 
-Neither upstream checkout nor GIS tooling is needed to play the game.
+No upstream checkout or GIS tooling is needed to play the game.
 
 For interactive preview, choose one of these commands:
 

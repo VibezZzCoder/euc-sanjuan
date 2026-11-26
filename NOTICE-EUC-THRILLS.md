@@ -182,7 +182,7 @@ and does not expand any asset/participant grant.
 
 **Code provenance (MIT):** the base is EUC Thrills v1.1.0, `5f45fff19b258e140833841ba2473069af751a12`.
 Only the following six source files from the exact v1.4.0 donor,
-`d37efc07cddc0d76ff7aa585901710d357b8e5a1`, participate in the focused dual-source adaptation:
+`d37efc07cddc0d76ff7aa585901710d357b8e5a1`, participate in the code adaptation:
 
 | Donor source | Selected scope |
 |---|---|
@@ -193,13 +193,15 @@ Only the following six source files from the exact v1.4.0 donor,
 | `src/simulation/eucStepPrimitives.ts` | Required transition-state copy fields alongside existing NYC state. |
 | `src/simulation/world.ts` | Transition and at-rest recovery capability contracts, adapted for NYC location/elevation and checked fallen support. |
 
-Generated headers and `js/euc/MANIFEST.json` identify both revisions, donor selections, source hashes, output hashes,
+The 3D looks for Red Rider, Trollina, FloWithZo, Adonisb2 and Officer Dorkins come from EUC Thrills v1.6.1 (`35ce848`). The art source is pinned at `35ce848ec4c1fa40e3eb63e61eb312c48ba6416b`.
+
+Generated headers and `js/euc/MANIFEST.json` identify all three revisions, donor selections, source hashes, output hashes,
 the actual eager/deferred graph and local adaptations. Do not hand-edit `js/euc/`; generation is owned by
 `tools/vendor-euc.mjs` and requires the exact public source snapshots. This is a focused code adaptation rather than
-a broad engine/source migration. The reviewed roster, appearance/mark closure and audio remain from the base
+a broad engine/source migration. The roster, other seven looks, chooser portraits, marks and audio remain from the base
 snapshot, including **18 reviewed source audio entries / 17 installed WAVs**. The offroad tyre is unshipped. The
 generated graph contained **101 modules / 41 eager / 60 deferred** in that San Francisco donor; San Juan's graph is
-**102 modules / 41 eager / 61 deferred** (one deferred module more: the rider portraits). The NPC look and paddle are restored for the
+**108 modules / 42 eager / 66 deferred** (including the deferred portraits and playable kits, and the NPC head). The NPC look and paddle are restored for the
 SF Dorkins integration; the paddle is constructed for the cop only and his metadata remains outside the playable roster.
 The audio provenance identifies source treatment, not SF gameplay acceptance.
 Selected CPU-only pixel workers and bounded

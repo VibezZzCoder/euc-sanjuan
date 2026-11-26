@@ -90,7 +90,12 @@ function hoverRig() {
     if (o.name === 'euc-shell') { shellClone = o.material.clone(); o.material = shellClone; shellClone.color.set(0x22314f); }
     if (o.name === 'rider-paddle-mesh') paddle = o;
   });
-  rig.euc.tyre.visible = false;
+  // The hover ring supplies the visible wheel. The standard tyre still casts its outline
+  // into the sun's shadow map, without covering the ring or writing to the colour-pass depth buffer.
+  rig.euc.tyre.getObjectByName('euc-motor-cover').visible = false;
+  rig.euc.tyre.castShadow = true;
+  rig.euc.tyre.material.colorWrite = false;
+  rig.euc.tyre.material.depthWrite = false;
   const parts = new THREE.Group(); parts.name = 'dorkins-hover-parts'; rig.euc.group.add(parts);
   const glow = opacity => new THREE.MeshBasicMaterial({ color: 0x46c8ff, transparent: true, opacity,
     blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
@@ -128,7 +133,7 @@ function hoverRig() {
   };
 }
 
-// A soft dark disc under him that fades with height (a contact shadow; he casts no real shadow).
+// A soft dark disc under him that fades with height (ambient contact beneath the sun-cast tyre).
 function hoverShadow() {
   const strength = uniform(0);
   const material = new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false });
