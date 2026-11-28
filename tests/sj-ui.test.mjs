@@ -168,6 +168,48 @@ test('a second finger\'s tap on a button is activated on release, once; an only 
   taps.reset();on.pointerdown(ev(11,pauseButton,350,30));on.pointerup(ev(11,pauseButton,350,30));assert.equal(pauseButton.clicks,4);
 });
 
+test('a finger resting on one button while another is tapped: its long-press menu does not take focus from the tapped one',async()=>{
+  const {bindHeldFingerTaps}=await import('../js/sj-ui.js');
+  const on={};let under=null;const doc={activeElement:null,addEventListener:(t,f)=>{on[t]=f;},elementFromPoint:()=>under};
+  // a button: in an open dialog (a rider stamp) or not (a HUD button); focus is recorded, as the picker highlights on it
+  const mk=(inDialog,name)=>{const b={name,nodeType:1,disabled:false,isConnected:true,clicks:0,focusLog:[],
+    click(){this.clicks++;},focus(){doc.activeElement=b;},blur(){if(doc.activeElement===b)doc.activeElement=null;},
+    contains:el=>el===b,getClientRects:()=>[{}],
+    closest(sel){return sel==='button'?b:sel==='dialog[open]'&&inDialog?{}:null;}};return b;};
+  const ev=(id,target,x,y)=>({pointerId:id,target,clientX:x,clientY:y,pointerType:'touch'});
+  const cool=mk(true,'cool'),red=mk(true,'red'),trollina=mk(true,'trollina');
+  const taps=bindHeldFingerTaps(doc,{now:()=>0});
+  // rest on Cool, tap Red: Red is clicked (not focused first); then the browser focuses Cool and raises its menu
+  doc.activeElement=trollina;on.pointerdown(ev(1,cool,50,50));on.pointerdown(ev(2,red,150,50));under=red;
+  on.pointerup(ev(2,red,150,50));assert.equal(red.clicks,1);assert.equal(doc.activeElement,trollina,'not focused before its click');
+  cool.focus();on.contextmenu({pointerId:1,target:cool});assert.equal(doc.activeElement,red,'focus back on the tapped stamp');
+  under=cool;on.pointerup(ev(1,cool,50,50));assert.equal(cool.clicks,0,'the resting finger presses nothing');
+  // a lone long press is left as it is: the browser's focus stays
+  doc.activeElement=red;on.pointerdown(ev(3,cool,50,50));cool.focus();on.contextmenu({pointerId:3,target:cool});assert.equal(doc.activeElement,cool);
+  on.pointercancel(ev(3,cool,50,50));
+  // a long press before the tap (no tap taken yet) highlights as a lone one does; the tap afterwards still wins
+  doc.activeElement=trollina;on.pointerdown(ev(4,cool,50,50));cool.focus();on.contextmenu({pointerId:4,target:cool});assert.equal(doc.activeElement,cool);
+  on.pointerdown(ev(5,red,150,50));under=red;on.pointerup(ev(5,red,150,50));assert.equal(red.clicks,2);
+  on.contextmenu({pointerId:4,target:cool});assert.equal(doc.activeElement,red);under=cool;on.pointerup(ev(4,cool,50,50));
+  // outside a dialog (riding HUD): the rested button is left unfocused rather than the tapped one focused
+  const map=mk(false,'map'),camera=mk(false,'camera');doc.activeElement=null;
+  on.pointerdown(ev(6,map,300,30));on.pointerdown(ev(7,camera,250,30));under=camera;on.pointerup(ev(7,camera,250,30));assert.equal(camera.clicks,1);
+  map.focus();on.contextmenu({pointerId:6,target:map});assert.equal(doc.activeElement,null);under=map;on.pointerup(ev(6,map,300,30));assert.equal(map.clicks,0);
+  // the tapped button closed with its dialog (Resume): the rested one is left, nothing is focused in its place
+  const resume=mk(true,'resume'),change=mk(true,'change');
+  on.pointerdown(ev(8,change,100,200));on.pointerdown(ev(9,resume,100,100));under=resume;resume.closest=sel=>sel==='button'?resume:null;
+  on.pointerup(ev(9,resume,100,100));change.focus();on.contextmenu({pointerId:8,target:change});assert.equal(doc.activeElement,null);
+  on.pointerup(ev(8,change,100,200));assert.equal(change.clicks,0);
+  // once every finger is up the gesture is over: a later lone long press keeps its focus; reset() clears it too
+  on.pointerdown(ev(10,cool,50,50));cool.focus();on.contextmenu({pointerId:10,target:cool});assert.equal(doc.activeElement,cool);on.pointercancel(ev(10,cool,50,50));
+  on.pointerdown(ev(11,cool,50,50));on.pointerdown(ev(12,red,150,50));under=red;on.pointerup(ev(12,red,150,50));taps.reset();
+  cool.focus();on.contextmenu({pointerId:11,target:cool});assert.equal(doc.activeElement,cool);
+  // a menu from a finger that is not on a button (the stick thumb lifting) changes nothing
+  taps.reset();const canvas={nodeType:1,closest:()=>null};doc.activeElement=red;
+  on.pointerdown(ev(13,canvas,100,600));on.pointerdown(ev(14,cool,50,50));under=cool;on.pointerup(ev(14,cool,50,50));
+  on.contextmenu({pointerId:13,target:canvas});assert.equal(doc.activeElement,red);
+});
+
 test('map marks: the nearest mark within reach answers; a mouse press travels, a finger names first and travels on the named mark',()=>{
   const marks=[{x:100,y:100},{x:105,y:102},{x:300,y:40}];
   assert.equal(nearestMark(marks,101,100,14),0);assert.equal(nearestMark(marks,104,102,14),1);

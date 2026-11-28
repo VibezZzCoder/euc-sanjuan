@@ -27,25 +27,32 @@ export function keepPageHome(view=globalThis.window){
  *  long-press menu; and when one button's tap is taken, other buttons still held under resting fingers are disarmed.
  *  An only finger keeps the browser's own click. If the browser sends a click for a release already activated here,
  *  with no new contact in between, that click is dropped: it would act twice, or press whatever the first opened under
- *  the finger. A new contact always gets its own click. */
+ *  the finger. A new contact always gets its own click. When the tap lifts, Chromium raises a long-press menu for a
+ *  finger still resting on another button and focuses that button first; focus is a highlight in the rider picker,
+ *  so focus goes back to the tapped button while it is still shown in an open dialog, or leaves the rested one. The
+ *  tapped button is not focused before its click: a click with no detail on a highlighted stamp confirms it. */
 export function bindHeldFingerTaps(doc=globalThis.document,{slop=12,echo=400,hold=1000,now=()=>performance.now()}={}){
   if(!doc?.addEventListener)return {reset(){}};
-  const presses=new Map();let touches=0,pending=null; // pointerId → {button,x,y,at,held,dead}
+  const presses=new Map();let touches=0,pending=null,taken=null; // pointerId → {button,x,y,at,held,dead}; taken: the button tapped while other fingers stay down
   const buttonOf=t=>{const el=t?.nodeType===1?t:t?.parentElement,b=el?.closest?.('button');return b&&!b.disabled&&!b.closest('#touch-controls')?b:null;};
   doc.addEventListener('pointerdown',e=>{pending=null;if(e.pointerType!=='touch')return;touches++;for(const p of presses.values())p.held=true;
     const button=buttonOf(e.target);if(button)presses.set(e.pointerId,{button,x:e.clientX,y:e.clientY,at:now(),held:touches>1,dead:false});},true);
   // A busy frame merges several moves into one event; the merged points still show a finger that left and came back.
   doc.addEventListener('pointermove',e=>{const p=presses.get(e.pointerId);if(!p||p.dead)return;
     for(const m of [e,...(e.getCoalescedEvents?.()??[])])if(Math.hypot(m.clientX-p.x,m.clientY-p.y)>slop){p.dead=true;break;}},{capture:true,passive:true});
-  doc.addEventListener('contextmenu',()=>{for(const p of presses.values())p.dead=true;},true);
-  const end=(e,released)=>{if(e.pointerType!=='touch')return;touches=Math.max(0,touches-1);const p=presses.get(e.pointerId);presses.delete(e.pointerId);
+  doc.addEventListener('contextmenu',e=>{for(const p of presses.values())p.dead=true;
+    const pulled=doc.activeElement,el=e.target?.nodeType===1?e.target:e.target?.parentElement;
+    if(!taken||!presses.has(e.pointerId)||!pulled||pulled===taken||!el||!pulled.contains?.(el))return;
+    if(taken.isConnected&&!taken.disabled&&taken.closest?.('dialog[open]')&&taken.getClientRects?.().length)taken.focus({preventScroll:true});
+    else pulled.blur?.();},true);
+  const end=(e,released)=>{if(e.pointerType!=='touch')return;touches=Math.max(0,touches-1);const p=presses.get(e.pointerId);presses.delete(e.pointerId);if(!touches)taken=null;
     if(!released||!p?.held||p.dead||now()-p.at>hold||Math.hypot(e.clientX-p.x,e.clientY-p.y)>slop||buttonOf(doc.elementFromPoint?.(e.clientX,e.clientY))!==p.button)return;
     for(const other of presses.values())other.dead=true;
-    pending={at:now(),x:e.clientX,y:e.clientY};p.button.click();};
+    pending={at:now(),x:e.clientX,y:e.clientY};taken=touches>0?p.button:null;p.button.click();};
   doc.addEventListener('pointerup',e=>end(e,true),true);doc.addEventListener('pointercancel',e=>end(e,false),true);
   doc.addEventListener('click',e=>{if(!e.isTrusted||!pending)return;const echoed=now()-pending.at<echo&&Math.hypot(e.clientX-pending.x,e.clientY-pending.y)<=slop*2;pending=null;
     if(echoed){e.preventDefault();e.stopImmediatePropagation();}},true);
-  return {reset(){presses.clear();touches=0;pending=null;}};
+  return {reset(){presses.clear();touches=0;pending=null;taken=null;}};
 }
 
 /** Saved on/off for the FPS counter. Off by default; unreadable or blocked storage keeps the choice in memory. */

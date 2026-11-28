@@ -32,8 +32,8 @@ city project.** This repository began as an empty folder and has its own history
   adaptations of city projects by Mr.doob and Kamil (@unable0_). San Juan does not use their cities, but some of its
   machinery reached it through those two editions: the page shell and engine integration, input, the vehicle and
   pedestrian figures and their behaviour, the synthesized street sound, Officer Dorkins and the booking, the rider
-  swap, and the skatepark construction kit. By count, of the 138 hand-written source files the game runs, 93 (about
-  26,000 lines) were written for San Juan and 45 (about 16,000 lines) are adapted from those editions, counting a
+  swap, and the skatepark construction kit. By count, of the 140 hand-written source files the game runs, 95 (about
+  27,000 lines) were written for San Juan and 45 (about 16,000 lines) are adapted from those editions, counting a
   file whole when any real part of it was borrowed. In the adapted files about 7,300 lines of code still match a
   sibling edition, and roughly 2,200 of those lines also appear in Mr.doob's or Kamil's original projects. [provenance/](provenance/README.md) names every such file with its source and hashes,
   and [LICENSE](LICENSE) carries all three copyright lines.
@@ -55,6 +55,9 @@ city project.** This repository began as an empty folder and has its own history
 <p align="center">
   <a href="screenshots/officer-dorkins.webp"><img src="screenshots/officer-dorkins.webp" width="420" alt="Officer Dorkins on his hover wheel beside the rider on Calle Norzagaray, paddle out, with La Perla below and a notice to dodge the paddle and outlast him." /></a>
   <a href="screenshots/skatepark-del-muelle.webp"><img src="screenshots/skatepark-del-muelle.webp" width="420" alt="Skatepark del Muelle from above: bowl, banks, kickers and a street section in bright paint, with The Drunkard riding through." /></a>
+</p>
+<p align="center">
+  <a href="screenshots/morivivi-el-morro.webp"><img src="screenshots/morivivi-el-morro.webp" width="420" alt="Moriviví in bloom on the El Morro lawn at golden hour: low mats of feathery leaves dotted with pink flower heads in the foreground, Cool Rider on the walk, the fort's walls and a kite beyond." /></a>
 </p>
 
 *Frames from the game as it runs in a browser (desktop, WebGPU, 3D resolution 100%, shown at 1280×720; nothing is retouched). Select a gallery image for full size.*
@@ -109,6 +112,10 @@ Kerbs are real: hop them. The hills are the real hills, so leave room to brake o
 - **City life:** parked rows, slow traffic that stops at corners and yields, people on sidewalks, benches and stairs,
   piragua carts, a sky full of kites over the El Morro lawn (flyers, families on blankets and a kite seller below),
   and synthesized street sound.
+- **Moriviví on the fort lawns:** the little sensitive plant (*Mimosa pudica*) that grows wild all over Puerto Rico
+  flowers in drifts on the El Morro lawn and on San Cristóbal's grass. Roll the wheel over a mat and its leaves fold
+  shut while the pink flower heads stay up; wait half a minute and it opens again. Hop over it and it never notices.
+  At blue hour it sleeps with its leaves closed.
 - **Two skate spots:** *Skatepark del Muelle*, an invented harbour-front park (raised bowl, mini ramp, pump line,
   kickers, a euro gap, a street section), and *El Bowl* in La Perla, the real hand-built community bowl, approximated
   and rideable.
@@ -139,10 +146,10 @@ Address switches (they apply whenever the address carries them and are not saved
 | `?time=midday`, `?time=golden`, `?time=blue` | start at that hour |
 | `?rider=<id>` | start as that rider, for example `?rider=trollina` |
 | `?cop=0` | no Officer Dorkins at all |
-| `?life=0` | no moving cars, people, street sound, piragua carts or kites |
+| `?life=0` | no moving cars, people, street sound, piragua carts, kites or moriviví |
 | `?parked=0` | no parked cars (and nothing to hit where they stood) |
-| `?cars=N`, `?people=N` | cap moving cars or people; 0 turns that population off, and `?people=0` also removes the carts and kites |
-| `?accents=0` | no piragua carts, kites or picnics on the El Morro lawn, everything else as usual |
+| `?cars=N`, `?people=N` | cap moving cars or people; 0 turns that population off, and `?people=0` also removes the carts, kites and moriviví |
+| `?accents=0` | no piragua carts, no kites or picnics on the El Morro lawn and no moriviví on the fort lawns, everything else as usual |
 
 ## Known limits
 

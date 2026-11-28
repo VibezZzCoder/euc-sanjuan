@@ -24,6 +24,7 @@ import {RIDERS} from './euc-roster.js';
 import {createRiders,startingRider} from './sj-riders.js';
 import {createDorkins} from './sj-dorkins.js';
 import {createShell} from './sj-shell.js';
+import {createMoriviviPart} from './sj-morivivi.js';
 const $=id=>document.getElementById(id), params=new URLSearchParams(location.search);
 const QUIET={preventScroll:true}; // focusing a menu control must never scroll the page on a phone
 keepPageHome();
@@ -181,8 +182,9 @@ function updateHud(now){const speed=Math.abs(entity.speed),mph=(speed*2.23694).t
   if(speedNodes.last!==mph+'|'+kmh){speedNodes.last=mph+'|'+kmh;speedNodes.mph.data=mph;speedNodes.kmh.data=kmh;}
   setText('location',`${entity.position.x.toFixed(1)}, ${entity.position.z.toFixed(1)} · ${entity.position.y.toFixed(1)} m`);
   const c=entity.controller,warning=hudModel.update({crashed:c.crashed,powerStage:c.powerWarning,tiltBack:c.tiltBack,overspeed:c.overspeed},performance.now()/1000);
-  setText('rider-status',c.crashed?'R / B / GET UP to recover':warning.warningLabel||(warning.overspeed.visible?'Overspeed — slow down':
-    animasTurnHint(entity.position.x,entity.position.z,entity.heading,entity.speed))||'');
+  const note=life.plant?.note||'',status=c.crashed?'R / B / GET UP to recover':warning.warningLabel||(warning.overspeed.visible?'Overspeed — slow down':
+    animasTurnHint(entity.position.x,entity.position.z,entity.heading,entity.speed))||note;
+  if(hudText['rider-status']!==status)$('rider-status').toggleAttribute('data-note',!!note&&status===note);setText('rider-status',status);
   if(streets&&!(now-streetAt<500&&now>=streetAt)){streetAt=now;setStreet(streets.at(entity.position.x,entity.position.z));} // at most twice a second
   touch.setDown(entity.controller.crashed);}
 function tick(now){const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
@@ -447,7 +449,7 @@ async function boot(){stage('Starting graphics…',.05);window.NYC={cityUniforms
   window.addEventListener('resize',()=>{resizePending=true;touch.reset();cameraControls.resetInput();clear(lookKeys);clear(keys);clear(padKeys);entity.clearInput();if(state==='map')mapDrawing();refitStreet();each('resize');});
   $('build').textContent=`Build ${document.querySelector('[name=euc-build]').content} · ${renderer.backend.isWebGPUBackend?'WebGPU':'WebGL2'} · ${RIDERS[riderId].name}`;
   // The parts are built behind the loading screen, so whatever they will ever draw is compiled with the city.
-  for(const create of [createRiders,createDorkins,createShell]){const part=await create(host);if(part)parts.push(part);}
+  for(const create of [createRiders,createDorkins,createShell,createMoriviviPart]){const part=await create(host);if(part)parts.push(part);}
   stage('Compiling the first view…',.85);resize();entity.prepareView();updateCamera(0,true);
   // Life gathers round the spawn; every actor pool draws at least one instance while the city compiles.
   life.focus(entity,camera);life.warm(true);each('warm',true);try{await compileWholeCity();}finally{life.warm(false);each('warm',false);}

@@ -153,6 +153,7 @@ body[data-input=gamepad] .primer>span{display:none}body[data-input=gamepad] .pri
 #location,#camera-status{padding:4px 7px 3px;background:var(--ink);color:var(--ivory);font:600 12px/1.2 var(--text);font-variant-numeric:tabular-nums;white-space:nowrap}
 #camera-status{color:#d9dfe6}
 #rider-status{grid-column:1/-1;justify-self:start;margin-top:2px;padding:6px 10px 5px;background:var(--red);color:var(--ivory);border:2px solid var(--ivory);box-shadow:0 0 0 1.5px var(--ink);font:800 14px/1.2 var(--text)}
+#rider-status[data-note]{background:var(--ivory);color:var(--ink);border-color:var(--cobalt);font-weight:700}
 #ride-status>:empty{display:none}
 .camera-tools-open #location,.camera-tools-open #camera-status{visibility:hidden}
 

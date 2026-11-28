@@ -32,10 +32,10 @@ export const FORT_GATE=FORT_OUTLINE[6];
 const LIGHTHOUSE=[-729.55,-611.96];                                  // OSM 4124264489 Faro Castillo del Morro
 const TURNING=[-726.53,-537.70];                                     // OSM 239008745, end of Calle del Morro
 // OSM 59745018 Calle del Morro (pedestrian, concrete, 5 m) across the esplanade (Wikimedia Commons curid=148962402, curid=148962401: the pale straight path).
-const CALLE=[[-475.436,-313.911],[-561.357,-392.068],[-714.936,-531.327],TURNING];
+export const CALLE=[[-475.436,-313.911],[-561.357,-392.068],[-714.936,-531.327],TURNING];
 const BENCHES=[[-731.53,-526.63],[-726.97,-525.21]];                 // OSM 5415318077/5415318080 (no backrest)
 // OSM 410617401 / 410617400: lawns either side of the bridge (moat floor; north terrace). Wikimedia Commons curid=34389396, curid=34389747: grass floor.
-const MOAT_LAWNS=[[[-779.22,-550.91],[-761.96,-571.09],[-758.58,-567.97],[-757.48,-564.99],[-741.10,-550.72],[-738.80,-548.10],
+export const MOAT_LAWNS=[[[-779.22,-550.91],[-761.96,-571.09],[-758.58,-567.97],[-757.48,-564.99],[-741.10,-550.72],[-738.80,-548.10],
   [-759.61,-535.91]],[[-758.87,-575.22],[-733.44,-552.25],[-729.62,-552.21],[-725.31,-554.52],[-705.36,-564.31],[-684.91,-574.59],
   [-683.07,-597.09],[-723.63,-576.66],[-743.44,-594.04],[-758.14,-577.94]]];
 const BATTER=1/6;                         // Wikimedia Commons curid=34389396, curid=123485577: steeper than the city wall's 1/7 batter

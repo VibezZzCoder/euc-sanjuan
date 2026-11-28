@@ -29,6 +29,7 @@ import { createPeople } from './sj-people.js';
 import { seededRandom } from './sj-life-random.js';
 import { createLifeAudio } from './sj-life-audio.js';
 import { buildWalkNetwork } from './sj-walk.js';
+import { createMorivivi } from './sj-morivivi.js';
 
 export { seededRandom };
 
@@ -58,6 +59,9 @@ export async function createCityLife({ scene, world, atmosphere, renderer, phone
   const traffic = await createTraffic(context);
   const people = await createPeople(context);
   const parts = [traffic, people];
+  // Moriviví on the fort lawns (js/sj-morivivi.js): grown after the accents, round the kite field; off with them.
+  const plant = params.get('accents') !== '0' && people.debug?.net
+    ? createMorivivi({ world, net: people.debug.net, accents: people.debug.accents, scene }) : null;
   // Read-only city graphs for other host parts (the officer's pursuit graph, js/sj-dorkins-graph.js): the lane graph
   // traffic drives and the walk network people use. With no people the walk network is still built here, while the
   // construction records exist, unless the officer is off too (?cop=0).
@@ -83,7 +87,7 @@ export async function createCityLife({ scene, world, atmosphere, renderer, phone
   }
 
   return {
-    enabled, caps, context, bodies, dynamicWorld, kit, traffic, people, graphs,
+    enabled, caps, context, bodies, dynamicWorld, kit, traffic, people, graphs, plant,
     /** Once per riding frame, before the rider steps. `entity` is the rider entity; dt 0 only refreshes the snapshot. */
     update(dt, entity, camera) {
       if (entity) {
@@ -129,6 +133,6 @@ export async function createCityLife({ scene, world, atmosphere, renderer, phone
     warm(on) { kit.warm(on); for (const part of parts) part.warm(on); },
     stats: () => ({ enabled, caps, traffic: traffic.stats(), people: people.stats(), kit: kit.stats(), bodies: bodies.stats.bodies,
       ms: { traffic: +ms.traffic.toFixed(3), people: +ms.people.toFixed(3), publish: +ms.publish.toFixed(3), kit: +ms.kit.toFixed(3) } }),
-    dispose() { audio?.dispose(); for (const part of parts) part.dispose(); kit.dispose(); },
+    dispose() { audio?.dispose(); for (const part of parts) part.dispose(); plant?.dispose(); kit.dispose(); },
   };
 }
